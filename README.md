@@ -7,11 +7,10 @@
 <p align="center">
   <a href="https://github.com/zahidoverflow/viperclaw/releases"><img src="https://img.shields.io/github/v/release/zahidoverflow/viperclaw?style=flat-square&logo=github&color=10b981&label=Release" alt="Latest GitHub Release" /></a>
   <a href="https://github.com/zahidoverflow/viperclaw/actions"><img src="https://img.shields.io/github/actions/workflow/status/zahidoverflow/viperclaw/ci.yml?branch=main&style=flat-square&logo=githubactions&logoColor=white&label=CI" alt="GitHub Actions CI Status" /></a>
-  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.10%2B%20(Zero%20Deps)-06b6d4?style=flat-square&logo=python&logoColor=white" alt="Python 3.10+ Zero Dependencies" /></a>
-  <a href="#-phase-gated-mcp-server-viperclaw-mcp"><img src="https://img.shields.io/badge/MCP-8%20Phase--Gated%20Tools-a855f7?style=flat-square" alt="Model Context Protocol MCP Server" /></a>
+  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.10%2B%20%7C%20Zero%20Deps-06b6d4?style=flat-square&logo=python&logoColor=white" alt="Python 3.10+ Zero Dependencies" /></a>
+  <a href="#-phase-gated-mcp-server-viperclaw-mcp"><img src="https://img.shields.io/badge/MCP-8%20Tools-a855f7?style=flat-square" alt="Model Context Protocol MCP Server" /></a>
   <a href="#-the-12-methodology-driven-skills"><img src="https://img.shields.io/badge/Skills-12%20Playbooks-f43f5e?style=flat-square" alt="12 Bug Bounty & Pentesting Skills" /></a>
   <a href="https://github.com/zahidoverflow/viperclaw/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-10b981?style=flat-square" alt="MIT License" /></a>
-  <a href="https://github.com/zahidoverflow/viperclaw/stargazers"><img src="https://img.shields.io/github/stars/zahidoverflow/viperclaw?style=flat-square&logo=github&color=eab308" alt="GitHub Stars" /></a>
 </p>
 
 <p align="center">
@@ -92,26 +91,12 @@
   <img src="assets/architecture.svg" alt="ViperClaw 4-Layer Offensive Architecture — AI Coding Harnesses, 12 Methodology Skills, 8-Tool Phase-Gated MCP Server, Pure-Python Offensive Analyzers, and 7-Gate Proof Oracle" width="100%" />
 </div>
 
-<details>
-<summary><b>📐 View Interactive Mermaid Architecture Flowchart</b></summary>
-<br />
-
-```mermaid
-flowchart TB
-    L1["🧠 LAYER 1: AI Coding Harnesses (Antigravity · Claude Code · Codex · Cursor)"]
-    L2A["🎯 LAYER 2A: 12 Methodology Skills (skills/*/SKILL.md)"]
-    L2B["🔌 LAYER 2B: Phase-Gated MCP Server (viperclaw mcp · 8 stdio Tools)"]
-    L3["🐍 LAYER 3: Pure-Python 3.10+ Analyzers (Live Scanner · Taint SAST · JS Harvester · HAR · SQLite Graph)"]
-    L4["🛡️ LAYER 4: Proof Oracle & 7-Gate Judge (WAF Soft-200 Filter · BOLA Diff · CVSS 3.1 · H1 MD & SARIF 2.1.0)"]
-
-    L1 -->|Loads Playbooks| L2A
-    L1 <-->|JSON-RPC 2.0 stdio| L2B
-    L2A -->|Routes Phase Calls| L2B
-    L2B -->|Executes| L3
-    L3 -->|Raw Wire Receipts| L4
-```
-
-</details>
+| Layer | Component | Role in the Offensive Kill Chain |
+| :---: | :--- | :--- |
+| **Layer 1** | **AI Coding Harness** | Runs natively inside **Google Antigravity (`agy`)**, **Claude Code**, **OpenAI Codex**, or **Cursor**—zero extra Docker containers or separate LLM API keys required. |
+| **Layer 2** | **12 Skills + 8-Tool MCP** | Methodology playbooks (`skills/*/SKILL.md`) guide the agent's hypothesis tree while `viperclaw mcp` exposes 8 deterministic `stdio` tools without bloating context. |
+| **Layer 3** | **Pure-Python 3.10+ Engine** | Executes stateful live HTTP exploitation, multi-language source-to-sink taint SAST, SPA lazy-chunk reconstruction, HAR fingerprinting, and SQLite pheromone graph ranking. |
+| **Layer 4** | **7-Gate Proof Oracle** | Rejects Cloudflare/Akamai/Imperva `200 OK` soft-blocks, diffs BOLA JSON keys, computes exact CVSS v3.1 vectors, and emits **HackerOne Markdown + SARIF 2.1.0**. |
 
 ---
 
@@ -140,14 +125,7 @@ viperclaw skills install --target claude
 viperclaw skills install --target all
 ```
 
-<details>
-<summary><b>📦 Using Claude Code Plugin Marketplace?</b></summary>
-
-```text
-/plugin marketplace add zahidoverflow/viperclaw
-/plugin install viperclaw@viperclaw
-```
-</details>
+> **📦 Claude Code Plugin Marketplace:** Run `/plugin marketplace add zahidoverflow/viperclaw` followed by `/plugin install viperclaw@viperclaw`.
 
 ### 3. Connect the Phase-Gated MCP Server (`viperclaw mcp`)
 
