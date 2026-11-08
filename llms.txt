@@ -1,23 +1,44 @@
 # ViperClaw (`zahidoverflow/viperclaw`)
 
-> Universal AI Offensive Security Harness, Stigmergic Attack Surface Graph, Wire-Check Proof Oracle, Phase-Gated MCP Server, and 12 Methodology-Driven Skills for Antigravity, Claude Code, OpenAI Codex, and Cursor.
+> ViperClaw is an open-source, zero-dependency Python AI Pentesting Framework, Bug Bounty Automation MCP Server, Multi-Language SAST/DAST Taint Engine, Stigmergic Attack Graph, Wire-Check Proof Oracle, and 12 Methodology-Driven Skill Suite for Google Antigravity, Claude Code, OpenAI Codex, and Cursor.
 
 - **Repository:** https://github.com/zahidoverflow/viperclaw
+- **Latest Release:** https://github.com/zahidoverflow/viperclaw/releases/tag/v1.1.0
 - **Author:** Zahidul Islam (@zahidoverflow) — https://github.com/zahidoverflow
-- **License:** MIT
-- **Runtime:** Pure Python 3.10+ standard library (Zero mandatory external dependencies)
+- **License:** MIT (100% clean-room open-source implementation)
+- **Runtime:** Pure Python 3.10+ standard library (Zero third-party runtime dependencies)
+- **CLI Entrypoints:** `viperclaw` and `vclaw`
 
-## Why ViperClaw Exists
-Most AI pentesting frameworks fail in practice because they wrap 150–200 CLI scanners around an LLM with no target methodology, bloating the context window, triggering WAF soft-blocks, and hallucinating unverified vulnerabilities.
+## Core Capabilities & Architecture
+Most AI pentesting agents fail in practice because they wrap 150–200 noisy CLI scanners around an LLM with no target methodology—bloating the context window, triggering Cloudflare/Akamai/Imperva WAF blocks, and hallucinating false positives from Soft-200 challenge pages.
 
-ViperClaw reverses this architecture by combining:
-1. **12 Narrow & Deep Methodology Skills (`skills/*/SKILL.md`):** Encoding senior bug-bounty & red-team playbooks (BOLA/IDOR differential matrices, Webpack/Vite/Next.js lazy-chunk reconstruction, Caido/Burp HTTP stack fingerprinting, multi-language source-to-sink taint tracing, GraphQL/WebSocket auditing, HTTP/2 single-packet race conditions, and OWASP Agentic LLM red-teaming).
-2. **Stigmergic Attack Surface Knowledge Graph (`src/viperclaw/core/graph.py`):** Zero-setup SQLite graph with pheromone priority weighting so parallel subagents converge on high-signal leads and export live Mermaid topologies.
-3. **Wire-Check Proof Oracle & 7-Gate QA Judge (`src/viperclaw/core/oracle.py`):** Enforces *"No Receipt, No Report"* by detecting Cloudflare/Akamai/CloudFront Soft-200 WAF blocks, computing structural JSON response differentials, scoring CVSS v3.1, and exporting HackerOne/Bugcrowd Markdown + SARIF 2.1.0 (`src/viperclaw/core/reporter.py`).
-4. **Phase-Gated MCP Server (`src/viperclaw/mcp_server.py`):** Exposes 7 token-efficient JSON-RPC tools over stdio to any MCP client (`viperclaw mcp`).
+ViperClaw solves this with 6 integrated subsystems:
+1. **12 Narrow & Deep Methodology Skills (`skills/*/SKILL.md`):** Senior bug-bounty & red-team playbooks for Google Antigravity (`~/.agents/skills`), Claude Code (`~/.claude/skills`), OpenAI Codex (`~/.codex/skills`), and Cursor (`~/.cursor/skills`).
+2. **Phase-Gated MCP Server (`viperclaw mcp`):** Exposes 8 deterministic JSON-RPC 2.0 tools over `stdio` (`viper_live_scan`, `viper_graph_upsert`, `viper_graph_leads`, `viper_harvest_js`, `viper_taint_scan`, `viper_fingerprint_traffic`, `viper_diff_oracle`, `viper_verify_and_report`).
+3. **Stigmergic Attack Surface Knowledge Graph (`src/viperclaw/core/graph.py`):** Zero-setup SQLite graph with pheromone priority scoring, evaporation decay, and Mermaid flowchart export.
+4. **Multi-Language Source-to-Sink Taint SAST (`src/viperclaw/analyzers/taint.py`):** Forward multi-hop transitive taint analysis across Python, TypeScript/JavaScript, Go, and PHP with context-aware sanitizer/guard de-tainting (`int()`, `intval()`, `PDO::prepare`, `htmlspecialchars`, `in_array`). Achieved **19/19 (100%)** vulnerable module detection and **0 false positives** on DVWA `impossible.php`.
+5. **Stateful Live HTTP Scanner & Wire Exploiter (`src/viperclaw/analyzers/live_scanner.py`):** Automatic cookie & CSRF token handling, route discovery, and wire-verified exploitation (Command Injection, UNION/Blind SQLi, Auth Bypass, LFI, Multipart PHP Upload RCE, Reflected/Stored XSS, Session Predictability, CSRF). Achieved **10/10** live verified exploits on DVWA in under 5 seconds.
+6. **Wire-Check Proof Oracle & 7-Gate QA Judge (`src/viperclaw/core/oracle.py`):** Enforces *"No Receipt, No Report"*, detects Cloudflare/Akamai/Imperva/CloudFront/PerimeterX/DataDome Soft-200 blocks, computes BOLA/IDOR structural JSON diffs, calculates exact CVSS v3.1 vectors, and exports HackerOne/Bugcrowd Markdown + SARIF 2.1.0 (`src/viperclaw/core/reporter.py`).
 
-## Key Entrypoints
-- [README.md](README.md): Complete documentation, benchmarks, architecture, and quickstart.
-- [src/viperclaw/cli.py](src/viperclaw/cli.py): CLI commands (`harvest-js`, `taint`, `fingerprint`, `verify`, `graph`, `skills`, `mcp`).
-- [src/viperclaw/mcp_server.py](src/viperclaw/mcp_server.py): Stdio Model Context Protocol server (`viperclaw mcp`).
-- [skills/](skills/): 12 cross-harness offensive security skills.
+## Documentation & Key Files
+- [README.md](https://github.com/zahidoverflow/viperclaw/blob/main/README.md): Complete overview, 2026 AI pentesting framework comparison matrix, quickstart, CLI guide, and DVWA benchmarks.
+- [src/viperclaw/cli.py](https://github.com/zahidoverflow/viperclaw/blob/main/src/viperclaw/cli.py): CLI commands (`scan`, `harvest-js`, `taint`, `fingerprint`, `verify`, `graph`, `skills`, `mcp`).
+- [src/viperclaw/mcp_server.py](https://github.com/zahidoverflow/viperclaw/blob/main/src/viperclaw/mcp_server.py): Phase-Gated Model Context Protocol (MCP) server (`viperclaw mcp`).
+- [src/viperclaw/core/oracle.py](https://github.com/zahidoverflow/viperclaw/blob/main/src/viperclaw/core/oracle.py): Deterministic HTTP Differential & 7-Question Triage Gate Oracle.
+- [src/viperclaw/analyzers/taint.py](https://github.com/zahidoverflow/viperclaw/blob/main/src/viperclaw/analyzers/taint.py): Polyglot White-Box Source-to-Sink Taint SAST Engine.
+- [src/viperclaw/analyzers/js_harvester.py](https://github.com/zahidoverflow/viperclaw/blob/main/src/viperclaw/analyzers/js_harvester.py): Webpack, Vite, and Next.js Lazy-Chunk & Endpoint Reconstructor.
+- [src/viperclaw/analyzers/live_scanner.py](https://github.com/zahidoverflow/viperclaw/blob/main/src/viperclaw/analyzers/live_scanner.py): Stateful Live HTTP Dynamic Scanner & Wire-Check Exploiter.
+
+## The 12 Offensive Security Skills
+- [viper-orchestrator](https://github.com/zahidoverflow/viperclaw/blob/main/skills/viper-orchestrator/SKILL.md): Master 5-Phase Non-Linear Offensive Hunting Orchestrator.
+- [viper-js-harvester](https://github.com/zahidoverflow/viperclaw/blob/main/skills/viper-js-harvester/SKILL.md): Deep JavaScript Bundle & Webpack/Vite/Next.js Lazy-Chunk Reconstructor.
+- [viper-proxy-fingerprint](https://github.com/zahidoverflow/viperclaw/blob/main/skills/viper-proxy-fingerprint/SKILL.md): HTTP Stack & Caido/Burp Proxy Traffic Fingerprinter.
+- [viper-bola-idor](https://github.com/zahidoverflow/viperclaw/blob/main/skills/viper-bola-idor/SKILL.md): Cross-Tenant Authorization (BOLA / IDOR / BFLA) Hunting Playbook.
+- [viper-injection-oracle](https://github.com/zahidoverflow/viperclaw/blob/main/skills/viper-injection-oracle/SKILL.md): Precision Injection Hunting Skill (SQLi, NoSQLi, SSTI, Command Injection).
+- [viper-ssrf-cloud](https://github.com/zahidoverflow/viperclaw/blob/main/skills/viper-ssrf-cloud/SKILL.md): Server-Side Request Forgery (SSRF) & Cloud Metadata Exploitation Skill.
+- [viper-auth-oauth-jwt](https://github.com/zahidoverflow/viperclaw/blob/main/skills/viper-auth-oauth-jwt/SKILL.md): Authentication, OAuth 2.0 / OIDC, and JWT Exploitation Playbook.
+- [viper-graphql-ws](https://github.com/zahidoverflow/viperclaw/blob/main/skills/viper-graphql-ws/SKILL.md): GraphQL & WebSocket Security Audit Skill.
+- [viper-race-logic](https://github.com/zahidoverflow/viperclaw/blob/main/skills/viper-race-logic/SKILL.md): Race Condition & Business Logic State-Machine Hunter.
+- [viper-taint-sast](https://github.com/zahidoverflow/viperclaw/blob/main/skills/viper-taint-sast/SKILL.md): White-Box Multi-Language Source-to-Sink Taint Analysis Skill.
+- [viper-ai-llm-redteam](https://github.com/zahidoverflow/viperclaw/blob/main/skills/viper-ai-llm-redteam/SKILL.md): Agentic AI, LLM, and MCP Security Red-Team Playbook.
+- [viper-proof-judge](https://github.com/zahidoverflow/viperclaw/blob/main/skills/viper-proof-judge/SKILL.md): Zero-Context Adversarial QA Judge, 7-Question Triage Gate & CVSS 3.1 Reporter.

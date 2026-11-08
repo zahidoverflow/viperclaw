@@ -1,0 +1,10 @@
+{
+  "$schema": "https://glama.ai/mcp/schemas/server.json",
+  "name": "viperclaw",
+  "description": "Phase-Gated AI Offensive Security & Bug Bounty MCP Server with 8 deterministic tools: live web exploitation, multi-language taint SAST (Python/TS/Go/PHP), Webpack/Vite/Next.js lazy-chunk harvesting, Caido/Burp HAR fingerprinting, Stigmergic SQLite Attack Graph, and a 7-Gate Wire-Check Proof Oracle.",
+  "repository": "https://github.com/zahidoverflow/viperclaw",
+  "license": "MIT",
+  "maintainers": ["zahidoverflow"],
+  "command": "viperclaw",
+  "args": ["mcp"]
+}

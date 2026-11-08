@@ -1,0 +1,28 @@
+cff-version: 1.2.0
+title: "ViperClaw: Universal AI Offensive Security Harness, Stigmergic Attack Graph, SAST/DAST Taint Engine & Wire-Check Proof Oracle"
+message: "If you use ViperClaw in your security research, bug bounty workflows, or benchmarks, please cite it using the metadata below."
+type: software
+authors:
+  - family-names: "Islam"
+    given-names: "Zahidul"
+    alias: "zahidoverflow"
+    website: "https://github.com/zahidoverflow"
+repository-code: "https://github.com/zahidoverflow/viperclaw"
+url: "https://github.com/zahidoverflow/viperclaw"
+license: MIT
+version: "1.1.0"
+date-released: "2026-11-08"
+keywords:
+  - ai-pentesting
+  - bug-bounty
+  - model-context-protocol
+  - mcp-server
+  - offensive-security
+  - static-analysis
+  - taint-analysis
+  - claude-code
+  - antigravity
+  - cursor
+  - codex
+  - application-security
+  - vulnerability-scanner

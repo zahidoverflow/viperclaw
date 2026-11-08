@@ -8,8 +8,9 @@
     {
       "name": "viperclaw",
       "source": "./",
-      "description": "ViperClaw \u2014 Universal AI Offensive Security Harness, Stigmergic Attack Graph, Wire-Check Proof Oracle, Phase-Gated MCP Server, and 12 Methodology-Driven Skills.",
-      "version": "1.0.0"
+      "description": "ViperClaw — AI Pentesting Framework, Bug Bounty MCP Server, SAST/DAST Taint Engine, Stigmergic Attack Graph, Wire-Check Proof Oracle & 12 Methodology Skills.",
+      "version": "1.1.0",
+      "keywords": ["ai-pentesting", "bug-bounty", "mcp-server", "offensive-security", "sast", "dast", "taint-analysis", "bola", "idor", "red-teaming"]
     }
   ]
 }

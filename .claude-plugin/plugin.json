@@ -8,6 +8,7 @@
   },
   "repository": "https://github.com/zahidoverflow/viperclaw",
   "license": "MIT",
+  "keywords": ["ai-pentesting", "bug-bounty", "mcp-server", "offensive-security", "sast", "dast", "taint-analysis", "bola", "idor", "red-teaming"],
   "skills": [
     "./skills/viper-ai-llm-redteam",
     "./skills/viper-auth-oauth-jwt",
