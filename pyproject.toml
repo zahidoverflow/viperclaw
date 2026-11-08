@@ -67,10 +67,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/zahidoverflow/viperclaw"
+Homepage = "https://zahidoverflow.github.io/viperclaw/"
 Repository = "https://github.com/zahidoverflow/viperclaw"
 Issues = "https://github.com/zahidoverflow/viperclaw/issues"
-Documentation = "https://github.com/zahidoverflow/viperclaw#readme"
+Documentation = "https://zahidoverflow.github.io/viperclaw/"
 Author = "https://github.com/zahidoverflow"
 
 [project.scripts]
