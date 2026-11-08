@@ -1,0 +1,23 @@
+# ViperClaw (`zahidoverflow/viperclaw`)
+
+> Universal AI Offensive Security Harness, Stigmergic Attack Surface Graph, Wire-Check Proof Oracle, Phase-Gated MCP Server, and 12 Methodology-Driven Skills for Antigravity, Claude Code, OpenAI Codex, and Cursor.
+
+- **Repository:** https://github.com/zahidoverflow/viperclaw
+- **Author:** Zahidul Islam (@zahidoverflow) — https://github.com/zahidoverflow
+- **License:** MIT
+- **Runtime:** Pure Python 3.10+ standard library (Zero mandatory external dependencies)
+
+## Why ViperClaw Exists
+Most AI pentesting frameworks fail in practice because they wrap 150–200 CLI scanners around an LLM with no target methodology, bloating the context window, triggering WAF soft-blocks, and hallucinating unverified vulnerabilities.
+
+ViperClaw reverses this architecture by combining:
+1. **12 Narrow & Deep Methodology Skills (`skills/*/SKILL.md`):** Encoding senior bug-bounty & red-team playbooks (BOLA/IDOR differential matrices, Webpack/Vite/Next.js lazy-chunk reconstruction, Caido/Burp HTTP stack fingerprinting, multi-language source-to-sink taint tracing, GraphQL/WebSocket auditing, HTTP/2 single-packet race conditions, and OWASP Agentic LLM red-teaming).
+2. **Stigmergic Attack Surface Knowledge Graph (`src/viperclaw/core/graph.py`):** Zero-setup SQLite graph with pheromone priority weighting so parallel subagents converge on high-signal leads and export live Mermaid topologies.
+3. **Wire-Check Proof Oracle & 7-Gate QA Judge (`src/viperclaw/core/oracle.py`):** Enforces *"No Receipt, No Report"* by detecting Cloudflare/Akamai/CloudFront Soft-200 WAF blocks, computing structural JSON response differentials, scoring CVSS v3.1, and exporting HackerOne/Bugcrowd Markdown + SARIF 2.1.0 (`src/viperclaw/core/reporter.py`).
+4. **Phase-Gated MCP Server (`src/viperclaw/mcp_server.py`):** Exposes 7 token-efficient JSON-RPC tools over stdio to any MCP client (`viperclaw mcp`).
+
+## Key Entrypoints
+- [README.md](README.md): Complete documentation, benchmarks, architecture, and quickstart.
+- [src/viperclaw/cli.py](src/viperclaw/cli.py): CLI commands (`harvest-js`, `taint`, `fingerprint`, `verify`, `graph`, `skills`, `mcp`).
+- [src/viperclaw/mcp_server.py](src/viperclaw/mcp_server.py): Stdio Model Context Protocol server (`viperclaw mcp`).
+- [skills/](skills/): 12 cross-harness offensive security skills.

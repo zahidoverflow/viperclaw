@@ -1,0 +1,71 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "viperclaw"
+version = "1.0.0"
+description = "ViperClaw — Universal AI Offensive Security Harness, Stigmergic Attack Graph, Wire-Check Proof Oracle, Phase-Gated MCP Server, and 12 Methodology-Driven Skills for Antigravity, Claude Code, Codex & Cursor."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+authors = [
+    { name = "Zahidul Islam (@zahidoverflow)", email = "zahidoverflow@users.noreply.github.com" }
+]
+keywords = [
+    "ai-pentesting",
+    "offensive-security",
+    "bug-bounty",
+    "mcp-server",
+    "claude-code",
+    "antigravity",
+    "codex",
+    "red-teaming",
+    "static-analysis",
+    "taint-analysis",
+    "hackbot",
+    "security-automation",
+    "cybersecurity",
+    "ai-agents"
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Security",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: Software Development :: Testing",
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/zahidoverflow/viperclaw"
+Repository = "https://github.com/zahidoverflow/viperclaw"
+Issues = "https://github.com/zahidoverflow/viperclaw/issues"
+Documentation = "https://github.com/zahidoverflow/viperclaw#readme"
+Author = "https://github.com/zahidoverflow"
+
+[project.scripts]
+viperclaw = "viperclaw.cli:main"
+vclaw = "viperclaw.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

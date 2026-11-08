@@ -1,0 +1,25 @@
+{
+  "name": "viperclaw",
+  "version": "1.0.0",
+  "description": "ViperClaw \u2014 Universal AI Offensive Security Harness, Stigmergic Attack Graph, Wire-Check Proof Oracle, Phase-Gated MCP Server, and 12 Methodology-Driven Skills.",
+  "author": {
+    "name": "Zahidul Islam (@zahidoverflow)",
+    "url": "https://github.com/zahidoverflow"
+  },
+  "repository": "https://github.com/zahidoverflow/viperclaw",
+  "license": "MIT",
+  "skills": [
+    "./skills/viper-ai-llm-redteam",
+    "./skills/viper-auth-oauth-jwt",
+    "./skills/viper-bola-idor",
+    "./skills/viper-graphql-ws",
+    "./skills/viper-injection-oracle",
+    "./skills/viper-js-harvester",
+    "./skills/viper-orchestrator",
+    "./skills/viper-proof-judge",
+    "./skills/viper-proxy-fingerprint",
+    "./skills/viper-race-logic",
+    "./skills/viper-ssrf-cloud",
+    "./skills/viper-taint-sast"
+  ]
+}

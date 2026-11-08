@@ -1,0 +1,15 @@
+{
+  "name": "viperclaw",
+  "owner": {
+    "name": "Zahidul Islam (@zahidoverflow)",
+    "url": "https://github.com/zahidoverflow"
+  },
+  "plugins": [
+    {
+      "name": "viperclaw",
+      "source": "./",
+      "description": "ViperClaw \u2014 Universal AI Offensive Security Harness, Stigmergic Attack Graph, Wire-Check Proof Oracle, Phase-Gated MCP Server, and 12 Methodology-Driven Skills.",
+      "version": "1.0.0"
+    }
+  ]
+}
