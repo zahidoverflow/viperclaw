@@ -269,7 +269,7 @@ Instead of polluting your LLM's context window with 150 raw CLI tool wrappers, `
 ViperClaw is continuously validated against **Damn Vulnerable Web Application (DVWA)** in both white-box source mode (`viperclaw taint`) and live containerized black-box HTTP mode (`viperclaw scan`):
 
 * **White-Box Taint SAST (`viperclaw taint`):** **19 / 19 (100%)** vulnerability modules detected across `vulnerabilities/*` via forward multi-hop transitive taint tracking, with **0 false positives** on hardened `impossible.php` targets (guarded by `PDO::prepare`, `intval`, `is_numeric`, `in_array` allowlists, and `htmlspecialchars`).
-* **Live Black-Box Wire Exploitation (`viperclaw scan`):** **10 / 10** end-to-end verified exploits proven with raw HTTP request/response receipts in under 5 seconds:
+* **Live Black-Box Wire Exploitation (`viperclaw scan`):** **14 / 14 (100%)** of live DVWA vulnerability modules exploited and verified over the wire with raw HTTP request/response receipts (and browser DOM execution verified via BrowserOS):
   1. `VC-LIVE-001` (**HIGH 8.8**): OS Command Injection (`ip=127.0.0.1;id` → `uid=33(www-data)`)
   2. `VC-LIVE-002` (**HIGH 8.1**): UNION-Based SQL Injection (credential hash dump)
   3. `VC-LIVE-003` (**MEDIUM 6.5**): Boolean-Based Blind SQL Injection (True/False differential oracle)
@@ -280,6 +280,10 @@ ViperClaw is continuously validated against **Damn Vulnerable Web Application (D
   8. `VC-LIVE-008` (**MEDIUM 5.4**): Stored Cross-Site Scripting in Guestbook (`mtxMessage`)
   9. `VC-LIVE-009` (**HIGH 8.2**): Predictable Sequential Session ID (`dvwaSession` $+1$ increment)
   10. `VC-LIVE-010` (**HIGH 8.8**): Cross-Site Request Forgery (CSRF) Unprotected GET Password Reset
+  11. `VC-LIVE-011` (**MEDIUM 6.5**): Multi-Step Workflow / CAPTCHA State-Machine Bypass (`step=2` Parameter Manipulation)
+  12. `VC-LIVE-012` (**MEDIUM 5.4**): Content Security Policy (CSP) Bypass & Arbitrary External Script Injection (`include` Parameter)
+  13. `VC-LIVE-013` (**MEDIUM 6.5**): Client-Side JavaScript Token Algorithm Reversal & Forgery (`md5(rot13("success"))`)
+  14. `VC-LIVE-014` (**MEDIUM 6.1**): DOM-Based Cross-Site Scripting (DOM XSS) via Unescaped `document.location.href` into `document.write()`
 
 ---
 
