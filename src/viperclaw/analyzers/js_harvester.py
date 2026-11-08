@@ -24,7 +24,7 @@ from urllib.parse import urljoin
 
 
 ENDPOINT_REGEX = re.compile(
-    r"""(?:"|'|`|path:\s*['"]|^\s*)(https?://[^\s"'`<>]+|/(?:api|v[1-9]|vulnerabilities|graphql|gql|internal|admin|auth|oauth|trpc|ws|webhooks?|users?|accounts?|orders?|billing|tenants?|orgs?|files?|upload|export|debug|actuator|swagger|openapi)[^\s"'`<>:]*)(?:"|'|`|:)?""",
+    r"""(?:"|'|`|path:\s*['"]|^\s*)(https?://[^\s"'`<>]+|/(?:api|v[1-9]|vulnerabilities|graphql|gql|internal|admin|auth|oauth|trpc|ws|webhooks?|users?|accounts?|orders?|billing|tenants?|orgs?|files?|upload|export|debug|actuator|swagger|openapi)[^\s"'`<>]*)(?:"|'|`)?""",
     re.IGNORECASE | re.MULTILINE,
 )
 
@@ -37,7 +37,7 @@ VITE_DYNAMIC_IMPORT_REGEX = re.compile(
 )
 
 NEXT_CHUNK_REGEX = re.compile(
-    r"""["']((?:static/chunks/|_next/static/chunks/)[^"']+\.js)["']"""
+    r"""["'](/?(?:static/chunks/|_next/static/chunks/)[^"']+\.js)["']"""
 )
 
 WEBPACK_CHUNK_MAP_REGEX = re.compile(

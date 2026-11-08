@@ -228,3 +228,48 @@ def test_all_12_skills_and_cli(tmp_path: Path) -> None:
     sarif_data = ReportGenerator.to_sarif([finding])
     assert sarif_data["version"] == "2.1.0"
     assert len(sarif_data["runs"][0]["results"]) == 1
+
+
+def test_cli_verify_file_and_python_sanitizer(tmp_path: Path) -> None:
+    py_file = tmp_path / "safe_and_vuln.py"
+    py_file.write_text(
+        """from flask import request
+def handler(cursor):
+    safe_id = request.args.get("id")
+    safe_id = int(safe_id)
+    cursor.execute(f"SELECT * FROM items WHERE id = {safe_id}")
+
+    vuln_id = request.GET.get("raw")
+    q = f"SELECT * FROM items WHERE name = '{vuln_id}'"
+    cursor.execute(q)
+""",
+        encoding="utf-8",
+    )
+    flows = TaintAnalyzer.analyze_file(py_file)
+    assert len(flows) == 1
+    assert flows[0].tainted_vars == ["q"]
+
+    finding_json = tmp_path / "finding.json"
+    finding_json.write_text(
+        """[{
+            "id": "VC-200",
+            "title": "Cross-Tenant BOLA on /api/v2/invoices/10042",
+            "vuln_class": "BOLA / IDOR",
+            "endpoint": "https://api.example.com/api/v2/invoices/10042",
+            "cvss_params": {"AV": "N", "AC": "L", "PR": "L", "UI": "N", "S": "U", "C": "H", "I": "N", "A": "N"},
+            "receipt": {
+                "request_method": "GET",
+                "request_url": "https://api.example.com/api/v2/invoices/10042",
+                "response_status": 200,
+                "response_body": "{\\"invoice_id\\": 10042, \\"customer_email\\": \\"victim@example.com\\"}"
+            }
+        }]""",
+        encoding="utf-8",
+    )
+    md_out = tmp_path / "out.md"
+    sarif_out = tmp_path / "out.sarif"
+    rc = main(["verify", str(finding_json), "--report-md", str(md_out), "--report-sarif", str(sarif_out)])
+    assert rc == 0
+    assert md_out.exists()
+    assert sarif_out.exists()
+

@@ -12,7 +12,7 @@ import json
 import shutil
 import sys
 from pathlib import Path
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from viperclaw import __version__
 from viperclaw.analyzers.js_harvester import JSHarvester
@@ -20,15 +20,15 @@ from viperclaw.analyzers.live_scanner import LiveScanner
 from viperclaw.analyzers.proxy_fingerprint import ProxyFingerprinter
 from viperclaw.analyzers.taint import TaintAnalyzer
 from viperclaw.core.graph import AttackGraph
-from viperclaw.core.oracle import HttpSample, ProofOracle
+from viperclaw.core.oracle import ProofOracle
 from viperclaw.core.reporter import ReportGenerator, VerifiedFinding
 from viperclaw.mcp_server import run_stdio_server
 
 
-BANNER = r"""
+BANNER = f"""
 ╦  ╦╦╔═╗╔═╗╦═╗╔═╗╦  ╔═╗╦ ╦
 ╚╗╔╝║╠═╝║╣ ╠╦╝║  ║  ╠═╣║║║
- ╚╝ ╩╩  ╚═╝╩╚═╚═╝╩═╝╩ ╩╚╩╝  v1.0.0
+ ╚╝ ╩╩  ╚═╝╩╚═╚═╝╩═╝╩ ╩╚╩╝  v{__version__}
 Universal AI Offensive Security Harness, Swarm Graph & Proof Oracle
 By Zahidul Islam (@zahidoverflow) — MIT License
 """
@@ -109,51 +109,110 @@ def build_parser() -> argparse.ArgumentParser:
     p_scan.add_argument("url", help="Target base URL (e.g., http://127.0.0.1:4280)")
     p_scan.add_argument("--username", default="admin", help="Optional login username")
     p_scan.add_argument("--password", default="password", help="Optional login password")
-    p_scan.add_argument("--graph-db", default=".viperclaw/graph.db", help="SQLite attack graph path to populate")
-    p_scan.add_argument("--sarif-out", default="", help="Optional path to write SARIF 2.1.0 report")
-    p_scan.add_argument("--report-out", default="", help="Optional path to write Markdown bounty report bundle")
+    p_scan.add_argument("--cookie", default="", help="Optional raw Cookie header (e.g. 'session=abc; security=low')")
+    p_scan.add_argument("--graph-db", "--db", dest="graph_db", default=".viperclaw/graph.db", help="SQLite attack graph path to populate")
+    p_scan.add_argument("--sarif-out", "--report-sarif", dest="sarif_out", default="", help="Optional path to write SARIF 2.1.0 report")
+    p_scan.add_argument("--report-out", "--report-md", dest="report_out", default="", help="Optional path to write Markdown bounty report bundle")
 
     # 2. harvest-js
     p_js = sub.add_parser("harvest-js", help="Extract lazy-loaded chunks, API endpoints, GraphQL ops, sinks & secrets from JS/TS files")
     p_js.add_argument("path", help="Path to JS bundle file or directory")
     p_js.add_argument("--base-url", default="", help="Optional asset base URL to resolve lazy chunk URLs")
-    p_js.add_argument("--graph-db", default="", help="Optional SQLite attack graph path to populate")
+    p_js.add_argument("--graph-db", "--db", dest="graph_db", default="", help="Optional SQLite attack graph path to populate")
+    p_js.add_argument("--output", "-o", default="", help="Optional output file path for JSON results")
 
-    # 2. taint
+    # 3. taint
     p_taint = sub.add_parser("taint", help="Run multi-language white-box source-to-sink taint analysis (Python, TS/JS, Go, PHP)")
     p_taint.add_argument("path", help="File or repository directory to scan")
-    p_taint.add_argument("--graph-db", default="", help="Optional SQLite attack graph path to populate")
+    p_taint.add_argument("--graph-db", "--db", dest="graph_db", default="", help="Optional SQLite attack graph path to populate")
+    p_taint.add_argument("--output", "-o", default="", help="Optional output file path for JSON results")
 
-    # 3. fingerprint
+    # 4. fingerprint
     p_fp = sub.add_parser("fingerprint", help="Fingerprint API hosts, backend frameworks, and auth mechanisms from a HAR capture")
     p_fp.add_argument("har_path", help="Path to .har file")
-    p_fp.add_argument("--domain", default="", help="Optional root domain filter")
+    p_fp.add_argument("--domain", "--target-domain", dest="domain", default="", help="Optional root domain filter")
+    p_fp.add_argument("--output", "-o", default="", help="Optional output file path for JSON results")
 
-    # 4. verify
-    p_ver = sub.add_parser("verify", help="Run the 7-Question Triage Gate & CVSS 3.1 Oracle on a candidate finding")
-    p_ver.add_argument("--title", required=True, help="Vulnerability title")
+    # 5. verify
+    p_ver = sub.add_parser("verify", help="Run the 7-Question Triage Gate & CVSS 3.1 Oracle on a candidate finding or JSON file")
+    p_ver.add_argument("finding_file", nargs="?", default="", help="Optional JSON file containing candidate finding(s)")
+    p_ver.add_argument("--title", default="", help="Vulnerability title")
     p_ver.add_argument("--vuln-class", default="Broken Object Level Authorization (BOLA/IDOR)", help="Vulnerability category")
-    p_ver.add_argument("--asset", required=True, help="Target endpoint or file")
-    p_ver.add_argument("--request", required=True, help="Raw HTTP request or command receipt")
-    p_ver.add_argument("--response", required=True, help="Raw HTTP response or output receipt")
-    p_ver.add_argument("--sarif-out", default="", help="Optional path to write SARIF 2.1.0 report")
+    p_ver.add_argument("--asset", default="", help="Target endpoint or file")
+    p_ver.add_argument("--request", default="", help="Raw HTTP request or command receipt")
+    p_ver.add_argument("--response", default="", help="Raw HTTP response or output receipt")
+    p_ver.add_argument("--sarif-out", "--report-sarif", dest="sarif_out", default="", help="Optional path to write SARIF 2.1.0 report")
+    p_ver.add_argument("--report-out", "--report-md", dest="report_out", default="", help="Optional path to write Markdown report")
 
-    # 5. graph
+    # 6. graph
     p_graph = sub.add_parser("graph", help="Inspect Stigmergic Attack Surface Graph leads or export Mermaid diagram")
-    p_graph.add_argument("--db", default=".viperclaw/graph.db", help="Path to SQLite graph DB")
+    p_graph.add_argument("--db", "--graph-db", dest="db", default=".viperclaw/graph.db", help="Path to SQLite graph DB")
     p_graph.add_argument("--mermaid", action="store_true", help="Output Mermaid flowchart")
+    p_graph.add_argument("--top-leads", type=int, default=0, help="Return top N prioritized unverified attack leads")
+    p_graph.add_argument("--decay", type=float, default=0.0, help="Apply pheromone evaporation factor (e.g. 0.85)")
 
-    # 6. skills
+    # 7. skills
     p_skills = sub.add_parser("skills", help="List or install the 12 ViperClaw methodology skills for Antigravity, Claude Code, Codex, or Cursor")
     p_skills.add_argument("action", choices=["list", "install"], help="Action to perform")
     p_skills.add_argument("--target", choices=["antigravity", "claude", "codex", "cursor", "all"], default="antigravity")
-    p_skills.add_argument("--dest", default=None, help="Custom destination directory override")
+    p_skills.add_argument("--dest", "--dest-dir", dest="dest", default=None, help="Custom destination directory override")
     p_skills.add_argument("--dry-run", action="store_true", help="Preview installation paths without copying files")
 
-    # 7. mcp
+    # 8. mcp
     sub.add_parser("mcp", help="Start the Phase-Gated Model Context Protocol (MCP) JSON-RPC server over stdio")
 
     return parser
+
+
+def _verify_single_item(item: Dict[str, Any]) -> tuple[ Any, VerifiedFinding]:
+    title = item.get("title", "")
+    vuln_class = item.get("vuln_class", "Broken Object Level Authorization (BOLA/IDOR)")
+    asset = item.get("asset") or item.get("endpoint") or ""
+    finding_id = item.get("id") or item.get("finding_id") or "VC-001"
+    receipt = item.get("receipt", {})
+    if isinstance(receipt, dict) and receipt:
+        req_method = receipt.get("request_method", "GET")
+        req_url = receipt.get("request_url", asset)
+        req_headers = receipt.get("request_headers", {})
+        hdr_lines = "\n".join(f"{k}: {v}" for k, v in req_headers.items())
+        req_str = item.get("request") or f"{req_method} {req_url} HTTP/1.1\n{hdr_lines}\n\n{receipt.get('request_body', '')}".strip()
+        resp_headers = receipt.get("response_headers", {})
+        resp_hdr_lines = "\n".join(f"{k}: {v}" for k, v in resp_headers.items())
+        resp_str = item.get("response") or f"HTTP/1.1 {receipt.get('response_status', 200)}\n{resp_hdr_lines}\n\n{receipt.get('response_body', '')}".strip()
+    else:
+        req_str = item.get("request", "")
+        resp_str = item.get("response", "")
+
+    raw_cvss = item.get("cvss_params") or {}
+    norm_cvss: Dict[str, str] = {}
+    for k, v in raw_cvss.items():
+        kl = k.lower()
+        if kl == "s":
+            norm_cvss["scope"] = str(v).upper()
+        elif kl in {"av", "ac", "pr", "ui", "scope", "c", "i", "a"}:
+            norm_cvss[kl] = str(v).upper()
+
+    verdict = ProofOracle.evaluate_7_gates(
+        title=title,
+        evidence_request=req_str,
+        evidence_response=resp_str,
+        cvss_params=norm_cvss if norm_cvss else None,
+    )
+    finding = VerifiedFinding(
+        finding_id=finding_id,
+        title=title,
+        vuln_class=vuln_class,
+        asset=asset,
+        cvss_score=verdict.cvss_score,
+        cvss_severity=verdict.cvss_severity,
+        cvss_vector=verdict.cvss_vector,
+        summary=item.get("description", ""),
+        impact=item.get("impact", ""),
+        remediation=item.get("remediation", ""),
+        request_receipt=req_str,
+        response_receipt=resp_str,
+    )
+    return verdict, finding
 
 
 def main(argv: List[str] | None = None) -> int:
@@ -171,14 +230,21 @@ def main(argv: List[str] | None = None) -> int:
 
     if args.command == "scan":
         scanner = LiveScanner(args.url)
+        if args.cookie:
+            for part in args.cookie.split(";"):
+                if "=" in part:
+                    k, v = part.strip().split("=", 1)
+                    scanner.cookies[k.strip()] = v.strip()
         res = scanner.run_scan(
             username=args.username,
             password=args.password,
             graph_db=args.graph_db or None,
         )
         if args.sarif_out:
+            Path(args.sarif_out).parent.mkdir(parents=True, exist_ok=True)
             Path(args.sarif_out).write_text(json.dumps(res.sarif, indent=2), encoding="utf-8")
         if args.report_out:
+            Path(args.report_out).parent.mkdir(parents=True, exist_ok=True)
             Path(args.report_out).write_text(res.markdown_bundle, encoding="utf-8")
         print(
             json.dumps(
@@ -205,7 +271,11 @@ def main(argv: List[str] | None = None) -> int:
                 boost = 5.0 if ep in res["idor_candidates"] or ep in res["ssrf_candidates"] else 1.5
                 graph.upsert_node("endpoint", ep, pheromone_boost=boost)
             graph.close()
-        print(json.dumps(res, indent=2))
+        out_str = json.dumps(res, indent=2)
+        if args.output:
+            Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+            Path(args.output).write_text(out_str, encoding="utf-8")
+        print(out_str)
         return 0
 
     if args.command == "taint":
@@ -216,45 +286,77 @@ def main(argv: List[str] | None = None) -> int:
                 label = f"{fl['vuln_class']} @ {fl['file_path']}:{fl['sink_line']}"
                 graph.upsert_node("taint_sink", label, pheromone_boost=8.0, metadata=fl)
             graph.close()
-        print(json.dumps(res, indent=2))
+        out_str = json.dumps(res, indent=2)
+        if args.output:
+            Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+            Path(args.output).write_text(out_str, encoding="utf-8")
+        print(out_str)
         return 0
 
     if args.command == "fingerprint":
         report = ProxyFingerprinter.analyze_har(args.har_path, root_domain=args.domain)
-        print(json.dumps(report.to_dict(), indent=2))
+        out_str = json.dumps(report.to_dict(), indent=2)
+        if args.output:
+            Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+            Path(args.output).write_text(out_str, encoding="utf-8")
+        print(out_str)
         return 0
 
     if args.command == "verify":
-        verdict = ProofOracle.evaluate_7_gates(
-            title=args.title,
-            evidence_request=args.request,
-            evidence_response=args.response,
-        )
-        finding = VerifiedFinding(
-            finding_id="VC-001",
-            title=args.title,
-            vuln_class=args.vuln_class,
-            asset=args.asset,
-            cvss_score=verdict.cvss_score,
-            cvss_severity=verdict.cvss_severity,
-            cvss_vector=verdict.cvss_vector,
-            request_receipt=args.request,
-            response_receipt=args.response,
-        )
-        if args.sarif_out:
-            Path(args.sarif_out).write_text(ReportGenerator.to_sarif_json([finding]), encoding="utf-8")
-        out = {
-            "triage": verdict.to_dict(),
-            "markdown_report": ReportGenerator.to_bounty_markdown(finding) if verdict.passed else None,
-        }
-        print(json.dumps(out, indent=2))
-        return 0 if verdict.passed else 2
+        items: List[Dict[str, Any]] = []
+        if args.finding_file:
+            loaded = json.loads(Path(args.finding_file).read_text(encoding="utf-8"))
+            items = loaded if isinstance(loaded, list) else [loaded]
+        else:
+            if not (args.title and args.asset and args.request and args.response):
+                parser.error("verify requires either a positional finding_file JSON or --title, --asset, --request, and --response")
+            items = [
+                {
+                    "title": args.title,
+                    "vuln_class": args.vuln_class,
+                    "asset": args.asset,
+                    "request": args.request,
+                    "response": args.response,
+                }
+            ]
+
+        verified_list: List[VerifiedFinding] = []
+        results_out: List[Dict[str, Any]] = []
+        all_passed = True
+        for item in items:
+            verdict, finding = _verify_single_item(item)
+            if verdict.passed:
+                verified_list.append(finding)
+            else:
+                all_passed = False
+            results_out.append(
+                {
+                    "triage": verdict.to_dict(),
+                    "markdown_report": ReportGenerator.to_bounty_markdown(finding) if verdict.passed else None,
+                }
+            )
+
+        if args.sarif_out and verified_list:
+            Path(args.sarif_out).parent.mkdir(parents=True, exist_ok=True)
+            Path(args.sarif_out).write_text(ReportGenerator.to_sarif_json(verified_list), encoding="utf-8")
+        if args.report_out and verified_list:
+            md_bundle = "\n\n---\n\n".join(ReportGenerator.to_bounty_markdown(f) for f in verified_list)
+            Path(args.report_out).parent.mkdir(parents=True, exist_ok=True)
+            Path(args.report_out).write_text(md_bundle, encoding="utf-8")
+
+        output_payload = results_out[0] if len(results_out) == 1 else {"results": results_out}
+        print(json.dumps(output_payload, indent=2))
+        return 0 if all_passed else 2
 
     if args.command == "graph":
         graph = AttackGraph(args.db)
         try:
+            if args.decay > 0.0:
+                graph.decay_pheromones(factor=args.decay)
             if args.mermaid:
                 print(graph.export_mermaid())
+            elif args.top_leads > 0:
+                print(json.dumps([n.to_dict() for n in graph.top_leads(limit=args.top_leads)], indent=2))
             else:
                 print(json.dumps(graph.summary(), indent=2))
         finally:

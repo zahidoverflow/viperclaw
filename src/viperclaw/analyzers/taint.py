@@ -30,7 +30,7 @@ LANGUAGE_EXTENSIONS = {
 
 SOURCE_PATTERNS: Dict[str, List[re.Pattern[str]]] = {
     "python": [
-        re.compile(r"\brequest\.(?:args|form|json|values|data|files|headers|cookies|query_params)\b"),
+        re.compile(r"\brequest\.(?:args|form|json|values|data|files|headers|cookies|query_params|GET|POST)\b"),
         re.compile(r"\b(?:Query|Body|Form|Header|Path)\s*\("),
         re.compile(r"\bsys\.argv\b"),
     ],
@@ -56,7 +56,7 @@ SOURCE_PATTERNS: Dict[str, List[re.Pattern[str]]] = {
 }
 
 VARIABLE_SANITIZERS: List[tuple[re.Pattern[str], Set[str]]] = [
-    (re.compile(r"\b(?:intval|floatval|boolval|abs)\s*\("), {"*"}),
+    (re.compile(r"\b(?:int|float|bool|intval|floatval|boolval|abs)\s*\("), {"*"}),
     (re.compile(r"\(\s*(?:int|float|bool)\s*\)"), {"*"}),
     (re.compile(r"\b(?:escapeshellarg|escapeshellcmd|shlex\.quote)\s*\("), {"Command Injection / RCE"}),
     (re.compile(r"\b(?:htmlspecialchars|htmlentities|bleach\.clean|DOMPurify\.sanitize)\s*\("), {"Cross-Site Scripting (XSS)"}),
@@ -229,22 +229,31 @@ class TaintAnalyzer:
             func_lines = lines[start_line - 1 : end_line]
             func_text = "\n".join(func_lines)
 
-            tainted_vars: Dict[str, tuple[int, str]] = {
-                arg.arg: (start_line, f"def {node.name}({arg.arg})")
+            tainted_vars: Dict[str, tuple[int, str, Set[str]]] = {
+                arg.arg: (start_line, f"def {node.name}({arg.arg})", set())
                 for arg in node.args.args
-                if arg.arg not in {"self", "cls", "db"}
+                if arg.arg not in {"self", "cls", "db", "cursor", "conn", "session", "request", "req", "res", "response"}
             }
 
             for idx, raw_line in enumerate(func_lines, start=start_line):
                 assign_match = re.match(r"\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+)", raw_line)
                 if assign_match:
                     lhs, rhs = assign_match.group(1), assign_match.group(2)
+                    line_neutralized: Set[str] = set()
+                    for san_re, san_classes in VARIABLE_SANITIZERS:
+                        if san_re.search(rhs):
+                            line_neutralized.update(san_classes)
                     if any(s_re.search(rhs) for s_re in src_regexes):
-                        tainted_vars[lhs] = (idx, raw_line.strip())
+                        if "*" not in line_neutralized:
+                            tainted_vars[lhs] = (idx, raw_line.strip(), set(line_neutralized))
                     else:
-                        for v, (orig_ln, orig_expr) in list(tainted_vars.items()):
+                        for v, (orig_ln, orig_expr, prev_neut) in list(tainted_vars.items()):
                             if orig_ln <= idx and re.search(rf"\b{re.escape(v)}\b", rhs):
-                                tainted_vars[lhs] = (orig_ln, orig_expr)
+                                combined_neut = set(prev_neut) | line_neutralized
+                                if "*" in combined_neut:
+                                    tainted_vars.pop(lhs, None)
+                                else:
+                                    tainted_vars[lhs] = (orig_ln, orig_expr, combined_neut)
                                 break
 
             if not tainted_vars and not any(r.search(func_text) for r in src_regexes):
@@ -253,16 +262,21 @@ class TaintAnalyzer:
             for idx, raw_line in enumerate(func_lines, start=start_line):
                 for sink_def in SINK_DEFINITIONS:
                     if sink_def["pattern"].search(raw_line):
+                        v_class = sink_def["vuln_class"]
                         used_vars = [
                             v
-                            for v, (orig_ln, _) in tainted_vars.items()
-                            if orig_ln <= idx and re.search(rf"\b{re.escape(v)}\b", raw_line)
+                            for v, (orig_ln, _, neut) in tainted_vars.items()
+                            if orig_ln <= idx
+                            and "*" not in neut
+                            and v_class not in neut
+                            and re.search(rf"\b{re.escape(v)}\b", raw_line)
                         ]
                         direct_src = any(r.search(raw_line) for r in src_regexes)
                         if used_vars or direct_src:
-                            src_ln, src_expr = (
-                                tainted_vars[used_vars[0]] if used_vars else (idx, raw_line.strip())
-                            )
+                            if used_vars:
+                                src_ln, src_expr, _ = tainted_vars[used_vars[0]]
+                            else:
+                                src_ln, src_expr = idx, raw_line.strip()
                             slice_start = max(1, min(src_ln, idx) - 2)
                             slice_end = min(len(lines), max(src_ln, idx) + 2)
                             snippet = "\n".join(
