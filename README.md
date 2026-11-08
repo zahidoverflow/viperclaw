@@ -25,6 +25,7 @@
   <a href="#-how-viperclaw-fixes-it-architecture">Architecture</a> •
   <a href="#-2026-ai-pentesting-framework-comparison">2026 Comparison Matrix</a> •
   <a href="#-60-second-quickstart">60s Quickstart</a> •
+  <a href="#-standalone-cli-showcase-viperclaw--vclaw">CLI Showcase</a> •
   <a href="#-the-12-methodology-driven-skills">12 Skills</a> •
   <a href="#-phase-gated-mcp-server-viperclaw-mcp">MCP Server</a> •
   <a href="#-validated-dvwa-benchmark-scorecard-white-box--black-box">DVWA Benchmark</a> •
@@ -59,7 +60,7 @@ Across the 2025–2026 **AI penetration testing** and **automated bug bounty** e
 
 ---
 
-## 🏗️ How ViperClaw Fixes It (Architecture)
+## 🧬 How ViperClaw Fixes It (Architecture)
 
 ```mermaid
 flowchart TD
@@ -175,7 +176,7 @@ claude mcp add viperclaw -- viperclaw mcp
 
 ---
 
-## 🛠️ Standalone CLI Showcase (`viperclaw` / `vclaw`)
+## 💻 Standalone CLI Showcase (`viperclaw` / `vclaw`)
 
 You can run every ViperClaw offensive analyzer directly from your terminal or CI/CD pipeline:
 
@@ -315,11 +316,36 @@ This repository includes a standard <a href="CITATION.cff"><code>CITATION.cff</c
 
 ---
 
-## 🧪 Running the Test Suite
+## 📂 Repository Structure
+
+```text
+viperclaw/
+├── .claude-plugin/               # Claude Code Marketplace & Plugin manifests
+├── .github/workflows/ci.yml      # GitHub Actions CI matrix (Python 3.10, 3.11, 3.12)
+├── assets/banner.svg             # Project SVG header banner
+├── logo.png                      # Lightweight 512x512 transparent emblem
+├── skills/                       # 12 Methodology-Driven Offensive Skills (SKILL.md)
+├── src/viperclaw/                # Zero-Dependency Python 3.10+ Core Package
+│   ├── cli.py                    # CLI entrypoints (`viperclaw` & `vclaw`)
+│   ├── mcp_server.py             # Phase-Gated 8-Tool JSON-RPC 2.0 stdio MCP Server
+│   ├── core/                     # Stigmergic Attack Graph, Proof Oracle & SARIF Reporter
+│   └── analyzers/                # Live HTTP Scanner, Polyglot Taint SAST, JS & HAR Analyzers
+├── tests/test_viperclaw.py       # 10 End-to-End & Adversarial QA Regression Suites
+├── CITATION.cff                  # Academic & Research Citation Metadata
+├── glama.json                    # MCP Registry Manifest
+├── llms.txt                      # AI / LLM Context Discovery Index
+└── pyproject.toml                # PEP 621 Zero-Dependency Package Configuration
+```
+
+---
+
+## 🧪 Running the Test Suite & Contributing
 
 ```bash
 pytest -v
 ```
+
+Contributions, new offensive skills, and sanitizer/sink rules are welcome! Please review [`CONTRIBUTING.md`](CONTRIBUTING.md) and our [`SECURITY.md`](SECURITY.md) policy before opening a pull request.
 
 ---
 
