@@ -16,6 +16,7 @@ from typing import Dict, List
 
 from viperclaw import __version__
 from viperclaw.analyzers.js_harvester import JSHarvester
+from viperclaw.analyzers.live_scanner import LiveScanner
 from viperclaw.analyzers.proxy_fingerprint import ProxyFingerprinter
 from viperclaw.analyzers.taint import TaintAnalyzer
 from viperclaw.core.graph import AttackGraph
@@ -103,7 +104,16 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--version", action="version", version=f"viperclaw {__version__}")
     sub = parser.add_subparsers(dest="command")
 
-    # 1. harvest-js
+    # 1. scan (live dynamic HTTP + stateful auth + wire-verified PoCs)
+    p_scan = sub.add_parser("scan", help="Run live stateful HTTP scan & wire-verified exploitation against a target URL")
+    p_scan.add_argument("url", help="Target base URL (e.g., http://127.0.0.1:4280)")
+    p_scan.add_argument("--username", default="admin", help="Optional login username")
+    p_scan.add_argument("--password", default="password", help="Optional login password")
+    p_scan.add_argument("--graph-db", default=".viperclaw/graph.db", help="SQLite attack graph path to populate")
+    p_scan.add_argument("--sarif-out", default="", help="Optional path to write SARIF 2.1.0 report")
+    p_scan.add_argument("--report-out", default="", help="Optional path to write Markdown bounty report bundle")
+
+    # 2. harvest-js
     p_js = sub.add_parser("harvest-js", help="Extract lazy-loaded chunks, API endpoints, GraphQL ops, sinks & secrets from JS/TS files")
     p_js.add_argument("path", help="Path to JS bundle file or directory")
     p_js.add_argument("--base-url", default="", help="Optional asset base URL to resolve lazy chunk URLs")
@@ -157,6 +167,32 @@ def main(argv: List[str] | None = None) -> int:
 
     if args.command == "mcp":
         run_stdio_server()
+        return 0
+
+    if args.command == "scan":
+        scanner = LiveScanner(args.url)
+        res = scanner.run_scan(
+            username=args.username,
+            password=args.password,
+            graph_db=args.graph_db or None,
+        )
+        if args.sarif_out:
+            Path(args.sarif_out).write_text(json.dumps(res.sarif, indent=2), encoding="utf-8")
+        if args.report_out:
+            Path(args.report_out).write_text(res.markdown_bundle, encoding="utf-8")
+        print(
+            json.dumps(
+                {
+                    "target_url": res.target_url,
+                    "authenticated": res.authenticated,
+                    "fingerprint": res.fingerprint,
+                    "discovered_routes_count": len(res.discovered_routes),
+                    "verified_findings_count": len(res.verified_findings),
+                    "verified_findings": res.verified_findings,
+                },
+                indent=2,
+            )
+        )
         return 0
 
     if args.command == "harvest-js":

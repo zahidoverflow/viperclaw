@@ -5,7 +5,7 @@ Why most MCP security bridges (like 150-tool wrappers) fail in practice:
 Exposing 150+ raw CLI tool schemas simultaneously bloats the agent's context window,
 degrades tool-selection accuracy, and induces noisy scanner behavior.
 
-ViperClaw's MCP server exposes 7 high-signal, methodology-driven tools over standard
+ViperClaw's MCP server exposes 8 high-signal, methodology-driven tools over standard
 JSON-RPC 2.0 (`stdio`), compatible with Antigravity, Claude Code, Codex, Cursor, and Windsurf.
 """
 
@@ -18,6 +18,7 @@ from typing import Any, Dict, List
 
 from viperclaw import __version__
 from viperclaw.analyzers.js_harvester import JSHarvester
+from viperclaw.analyzers.live_scanner import LiveScanner
 from viperclaw.analyzers.proxy_fingerprint import ProxyFingerprinter
 from viperclaw.analyzers.taint import TaintAnalyzer
 from viperclaw.core.graph import AttackGraph
@@ -59,7 +60,7 @@ MCP_TOOLS: List[Dict[str, Any]] = [
         "inputSchema": {
             "type": "object",
             "properties": {
-                "path": {"type": "string", "description": "File or directory path containing JS/TS/HTML bundles"},
+                "path": {"type": "string", "description": "File or directory path containing JS/TS/HTML/PHP bundles"},
                 "base_url": {"type": "string", "description": "Optional asset origin URL to resolve relative lazy chunk paths"},
             },
             "required": ["path"],
@@ -67,7 +68,7 @@ MCP_TOOLS: List[Dict[str, Any]] = [
     },
     {
         "name": "viper_taint_scan",
-        "description": "Run white-box multi-language source-to-sink taint analysis across Python, TypeScript/JS, Go, and PHP to locate RCE, SQLi, SSRF, LFI, Deserialization, and SSTI call chains.",
+        "description": "Run white-box multi-language source-to-sink taint analysis across Python, TypeScript/JS, Go, and PHP to locate RCE, SQLi, SSRF, LFI, Deserialization, XSS, CSRF, and SSTI call chains.",
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -119,6 +120,20 @@ MCP_TOOLS: List[Dict[str, Any]] = [
                 "cross_boundary_proven": {"type": "boolean", "default": True},
             },
             "required": ["title", "vuln_class", "asset", "request_receipt", "response_receipt"],
+        },
+    },
+    {
+        "name": "viper_live_scan",
+        "description": "Execute a stateful, authenticated HTTP dynamic scan against a live web target or lab (e.g., DVWA), proving exploits over the wire and updating the Stigmergic Attack Graph.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "url": {"type": "string", "description": "Target base URL"},
+                "username": {"type": "string", "default": "admin"},
+                "password": {"type": "string", "default": "password"},
+                "workspace_db": {"type": "string", "default": ".viperclaw/graph.db"},
+            },
+            "required": ["url"],
         },
     },
 ]
@@ -206,6 +221,15 @@ def handle_tool_call(name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
             "triage": triage.to_dict(),
             "markdown_report": ReportGenerator.to_bounty_markdown(finding) if triage.passed else None,
         }
+
+    if name == "viper_live_scan":
+        scanner = LiveScanner(arguments["url"])
+        res = scanner.run_scan(
+            username=arguments.get("username", "admin"),
+            password=arguments.get("password", "password"),
+            graph_db=arguments.get("workspace_db", ".viperclaw/graph.db"),
+        )
+        return res.to_dict()
 
     raise ValueError(f"Unknown MCP tool: {name}")
 

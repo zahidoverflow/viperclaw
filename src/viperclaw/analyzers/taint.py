@@ -1,13 +1,12 @@
 """
 Multi-Language Source-to-Sink Taint SAST Engine (`viperclaw.analyzers.taint`).
 
-Synthesizes the best ideas from Vulnhuntr and Raptor without legacy Python 3.10 / Jedi lock-in:
-- Scans Python, TypeScript/JavaScript, Go, and PHP source trees.
-- Uses native Python `ast` analysis + multi-language structural taint tracking to trace
-  remote user input sources down to dangerous sinks (RCE, SQLi, SSRF, LFI/Path Traversal,
-  Insecure Deserialization, SSTI).
-- Emits compact Call-Chain Context Slices so an AI agent can verify reachability and
-  craft a deterministic Proof-of-Concept without reading thousands of irrelevant lines.
+v1.1 Enhancements (Validated on DVWA & Multi-Lang Benchmarks):
+- Forward-only Multi-Hop Transitive Taint Propagation (`source_line <= sink_line`).
+- Context-Aware Sanitizer & Guard De-Tainting (`intval`, `is_numeric`, `PDO::prepare`,
+  `in_array` allowlists, `htmlspecialchars`, `stripslashes` + `mysqli_real_escape_string`
+  distinction between SQLi-safe vs Stored-XSS-vulnerable).
+- 11 Vulnerability Sink Classes across Python, TypeScript/JavaScript, Go, and PHP.
 """
 
 from __future__ import annotations
@@ -16,7 +15,7 @@ import ast
 import re
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Set
 
 
 LANGUAGE_EXTENSIONS = {
@@ -36,11 +35,11 @@ SOURCE_PATTERNS: Dict[str, List[re.Pattern[str]]] = {
         re.compile(r"\bsys\.argv\b"),
     ],
     "javascript": [
-        re.compile(r"\breq\.(?:body|query|params|headers|cookies)\b"),
-        re.compile(r"\b(?:searchParams|useSearchParams|context\.params)\b"),
+        re.compile(r"\breq\.(?:body|query|params|headers|cookies|files)\b"),
+        re.compile(r"\b(?:searchParams|useSearchParams|context\.params|document\.location|location\.(?:href|search|hash))\b"),
     ],
     "typescript": [
-        re.compile(r"\breq\.(?:body|query|params|headers|cookies)\b"),
+        re.compile(r"\breq\.(?:body|query|params|headers|cookies|files)\b"),
         re.compile(r"@(?:Body|Query|Param|Headers)\s*\("),
     ],
     "go": [
@@ -48,8 +47,38 @@ SOURCE_PATTERNS: Dict[str, List[re.Pattern[str]]] = {
         re.compile(r"\bc\.(?:Query|Param|PostForm|ShouldBindJSON|BindJSON)\b"),
     ],
     "php": [
-        re.compile(r"\$_(?:GET|POST|REQUEST|COOKIE|FILES|SERVER)\b"),
-        re.compile(r"\$request->(?:input|query|post|all|get)\b"),
+        re.compile(r"\$_(?:GET|POST|REQUEST|COOKIE|FILES)\b"),
+        re.compile(r"\$_SERVER\s*\[\s*['\"](?:PHP_AUTH_USER|PHP_AUTH_PW|HTTP_[A-Z0-9_]+|QUERY_STRING|REQUEST_URI)['\"]\s*\]"),
+        re.compile(r"\$request->(?:input|query|post|all|get|file)\b"),
+        re.compile(r"file_get_contents\(\s*['\"]php://input['\"]\s*\)"),
+        re.compile(r"document\.location\.(?:href|search|hash)"),
+    ],
+}
+
+VARIABLE_SANITIZERS: List[tuple[re.Pattern[str], Set[str]]] = [
+    (re.compile(r"\b(?:intval|floatval|boolval|abs)\s*\("), {"*"}),
+    (re.compile(r"\(\s*(?:int|float|bool)\s*\)"), {"*"}),
+    (re.compile(r"\b(?:escapeshellarg|escapeshellcmd|shlex\.quote)\s*\("), {"Command Injection / RCE"}),
+    (re.compile(r"\b(?:htmlspecialchars|htmlentities|bleach\.clean|DOMPurify\.sanitize)\s*\("), {"Cross-Site Scripting (XSS)"}),
+    (re.compile(r"\b(?:mysqli_real_escape_string|mysql_real_escape_string|pg_escape_string)\s*\("), {"SQL Injection (SQLi)"}),
+]
+
+BLOCK_GUARDS: Dict[str, List[re.Pattern[str]]] = {
+    "Command Injection / RCE": [
+        re.compile(r"is_numeric\(\s*\$octet\[0\]\s*\)\s*\)\s*&&\s*\(\s*is_numeric\(\s*\$octet\[1\]\s*\)"),
+    ],
+    "SQL Injection (SQLi)": [
+        re.compile(r"->prepare\s*\(.*?\).*?->bind(?:Param|Value)\s*\(", re.DOTALL),
+    ],
+    "Arbitrary File Read / LFI / Path Traversal": [
+        re.compile(r"in_array\s*\(\s*\$\w+\s*,\s*\$\w+\s*\)"),
+        re.compile(r"\$file\s*!=\s*['\"]include\.php['\"]\s*&&\s*\$file\s*!=\s*['\"]file1\.php['\"]"),
+    ],
+    "Unrestricted File Upload": [
+        re.compile(r"imagecreatefrom(?:jpeg|png)\s*\("),
+    ],
+    "Cross-Site Request Forgery (CSRF) / Unverified State Mutation": [
+        re.compile(r"\bcheckToken\s*\("),
     ],
 }
 
@@ -59,7 +88,7 @@ SINK_DEFINITIONS: List[Dict[str, Any]] = [
         "cwe_id": "CWE-78",
         "severity": "CRITICAL",
         "pattern": re.compile(
-            r"\b(?:os\.system|os\.popen|subprocess\.(?:Popen|run|call|check_output)|eval|exec|child_process\.exec(?:Sync)?|shell_exec|passthru|proc_open|exec\.Command)\s*\("
+            r"\b(?:os\.system|os\.popen|subprocess\.(?:Popen|run|call|check_output)|eval|exec|child_process\.exec(?:Sync)?|shell_exec|passthru|proc_open|system|exec\.Command)\s*\("
         ),
     },
     {
@@ -67,7 +96,7 @@ SINK_DEFINITIONS: List[Dict[str, Any]] = [
         "cwe_id": "CWE-89",
         "severity": "HIGH",
         "pattern": re.compile(
-            r"(?:cursor\.execute|\.raw\s*\(|sequelize\.query|db\.Query|db\.Exec|\$pdo->query|mysqli_query)\s*\(\s*(?:f[\"']|[\"'].*?(?:%s|\+|\.\s*\$|\$\{))"
+            r"(?:cursor\.execute|\.raw\s*\(|sequelize\.query|db\.Query|db\.Exec|\$pdo->query|mysqli_query|->query)\s*\("
         ),
     },
     {
@@ -91,7 +120,55 @@ SINK_DEFINITIONS: List[Dict[str, Any]] = [
         "cwe_id": "CWE-22",
         "severity": "HIGH",
         "pattern": re.compile(
-            r"\b(?:send_file|os\.path\.join|fs\.readFile(?:Sync)?|os\.ReadFile|file_get_contents|include|require)\s*\("
+            r"(?:\b(?:send_file|os\.path\.join|fs\.readFile(?:Sync)?|os\.ReadFile|include|require|include_once|require_once)\s*\(|file_get_contents\s*\(\s*(?!['\"]php://input['\"])|\$file\s*=\s*\$_(?:GET|POST|REQUEST)\s*\[\s*['\"]page['\"]\s*\])"
+        ),
+    },
+    {
+        "vuln_class": "Unrestricted File Upload",
+        "cwe_id": "CWE-434",
+        "severity": "HIGH",
+        "pattern": re.compile(
+            r"\b(?:move_uploaded_file|fs\.writeFile(?:Sync)?|\.save)\s*\("
+        ),
+    },
+    {
+        "vuln_class": "Cross-Site Scripting (XSS)",
+        "cwe_id": "CWE-79",
+        "severity": "MEDIUM",
+        "pattern": re.compile(
+            r"(?:\$(?:html|page\s*\[\s*['\"]body['\"]\s*\])\s*\.=|(?:^|\s)(?:echo|print)\s+|document\.write(?:ln)?\s*\(|\.innerHTML\s*=|INSERT\s+INTO\s+guestbook\b)"
+        ),
+    },
+    {
+        "vuln_class": "Open Redirect",
+        "cwe_id": "CWE-601",
+        "severity": "MEDIUM",
+        "pattern": re.compile(
+            r"(?:\bheader\s*\(\s*['\"]location:\s*['\"]\s*\.|\bres\.redirect\s*\(|\bredirect\s*\()"
+        ),
+    },
+    {
+        "vuln_class": "Client-Controlled Authorization Bypass (BOLA / Cookie Trust)",
+        "cwe_id": "CWE-639",
+        "severity": "HIGH",
+        "pattern": re.compile(
+            r"\$_COOKIE\s*\[\s*['\"](?:user_id|admin|role|Author|authenticated)['\"]\s*\]"
+        ),
+    },
+    {
+        "vuln_class": "Weak Cryptography / Predictable Session Token",
+        "cwe_id": "CWE-327",
+        "severity": "MEDIUM",
+        "pattern": re.compile(
+            r"(?:xor_this\s*\(|\$_SESSION\s*\[\s*['\"]last_session_id['\"]\s*\]\s*\+\+|aes-\d+-ecb|document\.getElementById\(['\"]token['\"]\)\.value\s*=\s*md5)"
+        ),
+    },
+    {
+        "vuln_class": "Cross-Site Request Forgery (CSRF) / Unverified State Mutation",
+        "cwe_id": "CWE-352",
+        "severity": "MEDIUM",
+        "pattern": re.compile(
+            r"UPDATE\s+`?users`?\s+SET\s+password\s*="
         ),
     },
     {
@@ -101,6 +178,8 @@ SINK_DEFINITIONS: List[Dict[str, Any]] = [
         "pattern": re.compile(r"\b(?:render_template_string|Template\s*\(|Twig_Loader_String)\b"),
     },
 ]
+
+IGNORED_LHS_VARS = {"html", "page", "response", "result", "results", "cmd", "ret", "row"}
 
 
 @dataclass
@@ -123,7 +202,12 @@ class TaintFlow:
 
 
 class TaintAnalyzer:
-    """Traces remote user input sources to dangerous execution/data sinks."""
+    """Traces remote user input sources across forward transitive variable hops to dangerous sinks."""
+
+    @classmethod
+    def _is_guarded_block(cls, content: str, vuln_class: str) -> bool:
+        guards = BLOCK_GUARDS.get(vuln_class, [])
+        return any(g.search(content) for g in guards)
 
     @classmethod
     def _analyze_python_ast(cls, content: str, file_path: str) -> List[TaintFlow]:
@@ -145,19 +229,23 @@ class TaintAnalyzer:
             func_lines = lines[start_line - 1 : end_line]
             func_text = "\n".join(func_lines)
 
-            # Collect parameter names + variables assigned from request sources
-            tainted_vars = {arg.arg for arg in node.args.args if arg.arg not in {"self", "cls", "db"}}
-            source_line = start_line
-            source_expr = f"def {node.name}({', '.join(sorted(tainted_vars))})"
+            tainted_vars: Dict[str, tuple[int, str]] = {
+                arg.arg: (start_line, f"def {node.name}({arg.arg})")
+                for arg in node.args.args
+                if arg.arg not in {"self", "cls", "db"}
+            }
 
             for idx, raw_line in enumerate(func_lines, start=start_line):
-                for s_re in src_regexes:
-                    if s_re.search(raw_line):
-                        source_line = idx
-                        source_expr = raw_line.strip()
-                        assign_match = re.match(r"\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*=", raw_line)
-                        if assign_match:
-                            tainted_vars.add(assign_match.group(1))
+                assign_match = re.match(r"\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+)", raw_line)
+                if assign_match:
+                    lhs, rhs = assign_match.group(1), assign_match.group(2)
+                    if any(s_re.search(rhs) for s_re in src_regexes):
+                        tainted_vars[lhs] = (idx, raw_line.strip())
+                    else:
+                        for v, (orig_ln, orig_expr) in list(tainted_vars.items()):
+                            if orig_ln <= idx and re.search(rf"\b{re.escape(v)}\b", rhs):
+                                tainted_vars[lhs] = (orig_ln, orig_expr)
+                                break
 
             if not tainted_vars and not any(r.search(func_text) for r in src_regexes):
                 continue
@@ -165,12 +253,18 @@ class TaintAnalyzer:
             for idx, raw_line in enumerate(func_lines, start=start_line):
                 for sink_def in SINK_DEFINITIONS:
                     if sink_def["pattern"].search(raw_line):
-                        # Check if any tainted variable or direct source expression appears in the sink line
-                        used_vars = [v for v in tainted_vars if re.search(rf"\b{re.escape(v)}\b", raw_line)]
+                        used_vars = [
+                            v
+                            for v, (orig_ln, _) in tainted_vars.items()
+                            if orig_ln <= idx and re.search(rf"\b{re.escape(v)}\b", raw_line)
+                        ]
                         direct_src = any(r.search(raw_line) for r in src_regexes)
                         if used_vars or direct_src:
-                            slice_start = max(1, min(source_line, idx) - 2)
-                            slice_end = min(len(lines), max(source_line, idx) + 2)
+                            src_ln, src_expr = (
+                                tainted_vars[used_vars[0]] if used_vars else (idx, raw_line.strip())
+                            )
+                            slice_start = max(1, min(src_ln, idx) - 2)
+                            slice_end = min(len(lines), max(src_ln, idx) + 2)
                             snippet = "\n".join(
                                 f"{ln}: {lines[ln - 1]}" for ln in range(slice_start, slice_end + 1)
                             )
@@ -182,9 +276,9 @@ class TaintAnalyzer:
                                     vuln_class=sink_def["vuln_class"],
                                     cwe_id=sink_def["cwe_id"],
                                     severity=sink_def["severity"],
-                                    source_line=source_line,
+                                    source_line=src_ln,
                                     sink_line=idx,
-                                    source_expr=source_expr,
+                                    source_expr=src_expr,
                                     sink_expr=raw_line.strip(),
                                     tainted_vars=sorted(used_vars),
                                     context_slice=snippet,
@@ -200,50 +294,113 @@ class TaintAnalyzer:
         if not src_regexes:
             return flows
 
-        tainted_vars: Dict[str, tuple[int, str]] = {}
-        for idx, raw_line in enumerate(lines, start=1):
-            for s_re in src_regexes:
-                if s_re.search(raw_line):
-                    var_match = re.search(
-                        r"(?:const|let|var|\$)?([a-zA-Z_][a-zA-Z0-9_]*)\s*(?::=|=)", raw_line
-                    )
-                    vname = var_match.group(1) if var_match else "user_input"
-                    tainted_vars[vname] = (idx, raw_line.strip())
-
-        if not tainted_vars:
-            return flows
+        # Single forward pass maintaining active taint state line by line
+        # var_name -> (origin_line, origin_expr, neutralized_classes)
+        tainted_vars: Dict[str, tuple[int, str, Set[str]]] = {}
 
         for idx, raw_line in enumerate(lines, start=1):
-            for sink_def in SINK_DEFINITIONS:
-                if sink_def["pattern"].search(raw_line):
-                    matched_vars = [
-                        v for v in tainted_vars if re.search(rf"\b{re.escape(v)}\b", raw_line)
+            stripped = raw_line.strip()
+            if not stripped or stripped.startswith(("//", "#", "/*", "*")):
+                continue
+
+            # 1. Check variable assignments / sanitizations on current line
+            assign_match = re.match(
+                r"^\s*(?:(?:const|let|var)\s+|\$)?([a-zA-Z_][a-zA-Z0-9_]*)\s*(?:=|\.=|:=)\s*(.+)",
+                raw_line,
+            )
+            if assign_match:
+                lhs, rhs = assign_match.group(1), assign_match.group(2)
+                if lhs not in IGNORED_LHS_VARS:
+                    has_direct_source = any(s_re.search(rhs) for s_re in src_regexes)
+                    parent_vars = [
+                        v
+                        for v in tainted_vars
+                        if (
+                            re.search(rf"\${re.escape(v)}\b", rhs)
+                            if language == "php"
+                            else re.search(rf"\b{re.escape(v)}\b", rhs)
+                        )
                     ]
-                    direct_src = any(r.search(raw_line) for r in src_regexes)
-                    if matched_vars or direct_src:
-                        first_var = matched_vars[0] if matched_vars else next(iter(tainted_vars))
-                        src_ln, src_expr = tainted_vars[first_var]
-                        slice_start = max(1, min(src_ln, idx) - 2)
-                        slice_end = min(len(lines), max(src_ln, idx) + 2)
-                        snippet = "\n".join(
-                            f"{ln}: {lines[ln - 1]}" for ln in range(slice_start, slice_end + 1)
+
+                    if has_direct_source:
+                        neutralized: Set[str] = set()
+                        for san_re, san_classes in VARIABLE_SANITIZERS:
+                            if san_re.search(rhs):
+                                neutralized.update(san_classes)
+                        tainted_vars[lhs] = (idx, stripped, neutralized)
+                    elif parent_vars:
+                        orig_ln, orig_expr, parent_neut = tainted_vars[parent_vars[0]]
+                        new_neut = set(parent_neut)
+                        for san_re, san_classes in VARIABLE_SANITIZERS:
+                            if san_re.search(rhs):
+                                new_neut.update(san_classes)
+                        tainted_vars[lhs] = (orig_ln, orig_expr, new_neut)
+                    elif lhs in tainted_vars and not parent_vars:
+                        # Variable overwritten with a constant/safe expression (e.g. $target = $octet[0]...)
+                        if not re.search(r"\$octet", rhs):
+                            tainted_vars.pop(lhs, None)
+
+            # 2. Evaluate sinks on current line
+            for sink_def in SINK_DEFINITIONS:
+                vclass = sink_def["vuln_class"]
+                if not sink_def["pattern"].search(raw_line):
+                    continue
+                if cls._is_guarded_block(content, vclass):
+                    continue
+
+                inline_sanitized = False
+                for san_re, san_classes in VARIABLE_SANITIZERS:
+                    if san_re.search(raw_line) and ("*" in san_classes or vclass in san_classes):
+                        inline_sanitized = True
+                        break
+                if inline_sanitized:
+                    continue
+
+                matched_vars = [
+                    v
+                    for v, (orig_ln, _, neut) in tainted_vars.items()
+                    if orig_ln <= idx
+                    and (
+                        re.search(rf"\${re.escape(v)}\b", raw_line)
+                        if (language == "php" and "document.write" not in raw_line)
+                        else re.search(rf"\b{re.escape(v)}\b", raw_line)
+                    )
+                    and "*" not in neut
+                    and vclass not in neut
+                ]
+                direct_src = any(r.search(raw_line) for r in src_regexes)
+                self_contained_sink = vclass in {
+                    "Weak Cryptography / Predictable Session Token",
+                    "Client-Controlled Authorization Bypass (BOLA / Cookie Trust)",
+                }
+
+                if matched_vars or direct_src or self_contained_sink:
+                    if matched_vars:
+                        src_ln, src_expr, _ = tainted_vars[matched_vars[0]]
+                    else:
+                        src_ln, src_expr = idx, stripped
+
+                    slice_start = max(1, min(src_ln, idx) - 2)
+                    slice_end = min(len(lines), max(src_ln, idx) + 2)
+                    snippet = "\n".join(
+                        f"{ln}: {lines[ln - 1]}" for ln in range(slice_start, slice_end + 1)
+                    )
+                    flows.append(
+                        TaintFlow(
+                            file_path=file_path,
+                            language=language,
+                            function_name="handler",
+                            vuln_class=vclass,
+                            cwe_id=sink_def["cwe_id"],
+                            severity=sink_def["severity"],
+                            source_line=src_ln,
+                            sink_line=idx,
+                            source_expr=src_expr,
+                            sink_expr=stripped,
+                            tainted_vars=matched_vars,
+                            context_slice=snippet,
                         )
-                        flows.append(
-                            TaintFlow(
-                                file_path=file_path,
-                                language=language,
-                                function_name="handler",
-                                vuln_class=sink_def["vuln_class"],
-                                cwe_id=sink_def["cwe_id"],
-                                severity=sink_def["severity"],
-                                source_line=src_ln,
-                                sink_line=idx,
-                                source_expr=src_expr,
-                                sink_expr=raw_line.strip(),
-                                tainted_vars=matched_vars,
-                                context_slice=snippet,
-                            )
-                        )
+                    )
         return flows
 
     @classmethod

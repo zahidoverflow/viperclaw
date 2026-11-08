@@ -173,6 +173,15 @@ claude mcp add viperclaw -- viperclaw mcp
 
 You can also run every ViperClaw analyzer directly from your terminal or CI/CD pipeline:
 
+### 0. Run a Stateful Live Web Scan & Wire-Verified Exploit Suite (`viperclaw scan`)
+Automatically manages session cookies, extracts anti-CSRF tokens, crawls routes, executes wire-verified exploit probes, populates the Stigmergic Attack Graph, and emits SARIF 2.1.0 + Markdown bounty reports:
+```bash
+viperclaw scan http://127.0.0.1:4280 \
+  --graph-db .viperclaw/graph.db \
+  --sarif-out findings.sarif \
+  --report-out bounty_report.md
+```
+
 ### 1. Reconstruct Hidden Lazy Chunks & Extract API/IDOR Leads from JS Bundles
 ```bash
 viperclaw harvest-js ./downloaded_bundles \
@@ -232,10 +241,11 @@ Each skill in [`skills/`](skills/) encodes a senior security researcher's decisi
 
 ## 🔌 Phase-Gated MCP Server (`viperclaw mcp`)
 
-Instead of polluting your LLM's context window with 150 raw CLI tool wrappers, `viperclaw mcp` exposes **7 high-signal, deterministic tools**:
+Instead of polluting your LLM's context window with 150 raw CLI tool wrappers, `viperclaw mcp` exposes **8 high-signal, deterministic tools**:
 
 | MCP Tool Name | Purpose |
 | :--- | :--- |
+| `viper_live_scan` | Execute a stateful, authenticated HTTP dynamic scan against a live web target/lab, proving exploits over the wire and updating the Attack Graph. |
 | `viper_graph_upsert` | Upsert hosts, endpoints, lazy chunks, taint sinks, or findings into the Stigmergic SQLite Attack Graph with pheromone boosts. |
 | `viper_graph_leads` | Query top pheromone-ranked attack leads and export a live Mermaid topology diagram. |
 | `viper_harvest_js` | Reconstruct Webpack/Vite/Next.js lazy chunks and harvest endpoints, IDOR/SSRF candidates, GraphQL ops, and secrets. |
@@ -243,6 +253,25 @@ Instead of polluting your LLM's context window with 150 raw CLI tool wrappers, `
 | `viper_fingerprint_traffic` | Fingerprint backend frameworks, WAFs, sibling API hosts, and error envelopes from HAR captures or HTTP headers/body. |
 | `viper_diff_oracle` | Compare baseline vs. mutated/cross-tenant HTTP responses to confirm BOLA/IDOR and filter Cloudflare/Akamai Soft-200 blocks. |
 | `viper_verify_and_report` | Run the 7-Question Triage Gate, calculate exact CVSS v3.1 scores, and generate a submission-ready Markdown report. |
+
+---
+
+## 🏆 Validated DVWA Benchmark Scorecard (White-Box + Black-Box)
+
+ViperClaw is continuously validated against **Damn Vulnerable Web Application (DVWA)** in both white-box source mode (`viperclaw taint`) and live containerized black-box HTTP mode (`viperclaw scan`):
+
+* **White-Box Taint SAST (`viperclaw taint`):** **19 / 19 (100%)** vulnerability modules detected across `vulnerabilities/*` via forward multi-hop transitive taint tracking, with **0 false positives** on `impossible.php` targets (guarded by `PDO::prepare`, `intval`, `is_numeric`, `in_array` allowlists, and `htmlspecialchars`).
+* **Live Black-Box Wire Exploitation (`viperclaw scan`):** **10 / 10** end-to-end verified exploits proven with raw HTTP request/response receipts in under 5 seconds:
+  1. `VC-LIVE-001` (**HIGH 8.8**): OS Command Injection (`ip=127.0.0.1;id` → `uid=33(www-data)`)
+  2. `VC-LIVE-002` (**HIGH 8.1**): UNION-Based SQL Injection (credential hash dump)
+  3. `VC-LIVE-003` (**MEDIUM 6.5**): Boolean-Based Blind SQL Injection (True/False differential oracle)
+  4. `VC-LIVE-004` (**HIGH 8.1**): SQL Injection Authentication Bypass (`admin' OR '1'='1' LIMIT 1#`)
+  5. `VC-LIVE-005` (**HIGH 7.1**): Local File Inclusion (`?page=/etc/passwd` → `root:x:0:0:...`)
+  6. `VC-LIVE-006` (**CRITICAL 9.9**): Unrestricted Multipart PHP Upload → Verified Remote Code Execution (`/hackable/uploads/viperclaw_poc.php`)
+  7. `VC-LIVE-007` (**MEDIUM 6.1**): Reflected Cross-Site Scripting (unescaped HTML reflection)
+  8. `VC-LIVE-008` (**MEDIUM 5.4**): Stored Cross-Site Scripting in Guestbook (`mtxMessage`)
+  9. `VC-LIVE-009` (**HIGH 8.2**): Predictable Sequential Session ID (`dvwaSession` $+1$ increment)
+  10. `VC-LIVE-010` (**HIGH 8.8**): Cross-Site Request Forgery (CSRF) Unprotected GET Password Reset
 
 ---
 

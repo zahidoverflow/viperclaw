@@ -130,11 +130,36 @@ export function handleWebhook(req: any, res: any) {
         encoding="utf-8",
     )
 
+    vuln_php = tmp_path / "sqli_multihop.php"
+    vuln_php.write_text(
+        """<?php
+$id = $_REQUEST['id'];
+$query = "SELECT first_name FROM users WHERE user_id = '$id';";
+$result = mysqli_query($conn, $query);
+?>""",
+        encoding="utf-8",
+    )
+
+    safe_php = tmp_path / "sqli_impossible.php"
+    safe_php.write_text(
+        """<?php
+$id = intval($_GET['id']);
+$stmt = $db->prepare('SELECT first_name FROM users WHERE user_id = :id');
+$stmt->bindParam(':id', $id, PDO::PARAM_INT);
+$stmt->execute();
+?>""",
+        encoding="utf-8",
+    )
+
     scan = TaintAnalyzer.scan_path(tmp_path)
-    assert scan["files_scanned"] == 2
-    assert scan["total_flows"] >= 2
+    assert scan["files_scanned"] == 4
+    assert scan["total_flows"] >= 3
     classes = {f["vuln_class"] for f in scan["flows"]}
     assert "Command Injection / RCE" in classes
+    assert "SQL Injection (SQLi)" in classes
+    # Confirm sqli_impossible.php produced 0 false positives
+    flagged_files = {Path(f["file_path"]).name for f in scan["flows"]}
+    assert "sqli_impossible.php" not in flagged_files
 
 
 def test_proxy_fingerprinter() -> None:
@@ -156,7 +181,7 @@ def test_mcp_server_jsonrpc(tmp_path: Path) -> None:
 
     list_resp = handle_jsonrpc_message({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
     assert list_resp is not None
-    assert len(list_resp["result"]["tools"]) == 7
+    assert len(list_resp["result"]["tools"]) == 8
 
     db_path = str(tmp_path / "mcp_graph.db")
     call_resp = handle_jsonrpc_message(

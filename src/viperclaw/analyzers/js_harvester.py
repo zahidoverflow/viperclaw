@@ -24,8 +24,8 @@ from urllib.parse import urljoin
 
 
 ENDPOINT_REGEX = re.compile(
-    r"""(?:"|'|`)((?:https?://[^\s"'`<>]+|/(?:api|v[1-9]|graphql|gql|internal|admin|auth|oauth|trpc|ws|webhooks?|users?|accounts?|orders?|billing|tenants?|orgs?|files?|upload|export|debug|actuator|swagger|openapi)[^\s"'`<>]*))(?:"|'|`)""",
-    re.IGNORECASE,
+    r"""(?:"|'|`|path:\s*['"]|^\s*)(https?://[^\s"'`<>]+|/(?:api|v[1-9]|vulnerabilities|graphql|gql|internal|admin|auth|oauth|trpc|ws|webhooks?|users?|accounts?|orders?|billing|tenants?|orgs?|files?|upload|export|debug|actuator|swagger|openapi)[^\s"'`<>:]*)(?:"|'|`|:)?""",
+    re.IGNORECASE | re.MULTILINE,
 )
 
 GRAPHQL_OP_REGEX = re.compile(
@@ -180,8 +180,8 @@ class JSHarvester:
             files = sorted(
                 p
                 for p in path.rglob("*")
-                if p.suffix.lower() in {".js", ".mjs", ".cjs", ".jsx", ".ts", ".tsx", ".html"}
-                and "node_modules" not in p.parts
+                if p.suffix.lower() in {".js", ".mjs", ".cjs", ".jsx", ".ts", ".tsx", ".html", ".php", ".yml", ".yaml"}
+                and not any(skip in p.parts for skip in ("node_modules", ".git", ".venv", "venv"))
             )
 
         all_chunks: Set[str] = set()
