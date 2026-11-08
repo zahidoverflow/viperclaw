@@ -61,16 +61,16 @@
   <!-- Feature Pills -->
   <g transform="translate(260, 256)" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="13" font-weight="600">
     <rect x="0" y="0" width="185" height="34" rx="8" fill="#0f172a" stroke="#10b981" stroke-width="1.2"/>
-    <text x="92" y="22" text-anchor="middle" fill="#34d399">⚡ Antigravity Ready</text>
+    <text x="92" y="22" text-anchor="middle" fill="#34d399">▸ Antigravity Ready</text>
 
     <rect x="200" y="0" width="175" height="34" rx="8" fill="#0f172a" stroke="#06b6d4" stroke-width="1.2"/>
-    <text x="287" y="22" text-anchor="middle" fill="#22d3ee">🤖 Claude Code &amp; Codex</text>
+    <text x="287" y="22" text-anchor="middle" fill="#22d3ee">▸ Claude Code &amp; Codex</text>
 
     <rect x="390" y="0" width="195" height="34" rx="8" fill="#0f172a" stroke="#f43f5e" stroke-width="1.2"/>
-    <text x="487" y="22" text-anchor="middle" fill="#fb7185">🛡️ No Receipt, No Report</text>
+    <text x="487" y="22" text-anchor="middle" fill="#fb7185">▸ No Receipt, No Report</text>
 
     <rect x="600" y="0" width="215" height="34" rx="8" fill="#0f172a" stroke="#a855f7" stroke-width="1.2"/>
-    <text x="707" y="22" text-anchor="middle" fill="#c084fc">🕸️ Stigmergic Swarm Graph</text>
+    <text x="707" y="22" text-anchor="middle" fill="#c084fc">▸ Stigmergic Swarm Graph</text>
   </g>
 
   <!-- Bottom Status Line -->
