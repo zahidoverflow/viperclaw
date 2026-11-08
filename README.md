@@ -19,13 +19,13 @@
 </p>
 
 <p align="center">
-  <a href="#-why-most-ai-pentesting-agents-fail-in-practice">Why ViperClaw</a> •
+  <a href="#-why-most-ai-pentesting-agents-fail-in-practice">Overview</a> •
   <a href="#-how-viperclaw-fixes-it-architecture">Architecture</a> •
   <a href="#-60-second-quickstart">Quickstart</a> •
   <a href="#-standalone-cli-showcase-viperclaw--vclaw">CLI Usage</a> •
   <a href="#-the-12-methodology-driven-skills">12 Skills</a> •
   <a href="#-phase-gated-mcp-server-viperclaw-mcp">MCP Server</a> •
-  <a href="#-validated-dvwa-benchmark-scorecard-white-box--black-box">DVWA Benchmark</a> •
+  <a href="#-validated-dvwa-benchmark-scorecard-white-box--black-box">Benchmarks</a> •
   <a href="#-2026-ai-pentesting-framework-comparison">Comparison</a> •
   <a href="#-frequently-asked-questions-faq">FAQ</a>
 </p>
@@ -56,30 +56,30 @@
 <table width="100%">
   <tr>
     <td width="33%" valign="top">
-      <h4>🕸️ Stigmergic Attack Graph</h4>
-      <p><code>viperclaw.core.graph</code><br/>Zero-setup SQLite knowledge graph with <b>pheromone priority scoring</b>, decay, and live <b>Mermaid</b> topology export.</p>
+      <h4>🕸️ Stigmergic Graph</h4>
+      <p><a href="src/viperclaw/core/graph.py"><code>core/graph.py</code></a><br/>Zero-setup SQLite knowledge graph with <b>pheromone priority scoring</b>, decay, and live <b>Mermaid</b> topology export.</p>
     </td>
     <td width="33%" valign="top">
-      <h4>🧩 Lazy-Chunk JS Harvester</h4>
-      <p><code>viperclaw.analyzers.js_harvester</code><br/>Reconstructs unloaded <b>Webpack, Vite &amp; Next.js</b> lazy chunks, hidden admin APIs, IDOR/SSRF params, GraphQL ops &amp; secrets.</p>
+      <h4>🧩 JS Chunk Harvester</h4>
+      <p><a href="src/viperclaw/analyzers/js_harvester.py"><code>analyzers/js_harvester.py</code></a><br/>Reconstructs unloaded <b>Webpack, Vite &amp; Next.js</b> lazy chunks, hidden admin APIs, IDOR/SSRF params &amp; secrets.</p>
     </td>
     <td width="33%" valign="top">
       <h4>🔬 Polyglot Taint SAST</h4>
-      <p><code>viperclaw.analyzers.taint</code><br/>Multi-hop source-to-sink taint tracking across <b>Python, TS/JS, Go &amp; PHP</b> with context-aware sanitizer de-tainting.</p>
+      <p><a href="src/viperclaw/analyzers/taint.py"><code>analyzers/taint.py</code></a><br/>Multi-hop source-to-sink taint tracking across <b>Python, TS/JS, Go &amp; PHP</b> with context-aware sanitizer de-tainting.</p>
     </td>
   </tr>
   <tr>
     <td width="33%" valign="top">
       <h4>🌐 Live Wire Exploiter</h4>
-      <p><code>viperclaw.analyzers.live_scanner</code><br/>Stateful cookie/CSRF session handling and <b>14 wire-verified exploit probes</b> (RCE, SQLi, LFI, Upload, XSS, CSRF, Logic).</p>
+      <p><a href="src/viperclaw/analyzers/live_scanner.py"><code>analyzers/live_scanner.py</code></a><br/>Stateful cookie/CSRF session handling and <b>14 wire-verified exploit probes</b> (RCE, SQLi, LFI, Upload, XSS, CSRF, Logic).</p>
     </td>
     <td width="33%" valign="top">
-      <h4>🕵️ HAR Stack Fingerprinter</h4>
-      <p><code>viperclaw.analyzers.proxy_fingerprint</code><br/>Infers backend stacks (<b>FastAPI, NestJS, Spring, Laravel, Rails</b>) and sibling APIs from <b>Caido / Burp</b> <code>.har</code> captures.</p>
+      <h4>🕵️ HAR Fingerprinter</h4>
+      <p><a href="src/viperclaw/analyzers/proxy_fingerprint.py"><code>analyzers/proxy_fingerprint.py</code></a><br/>Infers backend stacks (<b>FastAPI, NestJS, Spring, Laravel, Rails</b>) and sibling APIs from <b>Caido / Burp</b> <code>.har</code> captures.</p>
     </td>
     <td width="33%" valign="top">
       <h4>🛡️ 7-Gate Proof Oracle</h4>
-      <p><code>viperclaw.core.oracle</code><br/>Filters Cloudflare/Akamai/Imperva <b>Soft-200</b> blocks, diffs BOLA JSON keys, scores <b>CVSS 3.1</b>, and exports <b>H1 MD + SARIF 2.1.0</b>.</p>
+      <p><a href="src/viperclaw/core/oracle.py"><code>core/oracle.py</code></a><br/>Filters Cloudflare/Akamai/Imperva <b>Soft-200</b> blocks, diffs BOLA JSON keys, scores <b>CVSS 3.1</b>, and exports <b>H1 MD + SARIF 2.1.0</b>.</p>
     </td>
   </tr>
 </table>
@@ -239,22 +239,22 @@ ViperClaw is continuously benchmarked against **Damn Vulnerable Web Application 
 * **White-Box Taint SAST (`viperclaw taint`):** **19 / 19 (100%)** vulnerable modules detected via multi-hop transitive taint tracking, with **0 False Positives** on hardened `impossible.php` targets (`PDO::prepare`, `intval`, `is_numeric`, `in_array`, `htmlspecialchars`).
 * **Black-Box Live Wire Exploitation (`viperclaw scan`):** **14 / 14 (100%)** live vulnerability modules exploited and verified over HTTP in under 5 seconds with raw request/response receipts:
 
-| ID | Severity (CVSS 3.1) | Vulnerability Module | Verified Wire Proof / Exploit Vector |
+| # | Severity (CVSS) | Vulnerability Module | Verified Wire Proof / Exploit Vector |
 | :---: | :---: | :--- | :--- |
-| `VC-LIVE-001` | **HIGH (8.8)** | OS Command Injection | `ip=127.0.0.1;id` → Verified `uid=33(www-data)` execution |
-| `VC-LIVE-002` | **HIGH (8.1)** | UNION SQL Injection | `' UNION SELECT user,password FROM users#` → Credential hash dump |
-| `VC-LIVE-003` | **MEDIUM (6.5)** | Boolean Blind SQLi | True (`1' AND 1=1#`) vs. False (`1' AND 1=2#`) differential oracle |
-| `VC-LIVE-004` | **HIGH (8.1)** | SQLi Auth Bypass | `username=admin' OR '1'='1' LIMIT 1#` → Authenticated admin session |
-| `VC-LIVE-005` | **HIGH (7.1)** | Local File Inclusion (LFI) | `?page=/etc/passwd` → Verified `root:x:0:0:root:/root:/bin/bash` |
-| `VC-LIVE-006` | **CRITICAL (9.9)** | Unrestricted Upload RCE | Multipart PHP upload → Verified RCE at `/hackable/uploads/viperclaw_poc.php` |
-| `VC-LIVE-007` | **MEDIUM (6.1)** | Reflected XSS | Unescaped HTML payload reflection verified in DOM response |
-| `VC-LIVE-008` | **MEDIUM (5.4)** | Stored XSS (Guestbook) | Persistent payload stored in `mtxMessage` and rendered to all viewers |
-| `VC-LIVE-009` | **HIGH (8.2)** | Predictable Session ID | Sequential `dvwaSession` $+1$ increment proven across consecutive requests |
-| `VC-LIVE-010` | **HIGH (8.8)** | CSRF Password Reset | State-changing `GET` password reset verified without anti-CSRF token |
-| `VC-LIVE-011` | **MEDIUM (6.5)** | CAPTCHA Workflow Bypass | Direct `step=2` state-machine jump verified via auth oracle & restored |
-| `VC-LIVE-012` | **MEDIUM (5.4)** | CSP Bypass & Script Injection | External script injection via permissive `Content-Security-Policy` & `include` |
-| `VC-LIVE-013` | **MEDIUM (6.5)** | JS Token Algorithm Reversal | Reversed `md5(rot13("success"))` client-side token & verified server acceptance |
-| `VC-LIVE-014` | **MEDIUM (6.1)** | DOM-Based XSS | Unescaped `location.href` sink into `document.write()` verified in browser |
+| `01` | **HIGH (8.8)** | OS Command Injection | `ip=127.0.0.1;id` → Verified `uid=33(www-data)` execution |
+| `02` | **HIGH (8.1)** | UNION SQL Injection | `' UNION SELECT user,password FROM users#` → Credential hash dump |
+| `03` | **MED (6.5)** | Boolean Blind SQLi | True (`1' AND 1=1#`) vs. False (`1' AND 1=2#`) differential oracle |
+| `04` | **HIGH (8.1)** | SQLi Auth Bypass | `username=admin' OR '1'='1' LIMIT 1#` → Authenticated admin session |
+| `05` | **HIGH (7.1)** | Local File Inclusion | `?page=/etc/passwd` → Verified `root:x:0:0:root:/root:/bin/bash` |
+| `06` | **CRIT (9.9)** | Unrestricted Upload RCE | Multipart PHP upload → Verified RCE at `/hackable/uploads/viperclaw_poc.php` |
+| `07` | **MED (6.1)** | Reflected XSS | Unescaped HTML payload reflection verified in DOM response |
+| `08` | **MED (5.4)** | Stored XSS (Guestbook) | Persistent payload stored in `mtxMessage` and rendered to viewers |
+| `09` | **HIGH (8.2)** | Predictable Session ID | Sequential `dvwaSession` $+1$ increment proven across consecutive requests |
+| `10` | **HIGH (8.8)** | CSRF Password Reset | State-changing `GET` password reset verified without anti-CSRF token |
+| `11` | **MED (6.5)** | CAPTCHA Workflow Bypass | Direct `step=2` state-machine jump verified via auth oracle & restored |
+| `12` | **MED (5.4)** | CSP Bypass & Injection | External script injection via permissive `Content-Security-Policy` & `include` |
+| `13` | **MED (6.5)** | JS Token Reversal | Reversed `md5(rot13("success"))` client-side token & verified acceptance |
+| `14` | **MED (6.1)** | DOM-Based XSS | Unescaped `location.href` sink into `document.write()` verified in browser |
 
 ---
 
