@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ViperClaw — AI Pentesting Framework, Bug Bounty MCP Server &amp; SAST/DAST Engine</title>
+  <meta name="description" content="ViperClaw is a zero-dependency Python 3.10+ offensive security harness, 8-tool Phase-Gated MCP server, multi-language source-to-sink taint SAST, Stigmergic SQLite Attack Graph, and 12 methodology-driven skills for Google Antigravity, Claude Code, OpenAI Codex, and Cursor." />
+  <meta name="keywords" content="ViperClaw, AI pentesting, bug bounty automation, MCP server, Model Context Protocol, taint analysis, SAST, DAST, Claude Code skills, Google Antigravity skills, Codex, Cursor, BOLA, IDOR, SSRF, SQLi" />
+  <meta name="author" content="Zahidul Islam (@zahidoverflow)" />
+  <link rel="canonical" href="https://zahidoverflow.github.io/viperclaw/" />
+  <link rel="icon" type="image/png" href="logo.png" />
+
+  <!-- OpenGraph / Social Preview -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://zahidoverflow.github.io/viperclaw/" />
+  <meta property="og:title" content="ViperClaw — AI Pentesting Framework, Bug Bounty MCP Server &amp; 12 Offensive Skills" />
+  <meta property="og:description" content="Zero-dependency Python 3.10+ offensive security engine, Stigmergic SQLite Attack Graph, multi-language taint SAST, stateful live HTTP exploiter, and 7-Gate Proof Oracle." />
+  <meta property="og:image" content="https://zahidoverflow.github.io/viperclaw/logo.png" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="ViperClaw — AI Pentesting Framework &amp; Bug Bounty MCP Server" />
+  <meta name="twitter:description" content="12 offensive skills + 8 Phase-Gated MCP tools + Polyglot SAST/DAST + 7-Gate Proof Oracle for Antigravity, Claude Code, Codex &amp; Cursor." />
+  <meta name="twitter:image" content="https://zahidoverflow.github.io/viperclaw/logo.png" />
+
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "ViperClaw",
+    "alternateName": "vclaw",
+    "applicationCategory": "DeveloperApplication",
+    "operatingSystem": "Linux, macOS, Windows, WSL2",
+    "softwareVersion": "1.1.0",
+    "license": "https://opensource.org/licenses/MIT",
+    "url": "https://zahidoverflow.github.io/viperclaw/",
+    "codeRepository": "https://github.com/zahidoverflow/viperclaw",
+    "programmingLanguage": "Python 3.10+",
+    "author": {
+      "@type": "Person",
+      "name": "Zahidul Islam",
+      "alternateName": "zahidoverflow",
+      "url": "https://github.com/zahidoverflow"
+    },
+    "description": "Zero-dependency Python AI offensive security harness, Phase-Gated MCP Server, Stigmergic SQLite Attack Graph, multi-language SAST/DAST taint analyzer, and 12 methodology-driven bug bounty skills."
+  }
+  </script>
+
+  <style>
+    :root {
+      --bg: #07090e;
+      --bg-card: #0d1322;
+      --bg-code: #0a0f1a;
+      --border: #1e293b;
+      --border-accent: #10b981;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --emerald: #10b981;
+      --emerald-light: #34d399;
+      --cyan: #06b6d4;
+      --cyan-light: #22d3ee;
+      --rose: #f43f5e;
+      --purple: #a855f7;
+      --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+    }
+
+    body {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 0 24px 72px;
+    }
+
+    a {
+      color: var(--emerald-light);
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+
+    a:hover {
+      color: var(--cyan-light);
+      text-decoration: underline;
+    }
+
+    /* Header / Nav */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(7, 9, 14, 0.9);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 0;
+      margin-bottom: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-family: var(--font-mono);
+      font-weight: 800;
+      font-size: 1.15rem;
+      color: var(--text);
+      text-decoration: none !important;
+    }
+
+    .brand img {
+      width: 30px;
+      height: 30px;
+    }
+
+    .badge-ver {
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 5px;
+      background: rgba(16, 185, 129, 0.14);
+      border: 1px solid var(--emerald);
+      color: var(--emerald-light);
+      font-weight: 700;
+    }
+
+    nav {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      flex-wrap: wrap;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    nav a {
+      color: var(--text-muted);
+    }
+
+    nav a:hover {
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    .btn-gh {
+      background: #131c31;
+      border: 1px solid var(--emerald);
+      color: var(--emerald-light) !important;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    .btn-gh:hover {
+      background: rgba(16, 185, 129, 0.15);
+    }
+
+    /* Hero */
+    .hero-banner {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      display: block;
+      margin-bottom: 24px;
+    }
+
+    .hero-lead {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      max-width: 920px;
+      margin: 0 auto 28px;
+      text-align: center;
+    }
+
+    .hero-lead b {
+      color: var(--text);
+    }
+
+    /* Section Headings */
+    section {
+      margin-top: 52px;
+    }
+
+    h2 {
+      font-size: 1.45rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    h3 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    /* Grid Cards */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px 20px;
+    }
+
+    .card p {
+      font-size: 0.92rem;
+      color: var(--text-muted);
+    }
+
+    .card code, table code {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      background: rgba(15, 23, 42, 0.9);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--cyan-light);
+      border: 1px solid #1e293b;
+    }
+
+    /* Code Blocks with Copy Button */
+    .code-wrap {
+      position: relative;
+      background: var(--bg-code);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin: 12px 0 20px;
+      overflow: hidden;
+    }
+
+    .code-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 7px 14px;
+      background: #0f172a;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .copy-btn {
+      background: #1e293b;
+      color: var(--text);
+      border: 1px solid #334155;
+      border-radius: 4px;
+      padding: 3px 10px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+
+    .copy-btn:hover {
+      border-color: var(--emerald);
+      color: var(--emerald-light);
+    }
+
+    pre {
+      padding: 14px 16px;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: #e2e8f0;
+      line-height: 1.55;
+    }
+
+    /* Tables */
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-top: 14px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      background: var(--bg-card);
+    }
+
+    th, td {
+      padding: 11px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      background: #0f172a;
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .sev-crit { color: #fb7185; font-weight: 700; font-family: var(--font-mono); }
+    .sev-high { color: #fb923c; font-weight: 700; font-family: var(--font-mono); }
+    .sev-med  { color: #facc15; font-weight: 700; font-family: var(--font-mono); }
+
+    footer {
+      margin-top: 64px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="https://zahidoverflow.github.io/viperclaw/" class="brand">
+      <img src="logo.png" alt="ViperClaw Logo" />
+      <span>VIPERCLAW</span>
+      <span class="badge-ver">v1.1.0</span>
+    </a>
+    <nav>
+      <a href="#subsystems">Subsystems</a>
+      <a href="#architecture">Architecture</a>
+      <a href="#quickstart">Quickstart</a>
+      <a href="#cli">CLI</a>
+      <a href="#skills">12 Skills</a>
+      <a href="#mcp">MCP Server</a>
+      <a href="#benchmarks">DVWA Benchmark</a>
+      <a href="https://github.com/zahidoverflow/viperclaw" class="btn-gh" target="_blank" rel="noopener">GitHub Repo ↗</a>
+    </nav>
+  </header>
+
+  <main>
+    <img src="banner.svg" alt="ViperClaw Banner" class="hero-banner" />
+
+    <p class="hero-lead">
+      <b>ViperClaw</b> (<code>viperclaw</code> / <code>vclaw</code>) upgrades <b>Google Antigravity</b>, <b>Claude Code</b>, <b>OpenAI Codex</b>, and <b>Cursor</b> into a methodology-driven offensive security &amp; bug bounty platform—combining <b>12 offensive skills</b>, an <b>8-tool Phase-Gated MCP server</b>, a <b>Stigmergic SQLite Attack Graph</b>, <b>multi-language SAST/DAST analyzers</b>, and a <b>deterministic Wire-Check Proof Oracle</b> with <b>zero third-party runtime dependencies</b>.
+    </p>
+
+    <!-- 6 Core Subsystems -->
+    <section id="subsystems">
+      <h2>⚡ Core Offensive Subsystems</h2>
+      <div class="grid-3">
+        <div class="card">
+          <h3>🕸️ Stigmergic Attack Graph</h3>
+          <p><a href="https://github.com/zahidoverflow/viperclaw/blob/main/src/viperclaw/core/graph.py"><code>core/graph.py</code></a> — Zero-setup SQLite graph with pheromone priority scoring, evaporation decay, and Mermaid topology export.</p>
+        </div>
+        <div class="card">
+          <h3>🧩 JS Chunk Harvester</h3>
+          <p><a href="https://github.com/zahidoverflow/viperclaw/blob/main/src/viperclaw/analyzers/js_harvester.py"><code>analyzers/js_harvester.py</code></a> — Reconstructs unloaded Webpack, Vite &amp; Next.js lazy chunks, hidden admin routes, IDOR/SSRF params &amp; secrets.</p>
+        </div>
+        <div class="card">
+          <h3>🔬 Polyglot Taint SAST</h3>
+          <p><a href="https://github.com/zahidoverflow/viperclaw/blob/main/src/viperclaw/analyzers/taint.py"><code>analyzers/taint.py</code></a> — Multi-hop source-to-sink taint tracking across Python, TS/JS, Go &amp; PHP with context-aware sanitizer de-tainting.</p>
+        </div>
+        <div class="card">
+          <h3>🌐 Live Wire Exploiter</h3>
+          <p><a href="https://github.com/zahidoverflow/viperclaw/blob/main/src/viperclaw/analyzers/live_scanner.py"><code>analyzers/live_scanner.py</code></a> — Stateful cookie/CSRF handling and 14 wire-verified exploit probes (RCE, SQLi, LFI, Upload, XSS, CSRF, Logic).</p>
+        </div>
+        <div class="card">
+          <h3>🕵️ HAR Fingerprinter</h3>
+          <p><a href="https://github.com/zahidoverflow/viperclaw/blob/main/src/viperclaw/analyzers/proxy_fingerprint.py"><code>analyzers/proxy_fingerprint.py</code></a> — Infers backend stacks (FastAPI, NestJS, Spring, Laravel, Rails) and sibling APIs from Caido / Burp HAR traffic.</p>
+        </div>
+        <div class="card">
+          <h3>🛡️ 7-Gate Proof Oracle</h3>
+          <p><a href="https://github.com/zahidoverflow/viperclaw/blob/main/src/viperclaw/core/oracle.py"><code>core/oracle.py</code></a> — Filters Cloudflare/Akamai/Imperva Soft-200 blocks, diffs BOLA JSON keys, scores CVSS 3.1 &amp; exports H1 MD + SARIF 2.1.0.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Architecture -->
+    <section id="architecture">
+      <h2>🧬 4-Layer Architecture</h2>
+      <img src="architecture.svg" alt="ViperClaw 4-Layer Offensive Architecture" class="hero-banner" />
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Layer</th>
+              <th>Component</th>
+              <th>Role in the Offensive Kill Chain</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>Layer 1</code></td>
+              <td><b>AI Coding Harness</b></td>
+              <td>Runs natively inside Google Antigravity (<code>agy</code>), Claude Code, OpenAI Codex, or Cursor—zero extra Docker containers or separate API budgets.</td>
+            </tr>
+            <tr>
+              <td><code>Layer 2</code></td>
+              <td><b>12 Skills + 8-Tool MCP</b></td>
+              <td>Methodology playbooks (<code>skills/*/SKILL.md</code>) guide the hypothesis tree while <code>viperclaw mcp</code> exposes 8 deterministic <code>stdio</code> tools.</td>
+            </tr>
+            <tr>
+              <td><code>Layer 3</code></td>
+              <td><b>Pure-Python 3.10+ Engine</b></td>
+              <td>Executes stateful live HTTP exploitation, multi-language taint SAST, SPA lazy-chunk reconstruction, HAR fingerprinting, and SQLite pheromone ranking.</td>
+            </tr>
+            <tr>
+              <td><code>Layer 4</code></td>
+              <td><b>7-Gate Proof Oracle</b></td>
+              <td>Rejects WAF Soft-200 challenge pages, diffs BOLA JSON keys, computes exact CVSS v3.1 vectors, and exports HackerOne Markdown + SARIF 2.1.0.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Quickstart -->
+    <section id="quickstart">
+      <h2>🚀 60-Second Quickstart</h2>
+      <div class="code-wrap">
+        <div class="code-header">
+          <span>1. Clone, Install Package &amp; Load 12 Agent Skills</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><code>git clone https://github.com/zahidoverflow/viperclaw.git
+cd viperclaw
+pip install -e .
+
+# Install all 12 skills into Antigravity, Claude Code, Codex &amp; Cursor
+viperclaw skills install --target all</code></pre>
+      </div>
+
+      <div class="code-wrap">
+        <div class="code-header">
+          <span>2. Connect Phase-Gated MCP Server (mcp_config.json / .mcp.json)</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><code>{
+  "mcpServers": {
+    "viperclaw": {
+      "command": "viperclaw",
+      "args": ["mcp"]
+    }
+  }
+}</code></pre>
+      </div>
+    </section>
+
+    <!-- CLI Showcase -->
+    <section id="cli">
+      <h2>💻 Standalone CLI Usage (<code>viperclaw</code> / <code>vclaw</code>)</h2>
+      <div class="code-wrap">
+        <div class="code-header">
+          <span>CLI Workflows (Live DAST, White-Box SAST, JS Recon, HAR Fingerprinting &amp; Graph)</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><code># 1. Stateful live web scan &amp; wire-verified exploit suite
+viperclaw scan http://127.0.0.1:4280 --db .viperclaw/graph.db --report-md bounty_report.md --report-sarif findings.sarif
+
+# 2. Multi-language source-to-sink taint SAST (Python, TS/JS, Go, PHP)
+viperclaw taint ./target-repo --db .viperclaw/graph.db --output taint_flows.json
+
+# 3. Reconstruct hidden Webpack / Vite / Next.js lazy chunks &amp; API leads
+viperclaw harvest-js ./bundles --base-url https://app.target.tld/ --db .viperclaw/graph.db --output js_recon.json
+
+# 4. Fingerprint backend stacks from Caido / Burp HAR traffic &amp; view top leads
+viperclaw fingerprint ./traffic.har --domain target.tld --output tech_stack.json
+viperclaw graph --db .viperclaw/graph.db --top-leads 10 --mermaid</code></pre>
+      </div>
+    </section>
+
+    <!-- 12 Methodology Skills -->
+    <section id="skills">
+      <h2>🎯 The 12 Methodology-Driven Skills</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Skill</th>
+              <th>Focus Area &amp; Offensive Methodology</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code>01</code></td><td><a href="https://github.com/zahidoverflow/viperclaw/blob/main/skills/viper-orchestrator/SKILL.md"><code>viper-orchestrator</code></a></td><td>Master 5-Phase Orchestrator: Stigmergic Attack Graph prioritization, hypothesis decomposition &amp; 7-Gate QA.</td></tr>
+            <tr><td><code>02</code></td><td><a href="https://github.com/zahidoverflow/viperclaw/blob/main/skills/viper-js-harvester/SKILL.md"><code>viper-js-harvester</code></a></td><td>Deep JS &amp; Lazy-Chunk Harvester: Unloaded Webpack/Vite/Next.js chunk manifests, hidden admin routes &amp; secrets.</td></tr>
+            <tr><td><code>03</code></td><td><a href="https://github.com/zahidoverflow/viperclaw/blob/main/skills/viper-proxy-fingerprint/SKILL.md"><code>viper-proxy-fingerprint</code></a></td><td>HTTP &amp; Proxy Fingerprinter: Sibling API hosts, framework error envelopes (FastAPI, NestJS, Spring, Laravel) &amp; WAF traps.</td></tr>
+            <tr><td><code>04</code></td><td><a href="https://github.com/zahidoverflow/viperclaw/blob/main/skills/viper-bola-idor/SKILL.md"><code>viper-bola-idor</code></a></td><td>Cross-Tenant BOLA / IDOR / BFLA: Multi-role auth matrix, ID mutation &amp; structural JSON key diff verification.</td></tr>
+            <tr><td><code>05</code></td><td><a href="https://github.com/zahidoverflow/viperclaw/blob/main/skills/viper-injection-oracle/SKILL.md"><code>viper-injection-oracle</code></a></td><td>Precision Injection Oracle: True/false differential pairs for SQLi, NoSQLi, SSTI, and OS Command Injection.</td></tr>
+            <tr><td><code>06</code></td><td><a href="https://github.com/zahidoverflow/viperclaw/blob/main/skills/viper-ssrf-cloud/SKILL.md"><code>viper-ssrf-cloud</code></a></td><td>SSRF &amp; Cloud Metadata: URL parser differentials, redirect chains, AWS/GCP/Azure IMDSv1/v2 &amp; K8s discovery.</td></tr>
+            <tr><td><code>07</code></td><td><a href="https://github.com/zahidoverflow/viperclaw/blob/main/skills/viper-auth-oauth-jwt/SKILL.md"><code>viper-auth-oauth-jwt</code></a></td><td>Auth, OAuth 2.0 / OIDC &amp; JWT: <code>redirect_uri</code> bypasses, pre-ATO collisions, JWT <code>RS256</code>→<code>HS256</code> confusion &amp; <code>kid</code> injection.</td></tr>
+            <tr><td><code>08</code></td><td><a href="https://github.com/zahidoverflow/viperclaw/blob/main/skills/viper-graphql-ws/SKILL.md"><code>viper-graphql-ws</code></a></td><td>GraphQL &amp; WebSocket Auditor: Introspection bypass, field suggestion clairvoyance, nested edge BOLA &amp; CSWSH.</td></tr>
+            <tr><td><code>09</code></td><td><a href="https://github.com/zahidoverflow/viperclaw/blob/main/skills/viper-race-logic/SKILL.md"><code>viper-race-logic</code></a></td><td>Race Condition &amp; Business Logic: Single-packet HTTP/2 bursts, TOCTOU quota overruns &amp; workflow step skipping.</td></tr>
+            <tr><td><code>10</code></td><td><a href="https://github.com/zahidoverflow/viperclaw/blob/main/skills/viper-taint-sast/SKILL.md"><code>viper-taint-sast</code></a></td><td>White-Box Source-to-Sink Taint SAST: Multi-hop taint tracking across Python, TS/JS, Go &amp; PHP with PoC synthesis.</td></tr>
+            <tr><td><code>11</code></td><td><a href="https://github.com/zahidoverflow/viperclaw/blob/main/skills/viper-ai-llm-redteam/SKILL.md"><code>viper-ai-llm-redteam</code></a></td><td>Agentic AI, LLM &amp; MCP Red-Team: Indirect prompt injection, tool-call argument hijacking &amp; RAG vector bleed.</td></tr>
+            <tr><td><code>12</code></td><td><a href="https://github.com/zahidoverflow/viperclaw/blob/main/skills/viper-proof-judge/SKILL.md"><code>viper-proof-judge</code></a></td><td>Zero-Context Adversarial QA Judge: Enforces "No Receipt, No Report", 7-Question Gate, CVSS 3.1 &amp; H1/SARIF reports.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 8 MCP Tools -->
+    <section id="mcp">
+      <h2>🔌 Phase-Gated MCP Server (<code>viperclaw mcp</code>)</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>MCP Tool</th>
+              <th>Phase</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code>viper_live_scan</code></td><td>Exploit / DAST</td><td>Execute a stateful, authenticated HTTP dynamic scan against a live web target, proving exploits over the wire.</td></tr>
+            <tr><td><code>viper_taint_scan</code></td><td>White-Box SAST</td><td>Run multi-language source-to-sink taint analysis across Python, TypeScript/JavaScript, Go, and PHP.</td></tr>
+            <tr><td><code>viper_harvest_js</code></td><td>Recon / SPA</td><td>Reconstruct Webpack/Vite/Next.js lazy chunks and extract endpoints, IDOR/SSRF candidates, GraphQL ops &amp; secrets.</td></tr>
+            <tr><td><code>viper_fingerprint_traffic</code></td><td>Recon / HAR</td><td>Fingerprint backend frameworks, WAFs, sibling API hosts, and error envelopes from <code>.har</code> captures or headers.</td></tr>
+            <tr><td><code>viper_graph_upsert</code></td><td>Swarm Graph</td><td>Upsert hosts, endpoints, lazy chunks, taint sinks, or findings into the Stigmergic SQLite Attack Graph.</td></tr>
+            <tr><td><code>viper_graph_leads</code></td><td>Swarm Graph</td><td>Query top pheromone-ranked attack leads and export a live Mermaid topology diagram.</td></tr>
+            <tr><td><code>viper_diff_oracle</code></td><td>Verification</td><td>Compare baseline vs. mutated/cross-tenant HTTP responses to confirm BOLA/IDOR and filter WAF Soft-200 blocks.</td></tr>
+            <tr><td><code>viper_verify_and_report</code></td><td>Reporting</td><td>Run the 7-Question Triage Gate, calculate exact CVSS v3.1 scores, and generate HackerOne/Bugcrowd Markdown.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- DVWA Benchmark Scorecard -->
+    <section id="benchmarks">
+      <h2>🏆 Validated DVWA Benchmark Scorecard (100% Detection &amp; Wire Exploitation)</h2>
+      <p style="color: var(--text-muted); margin-bottom: 12px;">
+        • <b>White-Box Taint SAST (<code>viperclaw taint</code>):</b> <b>19 / 19 (100%)</b> vulnerable modules detected across multi-hop transitive taint paths with <b>0 False Positives</b> on hardened <code>impossible.php</code> targets.<br/>
+        • <b>Black-Box Live Wire Exploitation (<code>viperclaw scan</code>):</b> <b>14 / 14 (100%)</b> live DVWA vulnerability modules exploited and verified over HTTP with raw receipts:
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Severity (CVSS)</th>
+              <th>Vulnerability Module</th>
+              <th>Verified Wire Proof / Exploit Vector</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code>VC-LIVE-001</code></td><td class="sev-high">HIGH (8.8)</td><td>OS Command Injection</td><td><code>ip=127.0.0.1;id</code> → Verified <code>uid=33(www-data)</code> execution</td></tr>
+            <tr><td><code>VC-LIVE-002</code></td><td class="sev-high">HIGH (8.1)</td><td>UNION SQL Injection</td><td><code>' UNION SELECT user,password FROM users#</code> → Credential hash dump</td></tr>
+            <tr><td><code>VC-LIVE-003</code></td><td class="sev-med">MED (6.5)</td><td>Boolean Blind SQLi</td><td>True (<code>1' AND 1=1#</code>) vs. False (<code>1' AND 1=2#</code>) differential oracle</td></tr>
+            <tr><td><code>VC-LIVE-004</code></td><td class="sev-high">HIGH (8.1)</td><td>SQLi Auth Bypass</td><td><code>username=admin' OR '1'='1' LIMIT 1#</code> → Authenticated admin session</td></tr>
+            <tr><td><code>VC-LIVE-005</code></td><td class="sev-high">HIGH (7.1)</td><td>Local File Inclusion</td><td><code>?page=/etc/passwd</code> → Verified <code>root:x:0:0:root:/root:/bin/bash</code></td></tr>
+            <tr><td><code>VC-LIVE-006</code></td><td class="sev-crit">CRIT (9.9)</td><td>Unrestricted Upload RCE</td><td>Multipart PHP upload → Verified RCE at <code>/hackable/uploads/viperclaw_poc.php</code></td></tr>
+            <tr><td><code>VC-LIVE-007</code></td><td class="sev-med">MED (6.1)</td><td>Reflected XSS</td><td>Unescaped HTML payload reflection verified in DOM response</td></tr>
+            <tr><td><code>VC-LIVE-008</code></td><td class="sev-med">MED (5.4)</td><td>Stored XSS (Guestbook)</td><td>Persistent payload stored in <code>mtxMessage</code> and rendered to viewers</td></tr>
+            <tr><td><code>VC-LIVE-009</code></td><td class="sev-high">HIGH (8.2)</td><td>Predictable Session ID</td><td>Sequential <code>dvwaSession</code> +1 increment proven across consecutive requests</td></tr>
+            <tr><td><code>VC-LIVE-010</code></td><td class="sev-high">HIGH (8.8)</td><td>CSRF Password Reset</td><td>State-changing <code>GET</code> password reset verified without anti-CSRF token</td></tr>
+            <tr><td><code>VC-LIVE-011</code></td><td class="sev-med">MED (6.5)</td><td>CAPTCHA Workflow Bypass</td><td>Direct <code>step=2</code> state-machine jump verified via auth oracle &amp; restored</td></tr>
+            <tr><td><code>VC-LIVE-012</code></td><td class="sev-med">MED (5.4)</td><td>CSP Bypass &amp; Injection</td><td>External script injection via permissive <code>Content-Security-Policy</code> &amp; <code>include</code></td></tr>
+            <tr><td><code>VC-LIVE-013</code></td><td class="sev-med">MED (6.5)</td><td>JS Token Reversal</td><td>Reversed <code>md5(rot13("success"))</code> client-side token &amp; verified acceptance</td></tr>
+            <tr><td><code>VC-LIVE-014</code></td><td class="sev-med">MED (6.1)</td><td>DOM-Based XSS</td><td>Unescaped <code>location.href</code> sink into <code>document.write()</code> verified in browser</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div>
+      MIT License · Created by <a href="https://github.com/zahidoverflow" target="_blank" rel="noopener">Zahidul Islam (@zahidoverflow)</a>
+    </div>
+    <div>
+      <a href="https://github.com/zahidoverflow/viperclaw">GitHub Repository</a> ·
+      <a href="https://github.com/zahidoverflow/viperclaw/releases">Releases</a> ·
+      <a href="llms.txt">llms.txt</a> ·
+      <a href="sitemap.xml">Sitemap</a>
+    </div>
+  </footer>
+
+  <script>
+    function copyCode(btn) {
+      const code = btn.closest('.code-wrap').querySelector('code').innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        const orig = btn.innerText;
+        btn.innerText = 'Copied!';
+        setTimeout(() => { btn.innerText = orig; }, 1600);
+      });
+    }
+  </script>
+</body>
+</html>
