@@ -202,11 +202,12 @@ def _verify_single_item(item: Dict[str, Any]) -> tuple[ Any, VerifiedFinding]:
         finding_id=finding_id,
         title=title,
         vuln_class=vuln_class,
+        cwe_id=str(item.get("cwe_id") or "CWE-284"),
         asset=asset,
         cvss_score=verdict.cvss_score,
         cvss_severity=verdict.cvss_severity,
         cvss_vector=verdict.cvss_vector,
-        summary=item.get("description", ""),
+        summary=item.get("description") or item.get("summary") or "",
         impact=item.get("impact", ""),
         remediation=item.get("remediation", ""),
         request_receipt=req_str,
@@ -294,7 +295,11 @@ def main(argv: List[str] | None = None) -> int:
         return 0
 
     if args.command == "fingerprint":
-        report = ProxyFingerprinter.analyze_har(args.har_path, root_domain=args.domain)
+        har_file = Path(args.har_path)
+        if not har_file.is_file():
+            print(json.dumps({"error": f"HAR file not found: {args.har_path}"}), file=sys.stderr)
+            return 2
+        report = ProxyFingerprinter.analyze_har(har_file, root_domain=args.domain)
         out_str = json.dumps(report.to_dict(), indent=2)
         if args.output:
             Path(args.output).parent.mkdir(parents=True, exist_ok=True)
@@ -305,7 +310,15 @@ def main(argv: List[str] | None = None) -> int:
     if args.command == "verify":
         items: List[Dict[str, Any]] = []
         if args.finding_file:
-            loaded = json.loads(Path(args.finding_file).read_text(encoding="utf-8"))
+            fpath = Path(args.finding_file)
+            if not fpath.is_file():
+                print(json.dumps({"error": f"Finding JSON file not found: {args.finding_file}"}), file=sys.stderr)
+                return 2
+            try:
+                loaded = json.loads(fpath.read_text(encoding="utf-8"))
+            except Exception as exc:
+                print(json.dumps({"error": f"Invalid JSON in finding file: {exc}"}), file=sys.stderr)
+                return 2
             items = loaded if isinstance(loaded, list) else [loaded]
         else:
             if not (args.title and args.asset and args.request and args.response):

@@ -273,3 +273,73 @@ def handler(cursor):
     assert md_out.exists()
     assert sarif_out.exists()
 
+
+def test_qa_adversarial_regression_suite(tmp_path: Path) -> None:
+    from viperclaw.analyzers.live_scanner import LiveScanner
+
+    # 1. Corrupt / null HAR resilience
+    bad_har = tmp_path / "corrupt.har"
+    bad_har.write_text("{corrupt_json", encoding="utf-8")
+    assert ProxyFingerprinter.analyze_har(bad_har).discovered_hosts == []
+
+    null_har = tmp_path / "null.har"
+    null_har.write_text('{"log": null}', encoding="utf-8")
+    assert ProxyFingerprinter.analyze_har(null_har).discovered_hosts == []
+
+    # 2. Lowercase & invalid CVSS metric resilience
+    score, sev, _ = ProofOracle.calculate_cvss31(av="n", ac="l", pr="l", ui="n", scope="u", c="h", i="n", a="n")
+    assert score == 6.5 and sev == "MEDIUM"
+    score_inv, _, _ = ProofOracle.calculate_cvss31(av="INVALID_METRIC")
+    assert score_inv > 0.0
+
+    # 3. Deep JSON recursion bomb & Soft-200 JSON error envelope rejection
+    deep_json = "{" + '"a":{' * 500 + '"val":1' + "}" * 500 + "}"
+    v_deep = ProofOracle.compare_samples(HttpSample(200, body=deep_json), HttpSample(200, body=deep_json))
+    assert not v_deep.is_waf_soft_block
+
+    err1 = '{"error": "Forbidden", "message": "Access denied to tenant 1", "status": 403}'
+    err2 = '{"error": "Forbidden", "message": "Access denied to tenant 2", "status": 403}'
+    v_err = ProofOracle.compare_samples(HttpSample(200, body=err1), HttpSample(200, body=err2), HttpSample(401, body=""))
+    assert v_err.bola_CONFIRMED_hint is False
+
+    # 4. Python augmented assignment (`+=`), safe re-assignment de-tainting, mixed module scope, and trailing comments
+    py_edge = tmp_path / "edge.py"
+    py_edge.write_text(
+        """from flask import request
+import os, sys
+
+def aug_and_rebind():
+    cmd = "ping "
+    cmd += request.args.get("host")
+    os.system(cmd)
+
+    rebound = request.args.get("x")
+    rebound = "safe_constant"
+    os.system(rebound)  # eval(cmd) in comment should not double-trigger
+
+top_arg = sys.argv[1]
+os.system(top_arg)
+""",
+        encoding="utf-8",
+    )
+    edge_flows = TaintAnalyzer.analyze_file(py_edge)
+    assert len(edge_flows) == 2
+    sink_vars = {tuple(f.tainted_vars) for f in edge_flows}
+    assert ("cmd",) in sink_vars
+    assert ("top_arg",) in sink_vars
+
+    # 5. Inline comment sink suppression in JS
+    js_comment = tmp_path / "comment.js"
+    js_comment.write_text("const x = req.query.a;\nconst y = x; // do not call eval(y)\n", encoding="utf-8")
+    assert TaintAnalyzer.analyze_file(js_comment) == []
+
+    # 6. CSRF attribute order & unreachable port resilience
+    assert LiveScanner.extract_csrf('<input type="hidden" value="tok_abc" name="csrf_token">') == "tok_abc"
+    sc = LiveScanner("http://127.0.0.1:59997", timeout=0.3)
+    assert sc.run_scan(graph_db=str(tmp_path / "g.db")).verified_findings == []
+
+    # 7. Subpath base_url in JSHarvester & Markdown fence escaping
+    js_sub = JSHarvester.analyze_content('import("chunks/adm.js")', base_url="https://cdn.example.com/subpath")
+    assert js_sub.lazy_chunks == ["https://cdn.example.com/subpath/chunks/adm.js"]
+
+

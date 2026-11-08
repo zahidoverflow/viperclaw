@@ -26,7 +26,7 @@ from viperclaw.core.reporter import ReportGenerator, VerifiedFinding
 
 
 CSRF_TOKEN_REGEX = re.compile(
-    r"""<input[^>]+name=['"](?:user_token|csrf_token|_token)['"][^>]+value=['"]([^'"]+)['"]""",
+    r"""<input[^>]+(?:name=['"](?:user_token|csrf_token|_token)['"][^>]+value=['"]([^'"]+)['"]|value=['"]([^'"]+)['"][^>]+name=['"](?:user_token|csrf_token|_token)['"])""",
     re.IGNORECASE,
 )
 HREF_REGEX = re.compile(r"""href=['"]([^'"#]+)['"]""", re.IGNORECASE)
@@ -57,6 +57,7 @@ class LiveScanner:
     def __init__(self, base_url: str, timeout: float = 8.0) -> None:
         self.base_url = base_url.rstrip("/") + "/"
         self.timeout = timeout
+        self.cookies: Dict[str, str] = {}
         self.cookie_jar = http.cookiejar.CookieJar()
         self.opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(self.cookie_jar))
         self.no_redirect_opener = urllib.request.build_opener(
@@ -65,7 +66,8 @@ class LiveScanner:
         )
 
     def _build_cookie_header(self, extra_cookies: Optional[Dict[str, str]] = None) -> str:
-        merged = {c.name: c.value for c in self.cookie_jar}
+        merged = dict(self.cookies)
+        merged.update({c.name: c.value for c in self.cookie_jar})
         if extra_cookies:
             merged.update(extra_cookies)
         return "; ".join(f"{k}={v}" for k, v in merged.items())
@@ -110,6 +112,11 @@ class LiveScanner:
             elapsed = (time.time() - t0) * 1000.0
             resp_headers = {k: v for k, v in err.headers.items()} if err.headers else {}
             status = err.code
+        except Exception:
+            body = ""
+            elapsed = (time.time() - t0) * 1000.0
+            resp_headers = {}
+            status = 0
 
         parsed = urllib.parse.urlparse(url)
         req_line = f"{method} {parsed.path or '/'}{'?' + parsed.query if parsed.query else ''} HTTP/1.1"
@@ -125,7 +132,9 @@ class LiveScanner:
     @staticmethod
     def extract_csrf(html: str) -> Optional[str]:
         m = CSRF_TOKEN_REGEX.search(html)
-        return m.group(1) if m else None
+        if not m:
+            return None
+        return m.group(1) or m.group(2)
 
     def authenticate_dvwa_if_present(
         self, username: str = "admin", password: str = "password"

@@ -179,7 +179,7 @@ SINK_DEFINITIONS: List[Dict[str, Any]] = [
     },
 ]
 
-IGNORED_LHS_VARS = {"html", "page", "response", "result", "results", "cmd", "ret", "row"}
+IGNORED_LHS_VARS = {"html", "response", "result", "results", "ret", "row"}
 
 
 @dataclass
@@ -215,15 +215,15 @@ class TaintAnalyzer:
         try:
             tree = ast.parse(content)
         except SyntaxError:
-            return flows
+            return cls._analyze_generic(content, file_path, "python")
 
         lines = content.splitlines()
         src_regexes = SOURCE_PATTERNS["python"]
+        func_nodes = [n for n in ast.walk(tree) if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]
+        if not func_nodes:
+            return cls._analyze_generic(content, file_path, "python")
 
-        for node in ast.walk(tree):
-            if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                continue
-
+        for node in func_nodes:
             start_line = node.lineno
             end_line = getattr(node, "end_lineno", start_line + 40)
             func_lines = lines[start_line - 1 : end_line]
@@ -236,47 +236,59 @@ class TaintAnalyzer:
             }
 
             for idx, raw_line in enumerate(func_lines, start=start_line):
-                assign_match = re.match(r"\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+)", raw_line)
-                if assign_match:
-                    lhs, rhs = assign_match.group(1), assign_match.group(2)
+                code_line = re.sub(r"\s+#.*$", "", raw_line)
+                stripped = code_line.strip()
+                if not stripped or stripped.startswith("#"):
+                    continue
+                assign_match = re.match(r"\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*(\+?=)\s*(.+)", code_line)
+                if assign_match and not code_line.lstrip().startswith(("if ", "elif ", "while ", "assert ", "return ")):
+                    lhs, op, rhs = assign_match.group(1), assign_match.group(2), assign_match.group(3)
                     line_neutralized: Set[str] = set()
                     for san_re, san_classes in VARIABLE_SANITIZERS:
                         if san_re.search(rhs):
                             line_neutralized.update(san_classes)
                     if any(s_re.search(rhs) for s_re in src_regexes):
                         if "*" not in line_neutralized:
-                            tainted_vars[lhs] = (idx, raw_line.strip(), set(line_neutralized))
+                            tainted_vars[lhs] = (idx, stripped, set(line_neutralized))
+                        elif op == "=":
+                            tainted_vars.pop(lhs, None)
                     else:
+                        matched_parent = False
                         for v, (orig_ln, orig_expr, prev_neut) in list(tainted_vars.items()):
                             if orig_ln <= idx and re.search(rf"\b{re.escape(v)}\b", rhs):
+                                matched_parent = True
                                 combined_neut = set(prev_neut) | line_neutralized
                                 if "*" in combined_neut:
                                     tainted_vars.pop(lhs, None)
                                 else:
                                     tainted_vars[lhs] = (orig_ln, orig_expr, combined_neut)
                                 break
+                        if not matched_parent and op == "=" and lhs in tainted_vars:
+                            tainted_vars.pop(lhs, None)
 
-            if not tainted_vars and not any(r.search(func_text) for r in src_regexes):
-                continue
-
-            for idx, raw_line in enumerate(func_lines, start=start_line):
                 for sink_def in SINK_DEFINITIONS:
-                    if sink_def["pattern"].search(raw_line):
+                    if sink_def["pattern"].search(code_line):
                         v_class = sink_def["vuln_class"]
+                        inline_sanitized = any(
+                            san_re.search(code_line) and ("*" in san_classes or v_class in san_classes)
+                            for san_re, san_classes in VARIABLE_SANITIZERS
+                        )
+                        if inline_sanitized:
+                            continue
                         used_vars = [
                             v
                             for v, (orig_ln, _, neut) in tainted_vars.items()
                             if orig_ln <= idx
                             and "*" not in neut
                             and v_class not in neut
-                            and re.search(rf"\b{re.escape(v)}\b", raw_line)
+                            and re.search(rf"\b{re.escape(v)}\b", code_line)
                         ]
-                        direct_src = any(r.search(raw_line) for r in src_regexes)
+                        direct_src = any(r.search(code_line) for r in src_regexes)
                         if used_vars or direct_src:
                             if used_vars:
                                 src_ln, src_expr, _ = tainted_vars[used_vars[0]]
                             else:
-                                src_ln, src_expr = idx, raw_line.strip()
+                                src_ln, src_expr = idx, stripped
                             slice_start = max(1, min(src_ln, idx) - 2)
                             slice_end = min(len(lines), max(src_ln, idx) + 2)
                             snippet = "\n".join(
@@ -293,11 +305,22 @@ class TaintAnalyzer:
                                     source_line=src_ln,
                                     sink_line=idx,
                                     source_expr=src_expr,
-                                    sink_expr=raw_line.strip(),
+                                    sink_expr=stripped,
                                     tainted_vars=sorted(used_vars),
                                     context_slice=snippet,
                                 )
                             )
+
+        func_line_nums = {
+            ln
+            for n in func_nodes
+            for ln in range(n.lineno, getattr(n, "end_lineno", n.lineno) + 1)
+        }
+        module_lines = [
+            line if idx not in func_line_nums else ""
+            for idx, line in enumerate(lines, start=1)
+        ]
+        flows.extend(cls._analyze_generic("\n".join(module_lines), file_path, "python"))
         return flows
 
     @classmethod
@@ -313,17 +336,20 @@ class TaintAnalyzer:
         tainted_vars: Dict[str, tuple[int, str, Set[str]]] = {}
 
         for idx, raw_line in enumerate(lines, start=1):
-            stripped = raw_line.strip()
+            code_line = re.sub(r"(?<!:)//.*$", "", raw_line)
+            if language == "python":
+                code_line = re.sub(r"\s+#.*$", "", code_line)
+            stripped = code_line.strip()
             if not stripped or stripped.startswith(("//", "#", "/*", "*")):
                 continue
 
             # 1. Check variable assignments / sanitizations on current line
             assign_match = re.match(
-                r"^\s*(?:(?:const|let|var)\s+|\$)?([a-zA-Z_][a-zA-Z0-9_]*)\s*(?:=|\.=|:=)\s*(.+)",
-                raw_line,
+                r"^\s*(?:(?:const|let|var)\s+|\$)?([a-zA-Z_][a-zA-Z0-9_]*)\s*(=|\+=|\.=|:=)\s*(.+)",
+                code_line,
             )
             if assign_match:
-                lhs, rhs = assign_match.group(1), assign_match.group(2)
+                lhs, op, rhs = assign_match.group(1), assign_match.group(2), assign_match.group(3)
                 if lhs not in IGNORED_LHS_VARS:
                     has_direct_source = any(s_re.search(rhs) for s_re in src_regexes)
                     parent_vars = [
@@ -349,7 +375,7 @@ class TaintAnalyzer:
                             if san_re.search(rhs):
                                 new_neut.update(san_classes)
                         tainted_vars[lhs] = (orig_ln, orig_expr, new_neut)
-                    elif lhs in tainted_vars and not parent_vars:
+                    elif lhs in tainted_vars and not parent_vars and op in ("=", ":="):
                         # Variable overwritten with a constant/safe expression (e.g. $target = $octet[0]...)
                         if not re.search(r"\$octet", rhs):
                             tainted_vars.pop(lhs, None)
@@ -357,14 +383,14 @@ class TaintAnalyzer:
             # 2. Evaluate sinks on current line
             for sink_def in SINK_DEFINITIONS:
                 vclass = sink_def["vuln_class"]
-                if not sink_def["pattern"].search(raw_line):
+                if not sink_def["pattern"].search(code_line):
                     continue
                 if cls._is_guarded_block(content, vclass):
                     continue
 
                 inline_sanitized = False
                 for san_re, san_classes in VARIABLE_SANITIZERS:
-                    if san_re.search(raw_line) and ("*" in san_classes or vclass in san_classes):
+                    if san_re.search(code_line) and ("*" in san_classes or vclass in san_classes):
                         inline_sanitized = True
                         break
                 if inline_sanitized:
@@ -375,9 +401,9 @@ class TaintAnalyzer:
                     for v, (orig_ln, _, neut) in tainted_vars.items()
                     if orig_ln <= idx
                     and (
-                        re.search(rf"\${re.escape(v)}\b", raw_line)
-                        if (language == "php" and "document.write" not in raw_line)
-                        else re.search(rf"\b{re.escape(v)}\b", raw_line)
+                        re.search(rf"\${re.escape(v)}\b", code_line)
+                        if (language == "php" and "document.write" not in code_line)
+                        else re.search(rf"\b{re.escape(v)}\b", code_line)
                     )
                     and "*" not in neut
                     and vclass not in neut
@@ -429,9 +455,7 @@ class TaintAnalyzer:
             return []
 
         if lang == "python":
-            ast_flows = cls._analyze_python_ast(content, str(path))
-            if ast_flows:
-                return ast_flows
+            return cls._analyze_python_ast(content, str(path))
         return cls._analyze_generic(content, str(path), lang)
 
     @classmethod
@@ -444,7 +468,8 @@ class TaintAnalyzer:
             files = sorted(
                 p
                 for p in path.rglob("*")
-                if p.suffix.lower() in LANGUAGE_EXTENSIONS
+                if p.is_file()
+                and p.suffix.lower() in LANGUAGE_EXTENSIONS
                 and not any(skip in p.parts for skip in ("node_modules", ".git", ".venv", "venv", "__pycache__"))
             )
 

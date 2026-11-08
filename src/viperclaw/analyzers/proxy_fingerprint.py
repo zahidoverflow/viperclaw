@@ -130,8 +130,20 @@ class ProxyFingerprinter:
     @classmethod
     def analyze_har(cls, har_path: str | Path, root_domain: str = "") -> FingerprintReport:
         path = Path(har_path)
-        raw = json.loads(path.read_text(encoding="utf-8", errors="ignore"))
-        entries = raw.get("log", {}).get("entries", [])
+        if not path.is_file():
+            return FingerprintReport(target=root_domain or str(har_path))
+        try:
+            raw = json.loads(path.read_text(encoding="utf-8", errors="ignore"))
+        except Exception:
+            return FingerprintReport(target=root_domain or str(har_path))
+        if not isinstance(raw, dict):
+            return FingerprintReport(target=root_domain or str(har_path))
+        log_obj = raw.get("log")
+        if not isinstance(log_obj, dict):
+            return FingerprintReport(target=root_domain or str(har_path))
+        entries = log_obj.get("entries")
+        if not isinstance(entries, list):
+            entries = []
 
         hosts: Set[str] = set()
         api_hosts: Set[str] = set()
@@ -141,9 +153,13 @@ class ProxyFingerprinter:
         endpoints: Set[str] = set()
 
         for entry in entries:
-            req = entry.get("request", {})
-            resp = entry.get("response", {})
-            url = req.get("url", "")
+            if not isinstance(entry, dict):
+                continue
+            req = entry.get("request") or {}
+            resp = entry.get("response") or {}
+            if not isinstance(req, dict) or not isinstance(resp, dict):
+                continue
+            url = str(req.get("url") or "")
             parsed = urlparse(url)
             host = parsed.netloc
             if not host:
@@ -156,7 +172,8 @@ class ProxyFingerprinter:
                 api_hosts.add(host)
                 endpoints.add(f"{req.get('method', 'GET')} {parsed.scheme}://{host}{parsed.path}")
 
-            req_headers = {h["name"].lower(): h["value"] for h in req.get("headers", []) if "name" in h and "value" in h}
+            req_hdr_list = req.get("headers") if isinstance(req.get("headers"), list) else []
+            req_headers = {str(h["name"]).lower(): str(h["value"]) for h in req_hdr_list if isinstance(h, dict) and "name" in h and "value" in h}
             if "authorization" in req_headers:
                 val = req_headers["authorization"]
                 scheme = val.split()[0] if val else "Bearer"
@@ -165,9 +182,11 @@ class ProxyFingerprinter:
                 if custom_key in req_headers:
                     auths.add(f"Custom Header ({custom_key})")
 
-            resp_headers = {h["name"].lower(): h["value"] for h in resp.get("headers", []) if "name" in h and "value" in h}
-            body_text = resp.get("content", {}).get("text", "") or ""
-            sub = cls.fingerprint_response(url, resp_headers, body_text, resp.get("status", 200))
+            resp_hdr_list = resp.get("headers") if isinstance(resp.get("headers"), list) else []
+            resp_headers = {str(h["name"]).lower(): str(h["value"]) for h in resp_hdr_list if isinstance(h, dict) and "name" in h and "value" in h}
+            content_obj = resp.get("content") if isinstance(resp.get("content"), dict) else {}
+            body_text = str(content_obj.get("text") or "")
+            sub = cls.fingerprint_response(url, resp_headers, body_text, int(resp.get("status") or 200))
             techs.update(sub.detected_technologies)
             auths.update(sub.auth_mechanisms)
             error_hints.update(sub.error_shape_hints)

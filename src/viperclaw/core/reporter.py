@@ -12,6 +12,8 @@ import json
 from dataclasses import asdict, dataclass, field
 from typing import Any, Dict, List
 
+from viperclaw import __version__
+
 
 @dataclass
 class VerifiedFinding:
@@ -45,6 +47,11 @@ class ReportGenerator:
         if not steps:
             steps = "1. Replay the attached HTTP request receipt against the target endpoint.\n2. Observe the unauthorized data/state change in the response receipt."
 
+        req_clean = finding.request_receipt.strip()
+        resp_clean = finding.response_receipt.strip()
+        req_fence = "````" if "```" in req_clean else "```"
+        resp_fence = "````" if "```" in resp_clean else "```"
+
         return f"""# [{finding.cvss_severity}] {finding.title}
 
 | Metric | Value |
@@ -68,21 +75,21 @@ class ReportGenerator:
 ## Proof-of-Concept Receipts
 
 ### Request / Command Receipt
-```http
-{finding.request_receipt.strip()}
-```
+{req_fence}http
+{req_clean}
+{req_fence}
 
 ### Verified Response Receipt
-```http
-{finding.response_receipt.strip()}
-```
+{resp_fence}http
+{resp_clean}
+{resp_fence}
 
 ## Recommended Remediation
 {finding.remediation or "Enforce strict server-side authorization and input validation at the controller/resolver layer prior to executing state or data operations."}
 """
 
     @staticmethod
-    def to_sarif(findings: List[VerifiedFinding], tool_version: str = "1.0.0") -> Dict[str, Any]:
+    def to_sarif(findings: List[VerifiedFinding], tool_version: str = __version__) -> Dict[str, Any]:
         rules = []
         results = []
         seen_rules = set()

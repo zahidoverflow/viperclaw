@@ -140,8 +140,9 @@ MCP_TOOLS: List[Dict[str, Any]] = [
 
 
 def handle_tool_call(name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
+    arguments = arguments or {}
     if name == "viper_graph_upsert":
-        db_path = arguments.get("workspace_db", ".viperclaw/graph.db")
+        db_path = arguments.get("workspace_db") or arguments.get("db_path") or arguments.get("graph_db") or ".viperclaw/graph.db"
         graph = AttackGraph(db_path)
         try:
             node = graph.upsert_node(
@@ -155,7 +156,7 @@ def handle_tool_call(name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
             graph.close()
 
     if name == "viper_graph_leads":
-        db_path = arguments.get("workspace_db", ".viperclaw/graph.db")
+        db_path = arguments.get("workspace_db") or arguments.get("db_path") or arguments.get("graph_db") or ".viperclaw/graph.db"
         graph = AttackGraph(db_path)
         try:
             leads = graph.top_leads(
@@ -180,11 +181,12 @@ def handle_tool_call(name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
 
     if name == "viper_fingerprint_traffic":
         har_path = arguments.get("har_path")
+        root_domain = str(arguments.get("root_domain") or arguments.get("domain") or "")
         if har_path and Path(har_path).exists():
-            return ProxyFingerprinter.analyze_har(har_path).to_dict()
+            return ProxyFingerprinter.analyze_har(har_path, root_domain=root_domain).to_dict()
         return ProxyFingerprinter.fingerprint_response(
             url=arguments.get("url", "https://target.local"),
-            headers=arguments.get("headers", {}),
+            headers=arguments.get("headers") or {},
             body=arguments.get("body", ""),
         ).to_dict()
 
@@ -223,11 +225,12 @@ def handle_tool_call(name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
         }
 
     if name == "viper_live_scan":
+        db_path = arguments.get("workspace_db") or arguments.get("db_path") or arguments.get("graph_db") or ".viperclaw/graph.db"
         scanner = LiveScanner(arguments["url"])
         res = scanner.run_scan(
             username=arguments.get("username", "admin"),
             password=arguments.get("password", "password"),
-            graph_db=arguments.get("workspace_db", ".viperclaw/graph.db"),
+            graph_db=db_path,
         )
         return res.to_dict()
 
@@ -235,8 +238,13 @@ def handle_tool_call(name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def handle_jsonrpc_message(msg: Dict[str, Any]) -> Dict[str, Any] | None:
-    method = msg.get("method")
+    if not isinstance(msg, dict):
+        return None
+    method = str(msg.get("method") or "")
     msg_id = msg.get("id")
+
+    if method.startswith("notifications/"):
+        return None
 
     if method == "initialize":
         return {
@@ -249,9 +257,6 @@ def handle_jsonrpc_message(msg: Dict[str, Any]) -> Dict[str, Any] | None:
             },
         }
 
-    if method == "notifications/initialized":
-        return None
-
     if method == "tools/list":
         return {
             "jsonrpc": "2.0",
@@ -260,9 +265,9 @@ def handle_jsonrpc_message(msg: Dict[str, Any]) -> Dict[str, Any] | None:
         }
 
     if method == "tools/call":
-        params = msg.get("params", {})
-        tool_name = params.get("name", "")
-        arguments = params.get("arguments", {})
+        params = msg.get("params") if isinstance(msg.get("params"), dict) else {}
+        tool_name = str(params.get("name") or "")
+        arguments = params.get("arguments") if isinstance(params.get("arguments"), dict) else {}
         try:
             result = handle_tool_call(tool_name, arguments)
             return {

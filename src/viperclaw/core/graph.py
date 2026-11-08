@@ -249,10 +249,11 @@ class AttackGraph:
 
     def decay_pheromones(self, factor: float = 0.9) -> int:
         """Apply stigmergic evaporation so stale false leads decay over time."""
+        clamped = max(0.01, min(1.0, float(factor)))
         with self._conn:
             cur = self._conn.execute(
                 "UPDATE nodes SET pheromone = ROUND(MAX(0.5, pheromone * ?), 3) WHERE status != 'verified'",
-                (factor,),
+                (clamped,),
             )
             return cur.rowcount
 
@@ -274,13 +275,14 @@ class AttackGraph:
         node_ids = {n.node_id for n in nodes}
         lines = ["flowchart LR"]
         for n in nodes:
-            safe_label = n.label.replace('"', "'")
+            safe_label = n.label.replace('"', "'").replace("\n", " ").replace("\r", " ").replace("`", "'")
             lines.append(f'    {n.node_id}["[{n.node_type.upper()}] {safe_label} (p={n.pheromone})"]')
 
         edges = self._conn.execute("SELECT * FROM edges").fetchall()
         for e in edges:
             if e["source_id"] in node_ids and e["target_id"] in node_ids:
-                lines.append(f'    {e["source_id"]} -->|"{e["relation"]}"| {e["target_id"]}')
+                safe_rel = str(e["relation"]).replace('"', "'").replace("\n", " ").replace("\r", " ")
+                lines.append(f'    {e["source_id"]} -->|"{safe_rel}"| {e["target_id"]}')
         return "\n".join(lines)
 
     def to_json(self) -> Dict[str, Any]:

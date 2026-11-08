@@ -99,16 +99,17 @@ class JSHarvester:
         chunk_prefix: str = "static/js/",
     ) -> JSHarvestResult:
         chunks: Set[str] = set()
+        norm_base = (base_url.rstrip("/") + "/") if base_url else ""
 
         # 1. Vite / ES dynamic import() chunks
         for m in VITE_DYNAMIC_IMPORT_REGEX.finditer(content):
             raw = m.group(1)
-            chunks.add(urljoin(base_url, raw) if base_url else raw)
+            chunks.add(urljoin(norm_base, raw) if norm_base else raw)
 
         # 2. Next.js chunks
         for m in NEXT_CHUNK_REGEX.finditer(content):
             raw = m.group(1).lstrip("/")
-            chunks.add(urljoin(base_url, raw) if base_url else raw)
+            chunks.add(urljoin(norm_base, raw) if norm_base else raw)
 
         # 3. Webpack chunk ID -> hash map reconstruction
         for map_match in WEBPACK_CHUNK_MAP_REGEX.finditer(content):
@@ -116,7 +117,7 @@ class JSHarvester:
             for pair in WEBPACK_PAIR_REGEX.finditer(block):
                 cid, chash = pair.group(1), pair.group(2)
                 rel_path = f"{chunk_prefix.rstrip('/')}/{cid}.{chash}.chunk.js"
-                chunks.add(urljoin(base_url, rel_path) if base_url else rel_path)
+                chunks.add(urljoin(norm_base, rel_path) if norm_base else rel_path)
 
         # 4. Endpoints & classification
         endpoints: Set[str] = set()
@@ -180,7 +181,8 @@ class JSHarvester:
             files = sorted(
                 p
                 for p in path.rglob("*")
-                if p.suffix.lower() in {".js", ".mjs", ".cjs", ".jsx", ".ts", ".tsx", ".html", ".php", ".yml", ".yaml"}
+                if p.is_file()
+                and p.suffix.lower() in {".js", ".mjs", ".cjs", ".jsx", ".ts", ".tsx", ".html", ".php", ".yml", ".yaml"}
                 and not any(skip in p.parts for skip in ("node_modules", ".git", ".venv", "venv"))
             )
 
