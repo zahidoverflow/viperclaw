@@ -36,7 +36,7 @@
   <circle cx="56" cy="28" r="6" fill="#f59e0b"/>
   <circle cx="76" cy="28" r="6" fill="#10b981"/>
   <text x="102" y="33" fill="#475569" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="13" font-weight="600">
-    zahidoverflow@viperclaw:~ — stigmergic-swarm + mcp-bridge + wire-oracle (v1.2.0)
+    zahidoverflow@viperclaw:~ — stigmergic-swarm + mcp-bridge + wire-oracle (v2.0.0)
   </text>
 
   <!-- Stylized Fang / Claw Emblem -->
@@ -52,7 +52,7 @@
   </text>
   <rect x="708" y="104" width="96" height="32" rx="6" fill="#ecfdf5" stroke="#059669" stroke-width="1.5"/>
   <text x="756" y="125" text-anchor="middle" fill="#047857" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="15" font-weight="700">
-    v1.2.0
+    v2.0.0
   </text>
 
   <!-- Subtitle -->
@@ -60,7 +60,7 @@
     The Universal AI Offensive Security Harness, Swarm Graph &amp; Proof Oracle
   </text>
   <text x="260" y="224" fill="#475569" font-family="system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="16" font-weight="500">
-    Zero-bloat MCP Bridge · Stigmergic Attack Graph · Lazy-Chunk JS Harvester · Multi-Lang Taint SAST · 12 Elite Skills
+    Zero-bloat MCP Bridge · Stigmergic Attack Graph · Lazy-Chunk JS Harvester · Multi-Lang Taint SAST · 14 Elite Skills
   </text>
 
   <!-- Feature Pills -->
@@ -81,7 +81,7 @@
   <!-- Bottom Status Line -->
   <line x1="40" y1="328" x2="1160" y2="328" stroke="#cbd5e1" stroke-width="1.2"/>
   <text x="44" y="354" fill="#475569" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="13" font-weight="600">
-    [STATUS: ARMED]  •  12 Methodology Skills  •  8 Phase-Gated MCP Tools  •  Zero Third-Party Runtime Dependencies
+    [STATUS: ARMED]  •  14 Methodology Skills  •  13 Phase-Gated MCP Tools  •  Zero Third-Party Runtime Dependencies
   </text>
   <text x="1156" y="354" text-anchor="end" fill="#047857" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="13" font-weight="700">
     github.com/zahidoverflow/viperclaw
