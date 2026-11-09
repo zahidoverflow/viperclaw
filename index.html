@@ -535,8 +535,9 @@
       background: #f8fafc;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 10px;
+      justify-content: flex-start;
+      flex-wrap: wrap;
+      gap: 6px;
       user-select: none;
       transition: background 0.15s ease;
     }
@@ -551,6 +552,7 @@
 
     details.drawer > summary::after {
       content: "▸ Expand";
+      margin-left: auto;
       font-family: var(--font-mono);
       font-size: 0.75rem;
       font-weight: 600;
@@ -799,8 +801,9 @@
       background: #f8fafc;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 10px;
+      justify-content: flex-start;
+      flex-wrap: wrap;
+      gap: 6px;
       user-select: none;
       transition: background 0.15s ease;
     }
@@ -815,6 +818,7 @@
 
     details.drawer > summary::after {
       content: "▸ Expand";
+      margin-left: auto;
       font-family: var(--font-mono);
       font-size: 0.75rem;
       font-weight: 600;
