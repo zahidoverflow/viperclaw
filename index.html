@@ -376,11 +376,12 @@
       font-family: var(--font-mono);
       font-size: 0.8rem;
       background: rgba(15, 23, 42, 0.9);
-      padding: 2px 6px;
+      padding: 2px 7px;
       border-radius: 4px;
       color: var(--cyan-light);
       border: 1px solid #1e293b;
-      word-break: break-word;
+      white-space: nowrap;
+      word-break: keep-all;
     }
 
     /* Code Blocks with Copy Button */
@@ -452,10 +453,27 @@
     }
 
     th, td {
-      padding: 11px 14px;
+      padding: 12px 15px;
       text-align: left;
       border-bottom: 1px solid var(--border);
-      vertical-align: top;
+      vertical-align: middle;
+    }
+
+    tbody td:nth-child(1),
+    tbody td:nth-child(2) {
+      white-space: nowrap;
+      width: 1%;
+    }
+
+    .table-4col tbody td:nth-child(3) {
+      white-space: nowrap;
+      width: 1%;
+      font-weight: 600;
+    }
+
+    tbody td:last-child {
+      width: auto;
+      line-height: 1.5;
     }
 
     th {
@@ -489,9 +507,9 @@
     }
 
     /* ===================================================================== */
-    /* MOBILE & TABLET RESPONSIVENESS (<= 768px)                             */
+    /* MOBILE & TABLET RESPONSIVENESS (<= 860px)                             */
     /* ===================================================================== */
-    @media (max-width: 768px) {
+    @media (max-width: 860px) {
       body {
         padding: 0 14px 48px;
       }
@@ -630,6 +648,7 @@
       tbody tr td:nth-child(2) {
         display: inline-block;
         width: auto;
+        white-space: nowrap;
         margin-right: 8px;
         padding-bottom: 4px;
       }
@@ -638,7 +657,13 @@
       tbody tr td:nth-child(4) {
         display: block;
         width: 100%;
+        white-space: normal;
         color: var(--text-muted);
+      }
+
+      tbody tr td:last-child code {
+        white-space: normal;
+        word-break: break-word;
       }
 
       tbody tr td:nth-child(3) {
@@ -948,7 +973,7 @@ viperclaw graph --db .viperclaw/graph.db --top-leads 10 --mermaid</code></pre>
         • <b>White-Box Taint SAST (<code>viperclaw taint</code>):</b> <b>19 / 19 (100%)</b> vulnerable modules detected across multi-hop transitive taint paths with <b>0 False Positives</b> on hardened <code>impossible.php</code> targets.<br/>
         • <b>Black-Box Live Wire Exploitation (<code>viperclaw scan</code>):</b> <b>14 / 14 (100%)</b> live DVWA vulnerability modules exploited and verified over HTTP with raw receipts:
       </p>
-      <div class="table-wrap">
+      <div class="table-wrap table-4col">
         <table>
           <thead>
             <tr>
