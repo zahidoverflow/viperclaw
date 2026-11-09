@@ -7,7 +7,7 @@
   <a href="https://github.com/zahidoverflow/viperclaw/actions"><img src="https://img.shields.io/github/actions/workflow/status/zahidoverflow/viperclaw/ci.yml?branch=main&style=flat-square&logo=githubactions&logoColor=white&label=CI" alt="GitHub Actions CI Status" /></a>
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.10%2B%20%7C%20Zero%20Deps-06b6d4?style=flat-square&logo=python&logoColor=white" alt="Python 3.10+ Zero Dependencies" /></a>
   <a href="#-cli--mcp-reference"><img src="https://img.shields.io/badge/MCP-8%20Tools-a855f7?style=flat-square" alt="Model Context Protocol MCP Server" /></a>
-  <a href="#-the-12-methodology-driven-skills"><img src="https://img.shields.io/badge/Skills-12%20Playbooks-f43f5e?style=flat-square" alt="12 Bug Bounty & Pentesting Skills" /></a>
+  <a href="#-offensive-skill-playbooks"><img src="https://img.shields.io/badge/Skills-12%20Playbooks-f43f5e?style=flat-square" alt="12 Bug Bounty & Pentesting Skills" /></a>
   <a href="https://github.com/zahidoverflow/viperclaw/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-10b981?style=flat-square" alt="MIT License" /></a>
 </p>
 
@@ -17,11 +17,11 @@
 
 <p align="center">
   <a href="https://zahidoverflow.github.io/viperclaw/"><b>Website</b></a> •
-  <a href="docs/README.md"><b>Documentation</b></a> •
+  <a href="docs/README.md"><b>User Guide</b></a> •
   <a href="#-quickstart"><b>Quickstart</b></a> •
   <a href="#-architecture"><b>Architecture</b></a> •
   <a href="#-cli--mcp-reference"><b>CLI &amp; MCP</b></a> •
-  <a href="#-the-12-methodology-driven-skills"><b>12 Skills</b></a> •
+  <a href="#-offensive-skill-playbooks"><b>12 Skills</b></a> •
   <a href="#-benchmarks--comparison"><b>Benchmarks</b></a>
 </p>
 
@@ -31,24 +31,24 @@
 
 ## ⚡ Why ViperClaw?
 
-Most "AI pentesting wrappers" fail in production for two reasons: dumping **150+ noisy CLI scanners** into an LLM causes context-window rot and instant WAF blocks, while monolithic Docker pentest stacks require **4–6 containers and separate API budgets** when you already run a frontier coding agent locally.
+Most "AI pentesting wrappers" fail in production: dumping **150+ noisy CLI scanners** into an LLM causes context-window rot and instant WAF blocks, while monolithic Docker stacks require **4–6 containers and separate API budgets** when you already run a frontier coding agent locally.
 
-ViperClaw takes the opposite approach—pairing **12 methodology-driven playbooks** with a **zero-dependency Python 3.10+ offensive engine** and a strict **"No Receipt, No Report" Proof Oracle**:
+ViperClaw pairs **12 methodology-driven playbooks** with a **zero-dependency Python 3.10+ engine** and a strict **"No Receipt, No Report" Proof Oracle**:
 
-| Subsystem | Module | Capability |
-| :--- | :--- | :--- |
-| 🕸️ **Stigmergic Graph** | [`core/graph.py`](src/viperclaw/core/graph.py) | SQLite attack-surface knowledge graph with pheromone priority scoring, decay & Mermaid export. |
-| 🌐 **Live Wire Scanner** | [`analyzers/live_scanner.py`](src/viperclaw/analyzers/live_scanner.py) | Stateful cookie/CSRF session handling and **14 wire-verified HTTP exploit probes**. |
-| 🔬 **Polyglot Taint SAST** | [`analyzers/taint.py`](src/viperclaw/analyzers/taint.py) | Multi-hop source-to-sink taint tracking across **Python, TS/JS, Go & PHP** with sanitizer awareness. |
-| 🧩 **JS Chunk Harvester** | [`analyzers/js_harvester.py`](src/viperclaw/analyzers/js_harvester.py) | Reconstructs unloaded **Webpack, Vite & Next.js** lazy chunks, hidden routes, IDOR params & secrets. |
-| 🕵️ **HAR Fingerprinter** | [`analyzers/proxy_fingerprint.py`](src/viperclaw/analyzers/proxy_fingerprint.py) | Infers backend stacks (**FastAPI, NestJS, Spring, Laravel, Rails**) & sibling APIs from `.har` captures. |
-| 🛡️ **7-Gate Proof Oracle** | [`core/oracle.py`](src/viperclaw/core/oracle.py) | Rejects Cloudflare/Akamai/Imperva **Soft-200** traps, diffs BOLA JSON keys, scores **CVSS 3.1** & exports **SARIF 2.1.0**. |
+| Core&nbsp;Subsystem | Capability &amp; Implementation |
+| :--- | :--- |
+| 🕸️&nbsp;[**Stigmergic&nbsp;Graph**](src/viperclaw/core/graph.py) | Zero-setup SQLite knowledge graph with pheromone priority scoring, decay &amp; Mermaid topology export. |
+| 🌐&nbsp;[**Live&nbsp;Wire&nbsp;Scanner**](src/viperclaw/analyzers/live_scanner.py) | Stateful cookie/CSRF session handling and **14 wire-verified HTTP exploit probes** (RCE, SQLi, LFI, XSS, Logic). |
+| 🔬&nbsp;[**Polyglot&nbsp;Taint&nbsp;SAST**](src/viperclaw/analyzers/taint.py) | Multi-hop source-to-sink taint tracking across **Python, TS/JS, Go &amp; PHP** with sanitizer awareness. |
+| 🧩&nbsp;[**JS&nbsp;Chunk&nbsp;Harvester**](src/viperclaw/analyzers/js_harvester.py) | Reconstructs unloaded **Webpack, Vite &amp; Next.js** lazy chunks, hidden admin routes, IDOR params &amp; secrets. |
+| 🕵️&nbsp;[**HAR&nbsp;Fingerprinter**](src/viperclaw/analyzers/proxy_fingerprint.py) | Infers backend stacks (**FastAPI, NestJS, Spring, Laravel, Rails**) &amp; sibling APIs from Caido / Burp `.har` captures. |
+| 🛡️&nbsp;[**7&#8209;Gate&nbsp;Proof&nbsp;Oracle**](src/viperclaw/core/oracle.py) | Rejects Cloudflare/Akamai/Imperva **Soft-200** traps, diffs BOLA JSON keys, scores **CVSS 3.1** &amp; exports **SARIF 2.1.0**. |
 
 ---
 
 ## 🚀 Quickstart
 
-> 📘 **Looking for a complete step-by-step walkthrough?** Read the [**Beginner-to-Pro User Guide (`docs/README.md`)**](docs/README.md).
+> 📘 **New to ViperClaw?** Read the complete step-by-step [**Beginner-to-Pro User Guide (`docs/README.md`)**](docs/README.md).
 
 ```bash
 # 1. Clone & install (<2 seconds, zero external dependencies, Python 3.10+)
@@ -96,14 +96,14 @@ Add `viperclaw mcp` to your agent's `mcp_config.json` / `.mcp.json` (or run `cla
 
 Both `viperclaw` and the shorthand `vclaw` alias provide standalone CLI subcommands as well as the JSON-RPC 2.0 `stdio` MCP bridge:
 
-| Command | Purpose | Key Flags |
-| :--- | :--- | :--- |
-| `viperclaw scan <url>` | Stateful live HTTP web scanner & wire-verified exploit runner | `--db`, `--report-md`, `--report-sarif` |
-| `viperclaw taint <path>` | Multi-language source-to-sink taint SAST (`Py`, `TS/JS`, `Go`, `PHP`) | `--db`, `--output` |
-| `viperclaw harvest-js <path>` | Webpack / Vite / Next.js lazy-chunk & API/IDOR/secret harvester | `--base-url`, `--db`, `--output` |
-| `viperclaw fingerprint <har>` | Caido / Burp `.har` backend framework & sibling API fingerprinter | `--domain`, `--output` |
-| `viperclaw graph` | Query top pheromone-ranked attack leads & export Mermaid graphs | `--db`, `--top-leads`, `--mermaid` |
-| `viperclaw verify [file]` | Run the 7-Question Triage Gate, CVSS 3.1 & export H1 MD / SARIF | `--report-md`, `--report-sarif` |
+| CLI&nbsp;Command | Purpose &amp; Key Flags |
+| :--- | :--- |
+| `viperclaw`&nbsp;`scan`&nbsp;`<url>` | Stateful live HTTP web scanner &amp; wire-verified exploit runner (`--db`, `--report-md`, `--report-sarif`). |
+| `viperclaw`&nbsp;`taint`&nbsp;`<path>` | Multi-language source-to-sink taint SAST for Python, TS/JS, Go &amp; PHP (`--db`, `--output`). |
+| `viperclaw`&nbsp;`harvest&#8209;js`&nbsp;`<path>` | Webpack / Vite / Next.js lazy-chunk, hidden endpoint &amp; secret harvester (`--base-url`, `--db`, `--output`). |
+| `viperclaw`&nbsp;`fingerprint`&nbsp;`<har>` | Caido / Burp `.har` backend framework &amp; sibling API fingerprinter (`--domain`, `--output`). |
+| `viperclaw`&nbsp;`graph` | Query top pheromone-ranked attack leads &amp; export Mermaid topology (`--db`, `--top-leads`, `--mermaid`). |
+| `viperclaw`&nbsp;`verify`&nbsp;`[file]` | Run the 7-Question Triage Gate, CVSS 3.1 calculator &amp; H1 MD / SARIF exporter (`--report-md`, `--report-sarif`). |
 
 <details>
 <summary><b>📋 View Copy-Paste CLI Workflow Examples (Live DAST, Taint SAST, JS Recon, HAR)</b></summary>
@@ -130,39 +130,50 @@ viperclaw graph --db .viperclaw/graph.db --top-leads 10 --mermaid
 <summary><b>🔌 View All 8 Phase-Gated MCP Server Tools (<code>viperclaw mcp</code>)</b></summary>
 <br />
 
-| MCP Tool | Phase | Description |
-| :--- | :---: | :--- |
-| `viper_live_scan` | **Exploit / DAST** | Execute a stateful, authenticated HTTP dynamic scan against a live web target, proving exploits over the wire. |
-| `viper_taint_scan` | **White-Box SAST** | Run multi-language source-to-sink taint analysis across Python, TypeScript/JavaScript, Go, and PHP. |
-| `viper_harvest_js` | **Recon / SPA** | Reconstruct Webpack/Vite/Next.js lazy chunks and extract endpoints, IDOR/SSRF candidates, GraphQL ops & secrets. |
-| `viper_fingerprint_traffic` | **Recon / HAR** | Fingerprint backend frameworks, WAFs, sibling API hosts, and error envelopes from `.har` captures or HTTP headers. |
-| `viper_graph_upsert` | **Swarm Graph** | Upsert hosts, endpoints, lazy chunks, taint sinks, or findings into the Stigmergic SQLite Attack Graph. |
-| `viper_graph_leads` | **Swarm Graph** | Query top pheromone-ranked attack leads and export a live Mermaid topology diagram. |
-| `viper_diff_oracle` | **Verification** | Compare baseline vs. mutated/cross-tenant HTTP responses to confirm BOLA/IDOR and filter WAF Soft-200 blocks. |
-| `viper_verify_and_report` | **Reporting** | Run the 7-Question Triage Gate, calculate exact CVSS v3.1 scores, and generate HackerOne/Bugcrowd Markdown. |
+| MCP&nbsp;Tool | Phase | Description |
+| :--- | :--- | :--- |
+| `viper_live_scan` | **DAST** | Execute a stateful, authenticated HTTP dynamic scan against a live web target, proving exploits over the wire. |
+| `viper_taint_scan` | **SAST** | Run multi-language source-to-sink taint analysis across Python, TypeScript/JavaScript, Go, and PHP. |
+| `viper_harvest_js` | **Recon** | Reconstruct Webpack/Vite/Next.js lazy chunks and extract endpoints, IDOR/SSRF candidates, GraphQL ops &amp; secrets. |
+| `viper_fingerprint_traffic` | **Recon** | Fingerprint backend frameworks, WAFs, sibling API hosts, and error envelopes from `.har` captures or HTTP headers. |
+| `viper_graph_upsert` | **Graph** | Upsert hosts, endpoints, lazy chunks, taint sinks, or findings into the Stigmergic SQLite Attack Graph. |
+| `viper_graph_leads` | **Graph** | Query top pheromone-ranked attack leads and export a live Mermaid topology diagram. |
+| `viper_diff_oracle` | **Verify** | Compare baseline vs. mutated/cross-tenant HTTP responses to confirm BOLA/IDOR and filter WAF Soft-200 blocks. |
+| `viper_verify_and_report` | **Report** | Run the 7-Question Triage Gate, calculate exact CVSS v3.1 scores, and generate HackerOne/Bugcrowd Markdown. |
 
 </details>
 
 ---
 
-## 🎯 The 12 Methodology-Driven Skills
+## 🎯 Offensive Skill Playbooks
 
-Each playbook in [`skills/`](skills/) encodes a senior bug hunter's hypothesis tree, bypass ladder, and stopping conditions:
+Each skill in [`skills/`](skills/) encodes a senior security researcher's hypothesis tree, bypass ladder, and stopping conditions across 4 operational domains:
 
-| # | Skill | Offensive Focus & Methodology |
+* **🧭 Orchestration & QA (`01`, `12`):** [`viper-orchestrator`](skills/viper-orchestrator/SKILL.md) (5-Phase Swarm Graph router) and [`viper-proof-judge`](skills/viper-proof-judge/SKILL.md) (7-Gate Proof Oracle & CVSS 3.1 judge).
+* **🔭 Recon & White-Box SAST (`02`, `03`, `10`):** [`viper-js-harvester`](skills/viper-js-harvester/SKILL.md) (SPA lazy chunks), [`viper-proxy-fingerprint`](skills/viper-proxy-fingerprint/SKILL.md) (HAR stack profiling), and [`viper-taint-sast`](skills/viper-taint-sast/SKILL.md) (Polyglot taint auditing).
+* **⚔️ Web, API & Cloud Exploitation (`04`–`09`):** [`viper-bola-idor`](skills/viper-bola-idor/SKILL.md), [`viper-injection-oracle`](skills/viper-injection-oracle/SKILL.md), [`viper-ssrf-cloud`](skills/viper-ssrf-cloud/SKILL.md), [`viper-auth-oauth-jwt`](skills/viper-auth-oauth-jwt/SKILL.md), [`viper-graphql-ws`](skills/viper-graphql-ws/SKILL.md), and [`viper-race-logic`](skills/viper-race-logic/SKILL.md).
+* **🤖 AI & Agentic Red-Teaming (`11`):** [`viper-ai-llm-redteam`](skills/viper-ai-llm-redteam/SKILL.md) (Prompt injection, MCP tool hijacking & RAG exfiltration).
+
+<details>
+<summary><b>📚 View Full 12-Skill Directory &amp; Methodology Breakdown</b></summary>
+<br />
+
+| # | Skill&nbsp;Playbook | Offensive Focus &amp; Methodology |
 | :---: | :--- | :--- |
-| `01` | [`viper-orchestrator`](skills/viper-orchestrator/SKILL.md) | **5-Phase Orchestrator:** Attack Graph prioritization, hypothesis decomposition & subagent routing. |
-| `02` | [`viper-js-harvester`](skills/viper-js-harvester/SKILL.md) | **JS & Lazy-Chunk Harvester:** Unloaded Webpack/Vite/Next.js chunks, hidden admin routes & secrets. |
-| `03` | [`viper-proxy-fingerprint`](skills/viper-proxy-fingerprint/SKILL.md) | **HTTP & Proxy Fingerprinter:** Sibling API discovery, framework error envelopes & WAF soft-block detection. |
-| `04` | [`viper-bola-idor`](skills/viper-bola-idor/SKILL.md) | **Cross-Tenant BOLA / IDOR:** Multi-role auth matrix (`Tenant A` vs. `Tenant B`), ID mutation & JSON diffing. |
-| `05` | [`viper-injection-oracle`](skills/viper-injection-oracle/SKILL.md) | **Precision Injection Oracle:** Zero-noise boolean/time differential pairs for SQLi, NoSQLi, SSTI & CMDi. |
-| `06` | [`viper-ssrf-cloud`](skills/viper-ssrf-cloud/SKILL.md) | **SSRF & Cloud Metadata:** URL parser differentials, redirect chains, AWS/GCP/Azure IMDS & K8s discovery. |
-| `07` | [`viper-auth-oauth-jwt`](skills/viper-auth-oauth-jwt/SKILL.md) | **Auth, OAuth 2.0 & JWT:** `redirect_uri` bypasses, pre-ATO collisions, JWT `RS256`→`HS256` & `kid` injection. |
-| `08` | [`viper-graphql-ws`](skills/viper-graphql-ws/SKILL.md) | **GraphQL & WebSocket:** Introspection bypass, field clairvoyance, nested edge BOLA, batching & CSWSH. |
-| `09` | [`viper-race-logic`](skills/viper-race-logic/SKILL.md) | **Race Condition & Logic:** Single-packet HTTP/2 bursts, TOCTOU quota overruns & workflow step skipping. |
-| `10` | [`viper-taint-sast`](skills/viper-taint-sast/SKILL.md) | **White-Box Taint SAST:** Multi-hop source-to-sink code auditing across Python, TS/JS, Go & PHP. |
-| `11` | [`viper-ai-llm-redteam`](skills/viper-ai-llm-redteam/SKILL.md) | **Agentic AI, LLM & MCP Red-Team:** Indirect prompt injection, tool-call hijacking & RAG exfiltration. |
-| `12` | [`viper-proof-judge`](skills/viper-proof-judge/SKILL.md) | **Adversarial QA Judge:** Enforces *"No Receipt, No Report"*, 7-Question Triage Gate & CVSS 3.1 scoring. |
+| `01` | [`viper&#8209;orchestrator`](skills/viper-orchestrator/SKILL.md) | **5-Phase Orchestrator:** Attack Graph prioritization, hypothesis decomposition &amp; subagent routing. |
+| `02` | [`viper&#8209;js&#8209;harvester`](skills/viper-js-harvester/SKILL.md) | **JS &amp; Lazy-Chunk Harvester:** Unloaded Webpack/Vite/Next.js chunks, hidden admin routes &amp; secrets. |
+| `03` | [`viper&#8209;proxy&#8209;fingerprint`](skills/viper-proxy-fingerprint/SKILL.md) | **HTTP &amp; Proxy Fingerprinter:** Sibling API discovery, framework error envelopes &amp; WAF soft-block detection. |
+| `04` | [`viper&#8209;bola&#8209;idor`](skills/viper-bola-idor/SKILL.md) | **Cross-Tenant BOLA / IDOR:** Multi-role auth matrix (`Tenant A` vs. `Tenant B`), ID mutation &amp; JSON diffing. |
+| `05` | [`viper&#8209;injection&#8209;oracle`](skills/viper-injection-oracle/SKILL.md) | **Precision Injection Oracle:** Zero-noise boolean/time differential pairs for SQLi, NoSQLi, SSTI &amp; CMDi. |
+| `06` | [`viper&#8209;ssrf&#8209;cloud`](skills/viper-ssrf-cloud/SKILL.md) | **SSRF &amp; Cloud Metadata:** URL parser differentials, redirect chains, AWS/GCP/Azure IMDS &amp; K8s discovery. |
+| `07` | [`viper&#8209;auth&#8209;oauth&#8209;jwt`](skills/viper-auth-oauth-jwt/SKILL.md) | **Auth, OAuth 2.0 &amp; JWT:** `redirect_uri` bypasses, pre-ATO collisions, JWT `RS256`→`HS256` &amp; `kid` injection. |
+| `08` | [`viper&#8209;graphql&#8209;ws`](skills/viper-graphql-ws/SKILL.md) | **GraphQL &amp; WebSocket:** Introspection bypass, field clairvoyance, nested edge BOLA, batching &amp; CSWSH. |
+| `09` | [`viper&#8209;race&#8209;logic`](skills/viper-race-logic/SKILL.md) | **Race Condition &amp; Logic:** Single-packet HTTP/2 bursts, TOCTOU quota overruns &amp; workflow step skipping. |
+| `10` | [`viper&#8209;taint&#8209;sast`](skills/viper-taint-sast/SKILL.md) | **White-Box Taint SAST:** Multi-hop source-to-sink code auditing across Python, TS/JS, Go &amp; PHP. |
+| `11` | [`viper&#8209;ai&#8209;llm&#8209;redteam`](skills/viper-ai-llm-redteam/SKILL.md) | **Agentic AI, LLM &amp; MCP Red-Team:** Indirect prompt injection, tool-call hijacking &amp; RAG exfiltration. |
+| `12` | [`viper&#8209;proof&#8209;judge`](skills/viper-proof-judge/SKILL.md) | **Adversarial QA Judge:** Enforces *"No Receipt, No Report"*, 7-Question Triage Gate &amp; CVSS 3.1 scoring. |
+
+</details>
 
 ---
 
@@ -177,7 +188,7 @@ ViperClaw is continuously validated against **Damn Vulnerable Web Application (D
 <summary><b>🔬 View All 14 Wire-Verified DVWA Exploitation Proofs &amp; CVSS v3.1 Vectors</b></summary>
 <br />
 
-| # | Severity (CVSS) | Vulnerability Module | Verified Wire Proof / Exploit Vector |
+| # | Severity | Vulnerability&nbsp;Module | Verified Wire Proof / Exploit Vector |
 | :---: | :---: | :--- | :--- |
 | `01` | **HIGH (8.8)** | OS Command Injection | `ip=127.0.0.1;id` → Verified `uid=33(www-data)` execution |
 | `02` | **HIGH (8.1)** | UNION SQL Injection | `' UNION SELECT user,password FROM users#` → Credential hash dump |
@@ -189,9 +200,9 @@ ViperClaw is continuously validated against **Damn Vulnerable Web Application (D
 | `08` | **MED (5.4)** | Stored XSS (Guestbook) | Persistent payload stored in `mtxMessage` and rendered to viewers |
 | `09` | **HIGH (8.2)** | Predictable Session ID | Sequential `dvwaSession` $+1$ increment proven across consecutive requests |
 | `10` | **HIGH (8.8)** | CSRF Password Reset | State-changing `GET` password reset verified without anti-CSRF token |
-| `11` | **MED (6.5)** | CAPTCHA Workflow Bypass | Direct `step=2` state-machine jump verified via auth oracle & restored |
-| `12` | **MED (5.4)** | CSP Bypass & Injection | External script injection via permissive `Content-Security-Policy` & `include` |
-| `13` | **MED (6.5)** | JS Token Reversal | Reversed `md5(rot13("success"))` client-side token & verified acceptance |
+| `11` | **MED (6.5)** | CAPTCHA Workflow Bypass | Direct `step=2` state-machine jump verified via auth oracle &amp; restored |
+| `12` | **MED (5.4)** | CSP Bypass &amp; Injection | External script injection via permissive `Content-Security-Policy` &amp; `include` |
+| `13` | **MED (6.5)** | JS Token Reversal | Reversed `md5(rot13("success"))` client-side token &amp; verified acceptance |
 | `14` | **MED (6.1)** | DOM-Based XSS | Unescaped `location.href` sink into `document.write()` verified in browser |
 
 </details>
@@ -208,7 +219,7 @@ ViperClaw is continuously validated against **Damn Vulnerable Web Application (D
 | **Zero-Setup SQLite Attack Graph + Mermaid** | ✅ **Built-in** | ❌ | ⚠️ Needs Neo4j/PG | ❌ | ❌ |
 | **SPA Lazy-Chunk Reconstruction (Webpack/Vite/Next)** | ✅ **Built-in** | ⚠️ Partial | ❌ | ❌ | ❌ |
 | **Multi-Language White-Box Taint SAST** | ✅ **Py / TS / Go / PHP** | ✅ Dynamic + Code | ❌ Black-Box | ❌ | ⚠️ **Py 3.10 Only** |
-| **Deterministic WAF Soft-200 & BOLA Diff Oracle** | ✅ **Built-in** | ✅ PoC Validation | ⚠️ LLM-Judged | ❌ Raw Stdout | ❌ Static Only |
+| **Deterministic WAF Soft-200 &amp; BOLA Diff Oracle** | ✅ **Built-in** | ✅ PoC Validation | ⚠️ LLM-Judged | ❌ Raw Stdout | ❌ Static Only |
 | **7-Gate Triage + CVSS 3.1 + H1 MD + SARIF 2.1.0** | ✅ **Built-in** | ✅ SARIF | ⚠️ Basic Report | ❌ | ❌ |
 | **Runtime Dependencies** | ✅ **0 (Pure Stdlib)** | Docker + Node/LLM | Docker + DB + Kali | 150+ CLI Tools | Python 3.10 + `jedi` |
 
