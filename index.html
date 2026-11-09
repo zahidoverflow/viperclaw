@@ -76,12 +76,15 @@
       color: var(--text);
       font-family: var(--font-sans);
       line-height: 1.6;
+      overflow-x: hidden;
     }
 
     body {
       max-width: 1120px;
+      width: 100%;
       margin: 0 auto;
       padding: 0 24px 72px;
+      overflow-x: hidden;
     }
 
     a {
@@ -100,22 +103,29 @@
       position: sticky;
       top: 0;
       z-index: 50;
-      background: rgba(7, 9, 14, 0.9);
+      background: rgba(7, 9, 14, 0.92);
       backdrop-filter: blur(10px);
       border-bottom: 1px solid var(--border);
       padding: 14px 0;
-      margin-bottom: 32px;
+      margin-bottom: 28px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       flex-wrap: wrap;
-      gap: 16px;
+      gap: 14px;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
     }
 
     .brand {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       font-family: var(--font-mono);
       font-weight: 800;
       font-size: 1.15rem;
@@ -124,12 +134,13 @@
     }
 
     .brand img {
-      width: 30px;
-      height: 30px;
+      width: 28px;
+      height: 28px;
+      flex-shrink: 0;
     }
 
     .badge-ver {
-      font-size: 0.75rem;
+      font-size: 0.74rem;
       padding: 2px 8px;
       border-radius: 5px;
       background: rgba(16, 185, 129, 0.14);
@@ -149,6 +160,7 @@
 
     nav a {
       color: var(--text-muted);
+      white-space: nowrap;
     }
 
     nav a:hover {
@@ -160,28 +172,96 @@
       background: #131c31;
       border: 1px solid var(--emerald);
       color: var(--emerald-light) !important;
-      padding: 6px 14px;
+      padding: 6px 13px;
       border-radius: 6px;
       font-family: var(--font-mono);
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       font-weight: 700;
+      white-space: nowrap;
+      text-decoration: none !important;
     }
 
     .btn-gh:hover {
       background: rgba(16, 185, 129, 0.15);
     }
 
-    /* Hero */
+    .btn-gh-mobile {
+      display: none;
+    }
+
+    /* Hero Desktop vs Mobile */
     .hero-banner {
       width: 100%;
+      height: auto;
       border-radius: 12px;
       border: 1px solid var(--border);
       display: block;
       margin-bottom: 24px;
     }
 
+    .mobile-hero {
+      display: none;
+      background: linear-gradient(135deg, #07090e 0%, #0d1322 55%, #090d16 100%);
+      border: 1px solid var(--border);
+      border-top: 3px solid var(--emerald);
+      border-radius: 12px;
+      padding: 20px 18px;
+      margin-bottom: 20px;
+    }
+
+    .mobile-hero-top {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 12px;
+    }
+
+    .mobile-hero-top img {
+      width: 46px;
+      height: 46px;
+      flex-shrink: 0;
+    }
+
+    .mobile-hero-title {
+      font-family: var(--font-mono);
+      font-size: 1.55rem;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      background: linear-gradient(90deg, #10b981, #34d399, #06b6d4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 1.15;
+    }
+
+    .mobile-hero-sub {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 14px;
+    }
+
+    .mobile-pills {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.74rem;
+      font-weight: 600;
+    }
+
+    .mobile-pill {
+      background: #0f172a;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 8px;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     .hero-lead {
-      font-size: 1.05rem;
+      font-size: 1.03rem;
       color: var(--text-muted);
       max-width: 920px;
       margin: 0 auto 28px;
@@ -192,40 +272,44 @@
       color: var(--text);
     }
 
+    .hero-lead code, h2 code {
+      font-family: var(--font-mono);
+      font-size: 0.88em;
+      background: rgba(15, 23, 42, 0.9);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--cyan-light);
+      border: 1px solid #1e293b;
+    }
+
     /* Section Headings */
     section {
-      margin-top: 52px;
+      margin-top: 48px;
+      scroll-margin-top: 84px;
     }
 
     h2 {
-      font-size: 1.45rem;
+      display: block;
+      font-size: 1.4rem;
       font-weight: 700;
+      line-height: 1.35;
       margin-bottom: 16px;
       padding-bottom: 10px;
       border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      gap: 10px;
+      word-break: break-word;
     }
 
     h3 {
-      font-size: 1.05rem;
+      font-size: 1.02rem;
       font-weight: 700;
       margin-bottom: 8px;
       color: var(--text);
     }
 
     /* Grid Cards */
-    .grid-2 {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 16px;
-      margin-bottom: 20px;
-    }
-
     .grid-3 {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
       gap: 16px;
     }
 
@@ -234,21 +318,24 @@
       border: 1px solid var(--border);
       border-radius: 10px;
       padding: 18px 20px;
+      min-width: 0;
     }
 
     .card p {
       font-size: 0.92rem;
       color: var(--text-muted);
+      word-break: break-word;
     }
 
     .card code, table code {
       font-family: var(--font-mono);
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       background: rgba(15, 23, 42, 0.9);
       padding: 2px 6px;
       border-radius: 4px;
       color: var(--cyan-light);
       border: 1px solid #1e293b;
+      word-break: break-word;
     }
 
     /* Code Blocks with Copy Button */
@@ -259,13 +346,15 @@
       border-radius: 8px;
       margin: 12px 0 20px;
       overflow: hidden;
+      max-width: 100%;
     }
 
     .code-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 7px 14px;
+      gap: 12px;
+      padding: 8px 14px;
       background: #0f172a;
       border-bottom: 1px solid var(--border);
       font-family: var(--font-mono);
@@ -274,11 +363,12 @@
     }
 
     .copy-btn {
+      flex-shrink: 0;
       background: #1e293b;
       color: var(--text);
       border: 1px solid #334155;
       border-radius: 4px;
-      padding: 3px 10px;
+      padding: 4px 10px;
       font-family: var(--font-mono);
       font-size: 0.75rem;
       cursor: pointer;
@@ -292,10 +382,12 @@
     pre {
       padding: 14px 16px;
       overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
       font-family: var(--font-mono);
-      font-size: 0.85rem;
+      font-size: 0.84rem;
       color: #e2e8f0;
       line-height: 1.55;
+      max-width: 100%;
     }
 
     /* Tables */
@@ -304,6 +396,7 @@
       border: 1px solid var(--border);
       border-radius: 10px;
       margin-top: 14px;
+      max-width: 100%;
     }
 
     table {
@@ -317,24 +410,26 @@
       padding: 11px 14px;
       text-align: left;
       border-bottom: 1px solid var(--border);
+      vertical-align: top;
     }
 
     th {
       background: #0f172a;
       color: var(--text);
       font-family: var(--font-mono);
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      white-space: nowrap;
     }
 
     tr:last-child td {
       border-bottom: none;
     }
 
-    .sev-crit { color: #fb7185; font-weight: 700; font-family: var(--font-mono); }
-    .sev-high { color: #fb923c; font-weight: 700; font-family: var(--font-mono); }
-    .sev-med  { color: #facc15; font-weight: 700; font-family: var(--font-mono); }
+    .sev-crit { color: #fb7185; font-weight: 700; font-family: var(--font-mono); white-space: nowrap; }
+    .sev-high { color: #fb923c; font-weight: 700; font-family: var(--font-mono); white-space: nowrap; }
+    .sev-med  { color: #facc15; font-weight: 700; font-family: var(--font-mono); white-space: nowrap; }
 
     footer {
       margin-top: 64px;
@@ -347,16 +442,199 @@
       font-size: 0.88rem;
       color: var(--text-muted);
     }
+
+    /* ===================================================================== */
+    /* MOBILE & TABLET RESPONSIVENESS (<= 768px)                             */
+    /* ===================================================================== */
+    @media (max-width: 768px) {
+      body {
+        padding: 0 14px 48px;
+      }
+
+      header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        padding: 10px 0;
+        margin-bottom: 18px;
+      }
+
+      .header-top {
+        width: 100%;
+      }
+
+      .btn-gh-mobile {
+        display: inline-block;
+      }
+
+      nav .btn-gh-desktop {
+        display: none;
+      }
+
+      nav {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        gap: 8px;
+        padding-bottom: 2px;
+      }
+
+      nav::-webkit-scrollbar {
+        display: none;
+      }
+
+      nav a {
+        background: #0d1322;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 5px 10px;
+        font-size: 0.8rem;
+      }
+
+      /* Swap wide SVG banner for native crisp mobile hero card */
+      .hero-banner-top {
+        display: none;
+      }
+
+      .mobile-hero {
+        display: block;
+      }
+
+      /* Make architecture SVG horizontally pinch-scrollable or clean on mobile */
+      .arch-scroll-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #07090e;
+        margin-bottom: 14px;
+      }
+
+      .arch-scroll-wrap .hero-banner {
+        min-width: 680px;
+        margin-bottom: 0;
+        border: none;
+      }
+
+      .hero-lead {
+        font-size: 0.94rem;
+        text-align: left;
+        margin-bottom: 22px;
+      }
+
+      section {
+        margin-top: 34px;
+        scroll-margin-top: 96px;
+      }
+
+      h2 {
+        font-size: 1.18rem;
+        margin-bottom: 12px;
+      }
+
+      .grid-3 {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+
+      .card {
+        padding: 14px 16px;
+      }
+
+      pre {
+        font-size: 0.78rem;
+        padding: 12px;
+      }
+
+      /* Convert wide data tables into native stacked mobile cards */
+      .table-wrap {
+        border: none;
+        background: transparent;
+        overflow-x: visible;
+      }
+
+      table, thead, tbody, th, td, tr {
+        display: block;
+        width: 100%;
+      }
+
+      thead {
+        display: none;
+      }
+
+      tbody tr {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 12px 14px;
+        margin-bottom: 10px;
+      }
+
+      tbody tr:last-child {
+        margin-bottom: 0;
+      }
+
+      tbody td {
+        padding: 4px 0;
+        border: none;
+        font-size: 0.88rem;
+        word-break: break-word;
+      }
+
+      /* Inline badge/ID + title on first two cells of mobile card rows */
+      tbody tr td:nth-child(1),
+      tbody tr td:nth-child(2) {
+        display: inline-block;
+        width: auto;
+        margin-right: 8px;
+        padding-bottom: 4px;
+      }
+
+      tbody tr td:nth-child(3),
+      tbody tr td:nth-child(4) {
+        display: block;
+        width: 100%;
+        color: var(--text-muted);
+      }
+
+      tbody tr td:nth-child(3) {
+        color: var(--text);
+        font-weight: 600;
+      }
+
+      /* For 3-column tables, cell 3 is the description */
+      .table-3col tbody tr td:nth-child(3) {
+        color: var(--text-muted);
+        font-weight: 400;
+        margin-top: 2px;
+      }
+
+      footer {
+        flex-direction: column;
+        text-align: center;
+        margin-top: 44px;
+      }
+    }
+
+    @media (max-width: 400px) {
+      .mobile-pills {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
 
   <header>
-    <a href="https://zahidoverflow.github.io/viperclaw/" class="brand">
-      <img src="logo.png" alt="ViperClaw Logo" />
-      <span>VIPERCLAW</span>
-      <span class="badge-ver">v1.1.0</span>
-    </a>
+    <div class="header-top">
+      <a href="https://zahidoverflow.github.io/viperclaw/" class="brand">
+        <img src="logo.png" alt="ViperClaw Logo" />
+        <span>VIPERCLAW</span>
+        <span class="badge-ver">v1.1.0</span>
+      </a>
+      <a href="https://github.com/zahidoverflow/viperclaw" class="btn-gh btn-gh-mobile" target="_blank" rel="noopener">GitHub ↗</a>
+    </div>
     <nav>
       <a href="#subsystems">Subsystems</a>
       <a href="#architecture">Architecture</a>
@@ -364,13 +642,34 @@
       <a href="#cli">CLI</a>
       <a href="#skills">12 Skills</a>
       <a href="#mcp">MCP Server</a>
-      <a href="#benchmarks">DVWA Benchmark</a>
-      <a href="https://github.com/zahidoverflow/viperclaw" class="btn-gh" target="_blank" rel="noopener">GitHub Repo ↗</a>
+      <a href="#benchmarks">Benchmarks</a>
+      <a href="https://github.com/zahidoverflow/viperclaw" class="btn-gh btn-gh-desktop" target="_blank" rel="noopener">GitHub Repo ↗</a>
     </nav>
   </header>
 
   <main>
-    <img src="banner.svg" alt="ViperClaw Banner" class="hero-banner" />
+    <!-- Desktop SVG Hero Banner -->
+    <img src="banner.svg" alt="ViperClaw Banner" class="hero-banner hero-banner-top" />
+
+    <!-- Mobile Responsive Hero Card -->
+    <div class="mobile-hero">
+      <div class="mobile-hero-top">
+        <img src="logo.png" alt="ViperClaw Emblem" />
+        <div>
+          <div class="mobile-hero-title">VIPERCLAW</div>
+          <span class="badge-ver">v1.1.0 · Zero Dependencies</span>
+        </div>
+      </div>
+      <div class="mobile-hero-sub">
+        The Universal AI Offensive Security Harness, Swarm Graph &amp; Proof Oracle
+      </div>
+      <div class="mobile-pills">
+        <div class="mobile-pill" style="color: #34d399; border-color: #10b981;">▸ Antigravity Ready</div>
+        <div class="mobile-pill" style="color: #22d3ee; border-color: #06b6d4;">▸ Claude Code &amp; Codex</div>
+        <div class="mobile-pill" style="color: #fb7185; border-color: #f43f5e;">▸ No Receipt, No Report</div>
+        <div class="mobile-pill" style="color: #c084fc; border-color: #a855f7;">▸ Stigmergic Swarm Graph</div>
+      </div>
+    </div>
 
     <p class="hero-lead">
       <b>ViperClaw</b> (<code>viperclaw</code> / <code>vclaw</code>) upgrades <b>Google Antigravity</b>, <b>Claude Code</b>, <b>OpenAI Codex</b>, and <b>Cursor</b> into a methodology-driven offensive security &amp; bug bounty platform—combining <b>12 offensive skills</b>, an <b>8-tool Phase-Gated MCP server</b>, a <b>Stigmergic SQLite Attack Graph</b>, <b>multi-language SAST/DAST analyzers</b>, and a <b>deterministic Wire-Check Proof Oracle</b> with <b>zero third-party runtime dependencies</b>.
@@ -410,8 +709,10 @@
     <!-- Architecture -->
     <section id="architecture">
       <h2>🧬 4-Layer Architecture</h2>
-      <img src="architecture.svg" alt="ViperClaw 4-Layer Offensive Architecture" class="hero-banner" />
-      <div class="table-wrap">
+      <div class="arch-scroll-wrap">
+        <img src="architecture.svg" alt="ViperClaw 4-Layer Offensive Architecture" class="hero-banner" />
+      </div>
+      <div class="table-wrap table-3col">
         <table>
           <thead>
             <tr>
@@ -483,7 +784,7 @@ viperclaw skills install --target all</code></pre>
       <h2>💻 Standalone CLI Usage (<code>viperclaw</code> / <code>vclaw</code>)</h2>
       <div class="code-wrap">
         <div class="code-header">
-          <span>CLI Workflows (Live DAST, White-Box SAST, JS Recon, HAR Fingerprinting &amp; Graph)</span>
+          <span>CLI Workflows (Live DAST, White-Box SAST, JS Recon, HAR &amp; Graph)</span>
           <button class="copy-btn" onclick="copyCode(this)">Copy</button>
         </div>
         <pre><code># 1. Stateful live web scan &amp; wire-verified exploit suite
@@ -504,7 +805,7 @@ viperclaw graph --db .viperclaw/graph.db --top-leads 10 --mermaid</code></pre>
     <!-- 12 Methodology Skills -->
     <section id="skills">
       <h2>🎯 The 12 Methodology-Driven Skills</h2>
-      <div class="table-wrap">
+      <div class="table-wrap table-3col">
         <table>
           <thead>
             <tr>
@@ -534,7 +835,7 @@ viperclaw graph --db .viperclaw/graph.db --top-leads 10 --mermaid</code></pre>
     <!-- 8 MCP Tools -->
     <section id="mcp">
       <h2>🔌 Phase-Gated MCP Server (<code>viperclaw mcp</code>)</h2>
-      <div class="table-wrap">
+      <div class="table-wrap table-3col">
         <table>
           <thead>
             <tr>
@@ -544,14 +845,14 @@ viperclaw graph --db .viperclaw/graph.db --top-leads 10 --mermaid</code></pre>
             </tr>
           </thead>
           <tbody>
-            <tr><td><code>viper_live_scan</code></td><td>Exploit / DAST</td><td>Execute a stateful, authenticated HTTP dynamic scan against a live web target, proving exploits over the wire.</td></tr>
-            <tr><td><code>viper_taint_scan</code></td><td>White-Box SAST</td><td>Run multi-language source-to-sink taint analysis across Python, TypeScript/JavaScript, Go, and PHP.</td></tr>
-            <tr><td><code>viper_harvest_js</code></td><td>Recon / SPA</td><td>Reconstruct Webpack/Vite/Next.js lazy chunks and extract endpoints, IDOR/SSRF candidates, GraphQL ops &amp; secrets.</td></tr>
-            <tr><td><code>viper_fingerprint_traffic</code></td><td>Recon / HAR</td><td>Fingerprint backend frameworks, WAFs, sibling API hosts, and error envelopes from <code>.har</code> captures or headers.</td></tr>
-            <tr><td><code>viper_graph_upsert</code></td><td>Swarm Graph</td><td>Upsert hosts, endpoints, lazy chunks, taint sinks, or findings into the Stigmergic SQLite Attack Graph.</td></tr>
-            <tr><td><code>viper_graph_leads</code></td><td>Swarm Graph</td><td>Query top pheromone-ranked attack leads and export a live Mermaid topology diagram.</td></tr>
-            <tr><td><code>viper_diff_oracle</code></td><td>Verification</td><td>Compare baseline vs. mutated/cross-tenant HTTP responses to confirm BOLA/IDOR and filter WAF Soft-200 blocks.</td></tr>
-            <tr><td><code>viper_verify_and_report</code></td><td>Reporting</td><td>Run the 7-Question Triage Gate, calculate exact CVSS v3.1 scores, and generate HackerOne/Bugcrowd Markdown.</td></tr>
+            <tr><td><code>viper_live_scan</code></td><td><b>Exploit / DAST</b></td><td>Execute a stateful, authenticated HTTP dynamic scan against a live web target, proving exploits over the wire.</td></tr>
+            <tr><td><code>viper_taint_scan</code></td><td><b>White-Box SAST</b></td><td>Run multi-language source-to-sink taint analysis across Python, TypeScript/JavaScript, Go, and PHP.</td></tr>
+            <tr><td><code>viper_harvest_js</code></td><td><b>Recon / SPA</b></td><td>Reconstruct Webpack/Vite/Next.js lazy chunks and extract endpoints, IDOR/SSRF candidates, GraphQL ops &amp; secrets.</td></tr>
+            <tr><td><code>viper_fingerprint_traffic</code></td><td><b>Recon / HAR</b></td><td>Fingerprint backend frameworks, WAFs, sibling API hosts, and error envelopes from <code>.har</code> captures or headers.</td></tr>
+            <tr><td><code>viper_graph_upsert</code></td><td><b>Swarm Graph</b></td><td>Upsert hosts, endpoints, lazy chunks, taint sinks, or findings into the Stigmergic SQLite Attack Graph.</td></tr>
+            <tr><td><code>viper_graph_leads</code></td><td><b>Swarm Graph</b></td><td>Query top pheromone-ranked attack leads and export a live Mermaid topology diagram.</td></tr>
+            <tr><td><code>viper_diff_oracle</code></td><td><b>Verification</b></td><td>Compare baseline vs. mutated/cross-tenant HTTP responses to confirm BOLA/IDOR and filter WAF Soft-200 blocks.</td></tr>
+            <tr><td><code>viper_verify_and_report</code></td><td><b>Reporting</b></td><td>Run the 7-Question Triage Gate, calculate exact CVSS v3.1 scores, and generate HackerOne/Bugcrowd Markdown.</td></tr>
           </tbody>
         </table>
       </div>
@@ -560,7 +861,7 @@ viperclaw graph --db .viperclaw/graph.db --top-leads 10 --mermaid</code></pre>
     <!-- DVWA Benchmark Scorecard -->
     <section id="benchmarks">
       <h2>🏆 Validated DVWA Benchmark Scorecard (100% Detection &amp; Wire Exploitation)</h2>
-      <p style="color: var(--text-muted); margin-bottom: 12px;">
+      <p style="color: var(--text-muted); margin-bottom: 12px; font-size: 0.92rem;">
         • <b>White-Box Taint SAST (<code>viperclaw taint</code>):</b> <b>19 / 19 (100%)</b> vulnerable modules detected across multi-hop transitive taint paths with <b>0 False Positives</b> on hardened <code>impossible.php</code> targets.<br/>
         • <b>Black-Box Live Wire Exploitation (<code>viperclaw scan</code>):</b> <b>14 / 14 (100%)</b> live DVWA vulnerability modules exploited and verified over HTTP with raw receipts:
       </p>
