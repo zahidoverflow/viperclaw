@@ -2,8 +2,10 @@
 
 > ViperClaw is an open-source, zero-dependency Python AI Pentesting Framework, Bug Bounty Automation MCP Server, Multi-Language SAST/DAST Taint Engine, Stigmergic Attack Graph, Wire-Check Proof Oracle, and 12 Methodology-Driven Skill Suite for Google Antigravity, Claude Code, OpenAI Codex, and Cursor.
 
+- **Website:** https://zahidoverflow.github.io/viperclaw/
 - **Repository:** https://github.com/zahidoverflow/viperclaw
-- **Latest Release:** https://github.com/zahidoverflow/viperclaw/releases/tag/v1.1.0
+- **Latest Release:** https://github.com/zahidoverflow/viperclaw/releases/tag/v1.2.0
+- **Complete User Guide:** https://github.com/zahidoverflow/viperclaw/blob/main/docs/README.md
 - **Author:** Zahidul Islam (@zahidoverflow) — https://github.com/zahidoverflow
 - **License:** MIT (100% clean-room open-source implementation)
 - **Runtime:** Pure Python 3.10+ standard library (Zero third-party runtime dependencies)
