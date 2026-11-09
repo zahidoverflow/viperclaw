@@ -66,10 +66,10 @@
   <!-- ===================================================================== -->
   <!-- LAYER 2: 12 SKILLS (LEFT) + PHASE-GATED MCP SERVER (RIGHT)            -->
   <!-- ===================================================================== -->
-  <!-- Left Box: 12 Methodology Skills -->
+  <!-- Left Box: 14 Methodology Skills -->
   <rect x="36" y="172" width="510" height="142" rx="10" fill="#ffffff" stroke="#059669" stroke-width="1.5"/>
   <text x="56" y="196" fill="#047857" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="12" font-weight="800" letter-spacing="0.8">
-    LAYER 2A · 12 METHODOLOGY-DRIVEN SKILLS (skills/*/SKILL.md)
+    LAYER 2A · 14 METHODOLOGY-DRIVEN SKILLS (skills/*/SKILL.md)
   </text>
   <g transform="translate(56, 208)" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="11.5" font-weight="600">
     <rect x="0" y="0" width="228" height="26" rx="5" fill="#ecfdf5" stroke="#a7f3d0" stroke-width="1"/>
@@ -85,7 +85,7 @@
     <rect x="0" y="64" width="228" height="26" rx="5" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1"/>
     <text x="10" y="81" fill="#1e293b">05 viper-taint-sast</text>
     <rect x="240" y="64" width="230" height="26" rx="5" fill="#fff1f2" stroke="#fecdd3" stroke-width="1"/>
-    <text x="250" y="81" fill="#be123c">06 viper-proof-judge (+6 more)</text>
+    <text x="250" y="81" fill="#be123c">06 viper-proof-judge (+8 more)</text>
   </g>
 
   <!-- Bridge Arrow Between Skills and MCP -->
@@ -94,7 +94,7 @@
   <!-- Right Box: Phase-Gated MCP Server -->
   <rect x="576" y="172" width="508" height="142" rx="10" fill="#ffffff" stroke="#0284c7" stroke-width="1.5"/>
   <text x="596" y="196" fill="#0369a1" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="12" font-weight="800" letter-spacing="0.8">
-    LAYER 2B · PHASE-GATED MCP SERVER (viperclaw mcp · 8 Tools)
+    LAYER 2B · PHASE-GATED MCP SERVER (viperclaw mcp · 13 Tools)
   </text>
   <g transform="translate(596, 208)" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="11.5" font-weight="600">
     <rect x="0" y="0" width="228" height="26" rx="5" fill="#f0f9ff" stroke="#bae6fd" stroke-width="1"/>

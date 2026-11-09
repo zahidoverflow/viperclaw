@@ -1,4 +1,4 @@
-# 📘 ViperClaw Complete Usage & Best-Utilization Guide (`v1.2.0`)
+# 📘 ViperClaw Complete Usage & Best-Utilization Guide (`v2.0.0`)
 
 Welcome to the official **ViperClaw User Guide**. Whether you are completely new to security testing ("noob-friendly" step-by-step) or an experienced bug bounty hunter looking to automate your workflow inside **Google Antigravity**, **Claude Code**, **OpenAI Codex**, or **Cursor**, this guide explains **what every feature does, when to use it, and how to combine them for maximum results**.
 
@@ -33,7 +33,7 @@ When people try to use AI for penetration testing or bug bounty hunting, they us
 | Component | What It Is | How You Use It |
 | :--- | :--- | :--- |
 | **1. The CLI (`viperclaw` / `vclaw`)** | A fast command-line tool you can run in any terminal. | Run `viperclaw scan`, `viperclaw taint`, `viperclaw harvest-js`, `viperclaw fingerprint`, `viperclaw graph`, or `viperclaw verify`. |
-| **2. The 12 Offensive Skills (`skills/`)** | 12 step-by-step hunting playbooks (`SKILL.md`) written for AI coding agents. | Installed once with `viperclaw skills install --target all`. Your AI agent automatically reads them when you ask it to hunt bugs. |
+| **2. The 14 Offensive Skills (`skills/`)** | 12 step-by-step hunting playbooks (`SKILL.md`) written for AI coding agents. | Installed once with `viperclaw skills install --target all`. Your AI agent automatically reads them when you ask it to hunt bugs. |
 | **3. The MCP Server (`viperclaw mcp`)** | A bridge that lets your AI agent run ViperClaw's analyzers directly as native tools. | Added once to your agent's `mcp_config.json`. Gives your AI 8 deterministic security tools (`viper_live_scan`, `viper_taint_scan`, etc.). |
 
 ---
@@ -56,7 +56,7 @@ viperclaw --version
 ```
 *(Tip: You can type either `viperclaw` or the shorter alias `vclaw` for any command!)*
 
-### Step 2: Install the 12 Offensive Skills into Your AI Agent
+### Step 2: Install the 14 Offensive Skills into Your AI Agent
 Tell ViperClaw to copy its 12 hunting playbooks into your AI coding assistant's skill folder:
 
 ```bash

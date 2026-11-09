@@ -15,9 +15,14 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from viperclaw import __version__
+from viperclaw.analyzers.browser_bridge import BrowserBridge
+from viperclaw.analyzers.graphql_engine import GraphQLEngine
 from viperclaw.analyzers.js_harvester import JSHarvester
+from viperclaw.analyzers.jwt_engine import JWTEngine
 from viperclaw.analyzers.live_scanner import LiveScanner
+from viperclaw.analyzers.oob_engine import OOBEngine
 from viperclaw.analyzers.proxy_fingerprint import ProxyFingerprinter
+from viperclaw.analyzers.race_engine import RaceEngine
 from viperclaw.analyzers.taint import TaintAnalyzer
 from viperclaw.core.graph import AttackGraph
 from viperclaw.core.oracle import ProofOracle
@@ -133,7 +138,44 @@ def build_parser() -> argparse.ArgumentParser:
     p_fp.add_argument("--domain", "--target-domain", dest="domain", default="", help="Optional root domain filter")
     p_fp.add_argument("--output", "-o", default="", help="Optional output file path for JSON results")
 
-    # 5. verify
+    # 5. race (barrier-synchronized concurrency burst)
+    p_race = sub.add_parser("race", help="Run a barrier-synchronized concurrent HTTP race condition burst (TOCTOU)")
+    p_race.add_argument("url", help="Target URL for race burst")
+    p_race.add_argument("--method", "-X", default="POST", help="HTTP method (default: POST)")
+    p_race.add_argument("--body", "-d", default="", help="Request body payload")
+    p_race.add_argument("--cookie", default="", help="Optional Cookie header")
+    p_race.add_argument("--auth", default="", help="Optional Authorization header (e.g. 'Bearer ...')")
+    p_race.add_argument("--concurrency", "-c", type=int, default=15, help="Number of synchronized socket workers (default: 15)")
+    p_race.add_argument("--success-indicator", default="", help="Substring indicating a successful state transition")
+    p_race.add_argument("--output", "-o", default="", help="Optional output file path for JSON results")
+
+    # 6. jwt (decode, crack HMAC, forge alg:none / kid / confusion & replay)
+    p_jwt = sub.add_parser("jwt", help="Decode JWT, crack weak HMAC secrets, synthesize forged tokens & optionally replay")
+    p_jwt.add_argument("token", help="JWT token string")
+    p_jwt.add_argument("--target-url", default="", help="Optional target URL to replay forged tokens against")
+    p_jwt.add_argument("--public-key", default="", help="Optional path to RSA public key PEM for RS256->HS256 confusion")
+    p_jwt.add_argument("--output", "-o", default="", help="Optional output file path for JSON results")
+
+    # 7. graphql (introspection bypass, clairvoyance & batching)
+    p_gql = sub.add_parser("graphql", help="Scan a GraphQL endpoint for introspection bypass, Clairvoyance field leaks & batching")
+    p_gql.add_argument("url", help="GraphQL endpoint URL")
+    p_gql.add_argument("--auth", default="", help="Optional Authorization header")
+    p_gql.add_argument("--cookie", default="", help="Optional Cookie header")
+    p_gql.add_argument("--output", "-o", default="", help="Optional output file path for JSON results")
+
+    # 8. oob (HMAC canary & blind payload matrix)
+    p_oob = sub.add_parser("oob", help="Generate HMAC-tagged Out-of-Band (OOB) blind exploit payloads or verify a canary")
+    p_oob.add_argument("--callback", default="http://127.0.0.1:9999", help="Callback base URL (default: http://127.0.0.1:9999)")
+    p_oob.add_argument("--param", default="url", help="Target parameter name")
+    p_oob.add_argument("--verify-canary", default="", help="Verify an incoming canary token string")
+
+    # 9. browser (BrowserOS Neo bridge)
+    p_br = sub.add_parser("browser", help="Output BrowserOS Neo JS instrumentation scripts or ingest a browser DOM/storage snapshot")
+    p_br.add_argument("--scripts", action="store_true", help="Output JS snippets for BrowserOS evaluate_in_page")
+    p_br.add_argument("--ingest", default="", help="Path to JSON snapshot or raw JSON string from BrowserOS")
+    p_br.add_argument("--graph-db", "--db", dest="graph_db", default=".viperclaw/graph.db", help="SQLite attack graph path")
+
+    # 10. verify
     p_ver = sub.add_parser("verify", help="Run the 7-Question Triage Gate & CVSS 3.1 Oracle on a candidate finding or JSON file")
     p_ver.add_argument("finding_file", nargs="?", default="", help="Optional JSON file containing candidate finding(s)")
     p_ver.add_argument("--title", default="", help="Vulnerability title")
@@ -144,27 +186,27 @@ def build_parser() -> argparse.ArgumentParser:
     p_ver.add_argument("--sarif-out", "--report-sarif", dest="sarif_out", default="", help="Optional path to write SARIF 2.1.0 report")
     p_ver.add_argument("--report-out", "--report-md", dest="report_out", default="", help="Optional path to write Markdown report")
 
-    # 6. graph
+    # 11. graph
     p_graph = sub.add_parser("graph", help="Inspect Stigmergic Attack Surface Graph leads or export Mermaid diagram")
     p_graph.add_argument("--db", "--graph-db", dest="db", default=".viperclaw/graph.db", help="Path to SQLite graph DB")
     p_graph.add_argument("--mermaid", action="store_true", help="Output Mermaid flowchart")
     p_graph.add_argument("--top-leads", type=int, default=0, help="Return top N prioritized unverified attack leads")
     p_graph.add_argument("--decay", type=float, default=0.0, help="Apply pheromone evaporation factor (e.g. 0.85)")
 
-    # 7. skills
-    p_skills = sub.add_parser("skills", help="List or install the 12 ViperClaw methodology skills for Antigravity, Claude Code, Codex, or Cursor")
+    # 12. skills
+    p_skills = sub.add_parser("skills", help="List or install the 14 ViperClaw methodology skills for Antigravity, Claude Code, Codex, or Cursor")
     p_skills.add_argument("action", choices=["list", "install"], help="Action to perform")
     p_skills.add_argument("--target", choices=["antigravity", "claude", "codex", "cursor", "all"], default="antigravity")
     p_skills.add_argument("--dest", "--dest-dir", dest="dest", default=None, help="Custom destination directory override")
     p_skills.add_argument("--dry-run", action="store_true", help="Preview installation paths without copying files")
 
-    # 8. mcp
+    # 13. mcp
     sub.add_parser("mcp", help="Start the Phase-Gated Model Context Protocol (MCP) JSON-RPC server over stdio")
 
     return parser
 
 
-def _verify_single_item(item: Dict[str, Any]) -> tuple[ Any, VerifiedFinding]:
+def _verify_single_item(item: Dict[str, Any]) -> tuple[Any, VerifiedFinding]:
     title = item.get("title", "")
     vuln_class = item.get("vuln_class", "Broken Object Level Authorization (BOLA/IDOR)")
     asset = item.get("asset") or item.get("endpoint") or ""
@@ -305,6 +347,74 @@ def main(argv: List[str] | None = None) -> int:
             Path(args.output).parent.mkdir(parents=True, exist_ok=True)
             Path(args.output).write_text(out_str, encoding="utf-8")
         print(out_str)
+        return 0
+
+    if args.command == "race":
+        hdrs: Dict[str, str] = {}
+        if args.cookie:
+            hdrs["Cookie"] = args.cookie
+        if args.auth:
+            hdrs["Authorization"] = args.auth
+        rep = RaceEngine.execute_burst(
+            url=args.url,
+            method=args.method,
+            headers=hdrs,
+            body=args.body,
+            concurrency=args.concurrency,
+            success_indicator=args.success_indicator,
+        )
+        out_str = json.dumps(rep.to_dict(), indent=2)
+        if args.output:
+            Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+            Path(args.output).write_text(out_str, encoding="utf-8")
+        print(out_str)
+        return 0
+
+    if args.command == "jwt":
+        pem = ""
+        if args.public_key and Path(args.public_key).is_file():
+            pem = Path(args.public_key).read_text(encoding="utf-8")
+        rep = JWTEngine.analyze_and_attack(
+            token=args.token,
+            rsa_public_key_pem=pem,
+            target_url=args.target_url,
+        )
+        out_str = json.dumps(rep.to_dict(), indent=2)
+        if args.output:
+            Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+            Path(args.output).write_text(out_str, encoding="utf-8")
+        print(out_str)
+        return 0
+
+    if args.command == "graphql":
+        hdrs_gql: Dict[str, str] = {}
+        if args.auth:
+            hdrs_gql["Authorization"] = args.auth
+        if args.cookie:
+            hdrs_gql["Cookie"] = args.cookie
+        rep = GraphQLEngine.scan_endpoint(args.url, headers=hdrs_gql)
+        out_str = json.dumps(rep.to_dict(), indent=2)
+        if args.output:
+            Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+            Path(args.output).write_text(out_str, encoding="utf-8")
+        print(out_str)
+        return 0
+
+    if args.command == "oob":
+        if args.verify_canary:
+            valid, vclass, param = OOBEngine.verify_canary(args.verify_canary)
+            print(json.dumps({"valid": valid, "vuln_class": vclass, "parameter": param}, indent=2))
+            return 0 if valid else 2
+        print(json.dumps(OOBEngine.build_payload_matrix(args.callback, args.param), indent=2))
+        return 0
+
+    if args.command == "browser":
+        if args.ingest:
+            p = Path(args.ingest)
+            raw = p.read_text(encoding="utf-8") if p.is_file() else args.ingest
+            print(json.dumps(BrowserBridge.ingest_snapshot(raw, graph_db=args.graph_db or None), indent=2))
+            return 0
+        print(json.dumps(BrowserBridge.get_instrumentation_scripts(), indent=2))
         return 0
 
     if args.command == "verify":

@@ -2,13 +2,27 @@
 
 from __future__ import annotations
 
+import base64
+import hashlib
+import hmac
+import http.server
 import json
+import socketserver
+import threading
+import time
+import urllib.request
 from pathlib import Path
+from typing import Any
 
+from viperclaw.analyzers.browser_bridge import BrowserBridge
+from viperclaw.analyzers.graphql_engine import GraphQLEngine
 from viperclaw.analyzers.js_harvester import JSHarvester
+from viperclaw.analyzers.jwt_engine import JWTEngine
+from viperclaw.analyzers.oob_engine import OOBEngine
 from viperclaw.analyzers.proxy_fingerprint import ProxyFingerprinter
+from viperclaw.analyzers.race_engine import RaceEngine
 from viperclaw.analyzers.taint import TaintAnalyzer
-from viperclaw.cli import get_skills_dir, list_available_skills, main
+from viperclaw.cli import list_available_skills, main
 from viperclaw.core.graph import AttackGraph
 from viperclaw.core.oracle import HttpSample, ProofOracle
 from viperclaw.core.reporter import ReportGenerator, VerifiedFinding
@@ -62,7 +76,6 @@ def test_proof_oracle_waf_and_bola_diff() -> None:
 
 
 def test_proof_oracle_7_gates_and_cvss() -> None:
-    # 1. Valid High/Critical BOLA finding passes all 7 gates
     verdict_ok = ProofOracle.evaluate_7_gates(
         title="Cross-Tenant BOLA on /api/v1/orgs/{id}/secrets Exposes Production API Keys",
         evidence_request="GET /api/v1/orgs/99/secrets HTTP/1.1\nHost: api.example.com\nAuthorization: Bearer user_b",
@@ -74,7 +87,6 @@ def test_proof_oracle_7_gates_and_cvss() -> None:
     assert verdict_ok.verdict == "VERIFIED_SUBMITTABLE"
     assert verdict_ok.cvss_score >= 7.0
 
-    # 2. Scanner noise (missing X-Frame-Options) is automatically rejected
     verdict_noise = ProofOracle.evaluate_7_gates(
         title="Missing X-Frame-Options Header on Login Page",
         evidence_request="GET /login HTTP/1.1\nHost: example.com",
@@ -157,7 +169,6 @@ $stmt->execute();
     classes = {f["vuln_class"] for f in scan["flows"]}
     assert "Command Injection / RCE" in classes
     assert "SQL Injection (SQLi)" in classes
-    # Confirm sqli_impossible.php produced 0 false positives
     flagged_files = {Path(f["file_path"]).name for f in scan["flows"]}
     assert "sqli_impossible.php" not in flagged_files
 
@@ -181,7 +192,7 @@ def test_mcp_server_jsonrpc(tmp_path: Path) -> None:
 
     list_resp = handle_jsonrpc_message({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
     assert list_resp is not None
-    assert len(list_resp["result"]["tools"]) == 8
+    assert len(list_resp["result"]["tools"]) == 13
 
     db_path = str(tmp_path / "mcp_graph.db")
     call_resp = handle_jsonrpc_message(
@@ -204,9 +215,9 @@ def test_mcp_server_jsonrpc(tmp_path: Path) -> None:
     assert call_resp["result"]["isError"] is False
 
 
-def test_all_12_skills_and_cli(tmp_path: Path) -> None:
+def test_all_14_skills_and_cli(tmp_path: Path) -> None:
     skills = list_available_skills()
-    assert len(skills) == 12
+    assert len(skills) == 14
     for sk in skills:
         text = Path(sk["path"]).read_text(encoding="utf-8")
         assert text.startswith("---\nname: ")
@@ -215,7 +226,6 @@ def test_all_12_skills_and_cli(tmp_path: Path) -> None:
     rc = main(["skills", "install", "--target", "antigravity", "--dest", str(tmp_path / "skills"), "--dry-run"])
     assert rc == 0
 
-    sarif_file = tmp_path / "out.sarif"
     finding = VerifiedFinding(
         finding_id="VC-100",
         title="Verified SSRF on Webhook Tester",
@@ -274,10 +284,146 @@ def handler(cursor):
     assert sarif_out.exists()
 
 
+def test_jwt_graphql_race_oob_and_browser_engines(tmp_path: Path) -> None:
+    # 1. JWTEngine: create HS256 token signed with 'supersecret', crack it, and forge tokens
+    hdr_b64 = base64.urlsafe_b64encode(b'{"alg":"HS256","typ":"JWT","kid":"key_1"}').decode().rstrip("=")
+    pay_b64 = base64.urlsafe_b64encode(b'{"sub":"user_42","role":"user"}').decode().rstrip("=")
+    sig = base64.urlsafe_b64encode(
+        hmac.new(b"supersecret", f"{hdr_b64}.{pay_b64}".encode(), hashlib.sha256).digest()
+    ).decode().rstrip("=")
+    sample_jwt = f"{hdr_b64}.{pay_b64}.{sig}"
+
+    jwt_rep = JWTEngine.analyze_and_attack(sample_jwt, rsa_public_key_pem="-----BEGIN PUBLIC KEY-----\nMIIB...\n")
+    assert jwt_rep.cracked_secret == "supersecret"
+    assert "alg_none" in jwt_rep.forged_tokens
+    assert "cracked_hmac_admin" in jwt_rep.forged_tokens
+    assert "kid_dev_null" in jwt_rep.forged_tokens
+    assert "rs256_to_hs256_confusion" in jwt_rep.forged_tokens
+
+    # 2. OOBEngine: generate canary, verify HMAC, and test live ephemeral listener
+    matrix = OOBEngine.build_payload_matrix("http://127.0.0.1:9999", parameter="webhook_url")
+    ssrf_canary = matrix["canaries"]["ssrf"]
+    valid, vclass, param = OOBEngine.verify_canary(ssrf_canary)
+    assert valid is True and vclass == "ssrf" and param == "webhookurl"
+
+    def _trigger(base_url: str) -> None:
+        urllib.request.urlopen(f"{base_url}/{ssrf_canary}", timeout=2.0).read()
+
+    oob_res = OOBEngine.run_ephemeral_listener(trigger_fn=_trigger)
+    assert oob_res["verified_hits_count"] == 1
+    assert oob_res["hits"][0]["vuln_class"] == "ssrf"
+
+    # 3. BrowserBridge: ingest simulated BrowserOS evaluate_in_page snapshot
+    db_file = tmp_path / "browser_graph.db"
+    snap = {
+        "url": "https://app.target.tld/dashboard",
+        "origin": "https://app.target.tld",
+        "cookies": f"session={sample_jwt}",
+        "localStorage": {"auth_token": sample_jwt},
+        "metas": {"csrf-token": "csrf_998877"},
+        "nextData": '{"buildId":"123","page":"/admin","chunks":["_next/static/chunks/admin-secret-9911.js"]}',
+        "hookedRequests": [{"type": "fetch", "url": "/api/v1/orgs/101/billing?user_id=5", "method": "GET"}],
+    }
+    ingested = BrowserBridge.ingest_snapshot(snap, graph_db=str(db_file))
+    assert ingested["discovered_jwts_count"] == 1
+    assert ingested["jwt_analyses"][0]["cracked_secret"] == "supersecret"
+    assert any("admin-secret-9911.js" in c for c in ingested["lazy_chunks"])
+    assert "/api/v1/orgs/101/billing?user_id=5" in ingested["endpoints"]
+
+    # 4. RaceEngine & GraphQLEngine against an ephemeral local multi-threaded server
+    redeemed_flag = {"redeemed": False}
+
+    class _LabHandler(http.server.BaseHTTPRequestHandler):
+        def do_POST(self) -> None:  # noqa: N802
+            length = int(self.headers.get("Content-Length") or 0)
+            raw_body = self.rfile.read(length).decode("utf-8", errors="replace") if length > 0 else ""
+            if self.path == "/api/coupon/redeem":
+                if not redeemed_flag["redeemed"]:
+                    # Deliberate TOCTOU sleep window before setting flag
+                    time.sleep(0.04)
+                    redeemed_flag["redeemed"] = True
+                    self.send_response(200)
+                    self.end_headers()
+                    self.wfile.write(b'{"status":"COUPON_APPLIED"}')
+                else:
+                    self.send_response(409)
+                    self.end_headers()
+                    self.wfile.write(b'{"status":"ALREADY_REDEEMED"}')
+                return
+            if self.path == "/graphql":
+                parsed_gql = json.loads(raw_body)
+                if isinstance(parsed_gql, list):
+                    self.send_response(200)
+                    self.end_headers()
+                    self.wfile.write(json.dumps([{"data": {"__typename": "Query"}} for _ in parsed_gql]).encode())
+                    return
+                q_str = parsed_gql.get("query", "")
+                if "__schema" in q_str:
+                    resp_obj = {
+                        "data": {
+                            "__schema": {
+                                "queryType": {"name": "Query"},
+                                "mutationType": {"name": "Mutation"},
+                                "types": [
+                                    {
+                                        "kind": "OBJECT",
+                                        "name": "Query",
+                                        "fields": [{"name": "userAccount", "args": [{"name": "userId"}]}],
+                                    }
+                                ],
+                            }
+                        }
+                    }
+                elif "a15:" in q_str:
+                    resp_obj = {"data": {f"a{i}": "Query" for i in range(1, 16)}}
+                else:
+                    resp_obj = {"errors": [{"message": 'Cannot query field. Did you mean "secretAdminToken" or "userProfile"?'}]}
+                self.send_response(200)
+                self.end_headers()
+                self.wfile.write(json.dumps(resp_obj).encode())
+                return
+
+        def log_message(self, format: str, *args: Any) -> None:  # noqa: A002
+            return
+
+    class _ThreadedHTTP(socketserver.ThreadingMixIn, http.server.HTTPServer):
+        allow_reuse_address = True
+
+    srv = _ThreadedHTTP(("127.0.0.1", 0), _LabHandler)
+    port = srv.server_address[1]
+    t = threading.Thread(target=srv.serve_forever, daemon=True)
+    t.start()
+    try:
+        race_rep = RaceEngine.execute_burst(
+            url=f"http://127.0.0.1:{port}/api/coupon/redeem",
+            method="POST",
+            body="code=VIPER2026",
+            concurrency=8,
+            success_indicator="COUPON_APPLIED",
+            max_expected_successes=1,
+        )
+        assert race_rep.race_window_proven is True
+        assert race_rep.success_count >= 2
+
+        gql_rep = GraphQLEngine.scan_endpoint(f"http://127.0.0.1:{port}/graphql")
+        assert gql_rep.introspection_enabled is True
+        assert gql_rep.batching_allowed is True
+        assert gql_rep.alias_amplification_allowed is True
+        assert "Query.userAccount(userId)" in gql_rep.bola_candidate_fields
+
+        suggestions = GraphQLEngine.extract_clairvoyance_suggestions(
+            'Cannot query field "admin_vc". Did you mean "secretAdminToken" or "internalConfig"?'
+        )
+        assert "secretAdminToken" in suggestions
+        assert "internalConfig" in suggestions
+    finally:
+        srv.shutdown()
+        srv.server_close()
+
+
 def test_qa_adversarial_regression_suite(tmp_path: Path) -> None:
     from viperclaw.analyzers.live_scanner import LiveScanner
 
-    # 1. Corrupt / null HAR resilience
     bad_har = tmp_path / "corrupt.har"
     bad_har.write_text("{corrupt_json", encoding="utf-8")
     assert ProxyFingerprinter.analyze_har(bad_har).discovered_hosts == []
@@ -286,13 +432,11 @@ def test_qa_adversarial_regression_suite(tmp_path: Path) -> None:
     null_har.write_text('{"log": null}', encoding="utf-8")
     assert ProxyFingerprinter.analyze_har(null_har).discovered_hosts == []
 
-    # 2. Lowercase & invalid CVSS metric resilience
     score, sev, _ = ProofOracle.calculate_cvss31(av="n", ac="l", pr="l", ui="n", scope="u", c="h", i="n", a="n")
     assert score == 6.5 and sev == "MEDIUM"
     score_inv, _, _ = ProofOracle.calculate_cvss31(av="INVALID_METRIC")
     assert score_inv > 0.0
 
-    # 3. Deep JSON recursion bomb & Soft-200 JSON error envelope rejection
     deep_json = "{" + '"a":{' * 500 + '"val":1' + "}" * 500 + "}"
     v_deep = ProofOracle.compare_samples(HttpSample(200, body=deep_json), HttpSample(200, body=deep_json))
     assert not v_deep.is_waf_soft_block
@@ -302,7 +446,6 @@ def test_qa_adversarial_regression_suite(tmp_path: Path) -> None:
     v_err = ProofOracle.compare_samples(HttpSample(200, body=err1), HttpSample(200, body=err2), HttpSample(401, body=""))
     assert v_err.bola_CONFIRMED_hint is False
 
-    # 4. Python augmented assignment (`+=`), safe re-assignment de-tainting, mixed module scope, and trailing comments
     py_edge = tmp_path / "edge.py"
     py_edge.write_text(
         """from flask import request
@@ -328,18 +471,13 @@ os.system(top_arg)
     assert ("cmd",) in sink_vars
     assert ("top_arg",) in sink_vars
 
-    # 5. Inline comment sink suppression in JS
     js_comment = tmp_path / "comment.js"
     js_comment.write_text("const x = req.query.a;\nconst y = x; // do not call eval(y)\n", encoding="utf-8")
     assert TaintAnalyzer.analyze_file(js_comment) == []
 
-    # 6. CSRF attribute order & unreachable port resilience
     assert LiveScanner.extract_csrf('<input type="hidden" value="tok_abc" name="csrf_token">') == "tok_abc"
     sc = LiveScanner("http://127.0.0.1:59997", timeout=0.3)
     assert sc.run_scan(graph_db=str(tmp_path / "g.db")).verified_findings == []
 
-    # 7. Subpath base_url in JSHarvester & Markdown fence escaping
     js_sub = JSHarvester.analyze_content('import("chunks/adm.js")', base_url="https://cdn.example.com/subpath")
     assert js_sub.lazy_chunks == ["https://cdn.example.com/subpath/chunks/adm.js"]
-
-
