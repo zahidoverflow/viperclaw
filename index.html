@@ -260,6 +260,51 @@
       text-overflow: ellipsis;
     }
 
+    .mobile-arch {
+      display: none;
+      margin-bottom: 14px;
+    }
+
+    .arch-layer {
+      background: #0d1322;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+    }
+
+    .arch-layer-tag {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .arch-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 0.74rem;
+    }
+
+    .arch-chip {
+      background: #131c31;
+      border: 1px solid #1e293b;
+      border-radius: 5px;
+      padding: 4px 8px;
+      color: #e2e8f0;
+    }
+
+    .arch-arrow {
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--emerald-light);
+      padding: 4px 0;
+    }
+
     .hero-lead {
       font-size: 1.03rem;
       color: var(--text-muted);
@@ -454,6 +499,9 @@
       header {
         flex-direction: column;
         align-items: stretch;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
         gap: 10px;
         padding: 10px 0;
         margin-bottom: 18px;
@@ -461,6 +509,7 @@
 
       .header-top {
         width: 100%;
+        min-width: 0;
       }
 
       .btn-gh-mobile {
@@ -472,6 +521,10 @@
       }
 
       nav {
+        display: flex;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
         flex-wrap: nowrap;
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
@@ -485,6 +538,7 @@
       }
 
       nav a {
+        flex-shrink: 0;
         background: #0d1322;
         border: 1px solid var(--border);
         border-radius: 6px;
@@ -492,29 +546,15 @@
         font-size: 0.8rem;
       }
 
-      /* Swap wide SVG banner for native crisp mobile hero card */
-      .hero-banner-top {
+      /* Swap wide SVG banner & architecture SVG for native crisp mobile layouts */
+      .hero-banner-top,
+      .arch-desktop {
         display: none;
       }
 
-      .mobile-hero {
+      .mobile-hero,
+      .mobile-arch {
         display: block;
-      }
-
-      /* Make architecture SVG horizontally pinch-scrollable or clean on mobile */
-      .arch-scroll-wrap {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        background: #07090e;
-        margin-bottom: 14px;
-      }
-
-      .arch-scroll-wrap .hero-banner {
-        min-width: 680px;
-        margin-bottom: 0;
-        border: none;
       }
 
       .hero-lead {
@@ -545,6 +585,9 @@
       pre {
         font-size: 0.78rem;
         padding: 12px;
+        white-space: pre-wrap;
+        word-break: break-word;
+        overflow-x: hidden;
       }
 
       /* Convert wide data tables into native stacked mobile cards */
@@ -709,8 +752,47 @@
     <!-- Architecture -->
     <section id="architecture">
       <h2>🧬 4-Layer Architecture</h2>
-      <div class="arch-scroll-wrap">
+      <div class="arch-desktop">
         <img src="architecture.svg" alt="ViperClaw 4-Layer Offensive Architecture" class="hero-banner" />
+      </div>
+      <div class="mobile-arch">
+        <div class="arch-layer" style="border-color: #334155;">
+          <div class="arch-layer-tag" style="color: #94a3b8;">Layer 1 · AI Coding Harness</div>
+          <div class="arch-chips">
+            <span class="arch-chip" style="border-color:#10b981;color:#34d399;">▸ Antigravity (agy)</span>
+            <span class="arch-chip" style="border-color:#06b6d4;color:#22d3ee;">▸ Claude Code</span>
+            <span class="arch-chip" style="border-color:#a855f7;color:#c084fc;">▸ OpenAI Codex</span>
+            <span class="arch-chip" style="border-color:#38bdf8;color:#7dd3fc;">▸ Cursor / Windsurf</span>
+          </div>
+        </div>
+        <div class="arch-arrow">▼ SKILL.md Playbooks + JSON-RPC 2.0 stdio ▼</div>
+        <div class="arch-layer" style="border-color: #10b981;">
+          <div class="arch-layer-tag" style="color: #34d399;">Layer 2A &amp; 2B · 12 Skills + 8-Tool MCP Server</div>
+          <div class="arch-chips">
+            <span class="arch-chip">12 Offensive SKILL.md Playbooks</span>
+            <span class="arch-chip" style="color:#67e8f9;">viperclaw mcp (8 Phase-Gated Tools)</span>
+          </div>
+        </div>
+        <div class="arch-arrow" style="color: #22d3ee;">▼ Pure-Python 3.10+ Execution ▼</div>
+        <div class="arch-layer" style="border-color: #06b6d4;">
+          <div class="arch-layer-tag" style="color: #22d3ee;">Layer 3 · Core Offensive Analyzers (Zero Deps)</div>
+          <div class="arch-chips">
+            <span class="arch-chip">[01] Live HTTP Scanner</span>
+            <span class="arch-chip">[02] Polyglot Taint SAST</span>
+            <span class="arch-chip">[03] JS Harvester</span>
+            <span class="arch-chip">[04] HAR Fingerprinter</span>
+            <span class="arch-chip">[05] SQLite Swarm Graph</span>
+          </div>
+        </div>
+        <div class="arch-arrow" style="color: #fb7185;">▼ Raw Wire Proof Receipts ▼</div>
+        <div class="arch-layer" style="border-color: #f43f5e;">
+          <div class="arch-layer-tag" style="color: #fb7185;">Layer 4 · 7-Gate Proof Oracle ("No Receipt, No Report")</div>
+          <div class="arch-chips">
+            <span class="arch-chip" style="color:#fda4af;">WAF Soft-200 &amp; BOLA Diff</span>
+            <span class="arch-chip" style="color:#fdba74;">7-Gate Triage + CVSS 3.1</span>
+            <span class="arch-chip" style="color:#6ee7b7;">H1 MD + SARIF 2.1.0</span>
+          </div>
+        </div>
       </div>
       <div class="table-wrap table-3col">
         <table>
