@@ -98,12 +98,12 @@ Both `viperclaw` and the shorthand `vclaw` alias provide standalone CLI subcomma
 
 | CLI&nbsp;Command | Purpose &amp; Key Flags |
 | :--- | :--- |
-| `viperclaw`&nbsp;`scan`&nbsp;`<url>` | Stateful live HTTP web scanner &amp; wire-verified exploit runner (`--db`, `--report-md`, `--report-sarif`). |
-| `viperclaw`&nbsp;`taint`&nbsp;`<path>` | Multi-language source-to-sink taint SAST for Python, TS/JS, Go &amp; PHP (`--db`, `--output`). |
-| `viperclaw`&nbsp;`harvest&#8209;js`&nbsp;`<path>` | Webpack / Vite / Next.js lazy-chunk, hidden endpoint &amp; secret harvester (`--base-url`, `--db`, `--output`). |
-| `viperclaw`&nbsp;`fingerprint`&nbsp;`<har>` | Caido / Burp `.har` backend framework &amp; sibling API fingerprinter (`--domain`, `--output`). |
-| `viperclaw`&nbsp;`graph` | Query top pheromone-ranked attack leads &amp; export Mermaid topology (`--db`, `--top-leads`, `--mermaid`). |
-| `viperclaw`&nbsp;`verify`&nbsp;`[file]` | Run the 7-Question Triage Gate, CVSS 3.1 calculator &amp; H1 MD / SARIF exporter (`--report-md`, `--report-sarif`). |
+| <code>viperclaw&nbsp;scan&nbsp;&lt;url&gt;</code> | Stateful live HTTP web scanner &amp; wire-verified exploit runner (`--db`, `--report-md`, `--report-sarif`). |
+| <code>viperclaw&nbsp;taint&nbsp;&lt;path&gt;</code> | Multi-language source-to-sink taint SAST for Python, TS/JS, Go &amp; PHP (`--db`, `--output`). |
+| <code>viperclaw&nbsp;harvest&#8209;js&nbsp;&lt;path&gt;</code> | Webpack / Vite / Next.js lazy-chunk, hidden endpoint &amp; secret harvester (`--base-url`, `--db`, `--output`). |
+| <code>viperclaw&nbsp;fingerprint&nbsp;&lt;har&gt;</code> | Caido / Burp `.har` backend framework &amp; sibling API fingerprinter (`--domain`, `--output`). |
+| <code>viperclaw&nbsp;graph</code> | Query top pheromone-ranked attack leads &amp; export Mermaid topology (`--db`, `--top-leads`, `--mermaid`). |
+| <code>viperclaw&nbsp;verify&nbsp;[file]</code> | Run the 7-Question Triage Gate, CVSS 3.1 calculator &amp; H1 MD / SARIF exporter (`--report-md`, `--report-sarif`). |
 
 <details>
 <summary><b>📋 View Copy-Paste CLI Workflow Examples (Live DAST, Taint SAST, JS Recon, HAR)</b></summary>
@@ -149,10 +149,10 @@ viperclaw graph --db .viperclaw/graph.db --top-leads 10 --mermaid
 
 Each skill in [`skills/`](skills/) encodes a senior security researcher's hypothesis tree, bypass ladder, and stopping conditions across 4 operational domains:
 
-* **🧭 Orchestration & QA (`01`, `12`):** [`viper-orchestrator`](skills/viper-orchestrator/SKILL.md) (5-Phase Swarm Graph router) and [`viper-proof-judge`](skills/viper-proof-judge/SKILL.md) (7-Gate Proof Oracle & CVSS 3.1 judge).
-* **🔭 Recon & White-Box SAST (`02`, `03`, `10`):** [`viper-js-harvester`](skills/viper-js-harvester/SKILL.md) (SPA lazy chunks), [`viper-proxy-fingerprint`](skills/viper-proxy-fingerprint/SKILL.md) (HAR stack profiling), and [`viper-taint-sast`](skills/viper-taint-sast/SKILL.md) (Polyglot taint auditing).
-* **⚔️ Web, API & Cloud Exploitation (`04`–`09`):** [`viper-bola-idor`](skills/viper-bola-idor/SKILL.md), [`viper-injection-oracle`](skills/viper-injection-oracle/SKILL.md), [`viper-ssrf-cloud`](skills/viper-ssrf-cloud/SKILL.md), [`viper-auth-oauth-jwt`](skills/viper-auth-oauth-jwt/SKILL.md), [`viper-graphql-ws`](skills/viper-graphql-ws/SKILL.md), and [`viper-race-logic`](skills/viper-race-logic/SKILL.md).
-* **🤖 AI & Agentic Red-Teaming (`11`):** [`viper-ai-llm-redteam`](skills/viper-ai-llm-redteam/SKILL.md) (Prompt injection, MCP tool hijacking & RAG exfiltration).
+* **🧭 Orchestration & QA (`01`, `12`):** <a href="skills/viper-orchestrator/SKILL.md"><code>viper-orchestrator</code></a> (5-Phase Swarm Graph router) and <a href="skills/viper-proof-judge/SKILL.md"><code>viper-proof-judge</code></a> (7-Gate Proof Oracle & CVSS 3.1 judge).
+* **🔭 Recon & White-Box SAST (`02`, `03`, `10`):** <a href="skills/viper-js-harvester/SKILL.md"><code>viper-js-harvester</code></a> (SPA lazy chunks), <a href="skills/viper-proxy-fingerprint/SKILL.md"><code>viper-proxy-fingerprint</code></a> (HAR stack profiling), and <a href="skills/viper-taint-sast/SKILL.md"><code>viper-taint-sast</code></a> (Polyglot taint auditing).
+* **⚔️ Web, API & Cloud Exploitation (`04`–`09`):** <a href="skills/viper-bola-idor/SKILL.md"><code>viper-bola-idor</code></a>, <a href="skills/viper-injection-oracle/SKILL.md"><code>viper-injection-oracle</code></a>, <a href="skills/viper-ssrf-cloud/SKILL.md"><code>viper-ssrf-cloud</code></a>, <a href="skills/viper-auth-oauth-jwt/SKILL.md"><code>viper-auth-oauth-jwt</code></a>, <a href="skills/viper-graphql-ws/SKILL.md"><code>viper-graphql-ws</code></a>, and <a href="skills/viper-race-logic/SKILL.md"><code>viper-race-logic</code></a>.
+* **🤖 AI & Agentic Red-Teaming (`11`):** <a href="skills/viper-ai-llm-redteam/SKILL.md"><code>viper-ai-llm-redteam</code></a> (Prompt injection, MCP tool hijacking & RAG exfiltration).
 
 <details>
 <summary><b>📚 View Full 12-Skill Directory &amp; Methodology Breakdown</b></summary>
@@ -160,18 +160,18 @@ Each skill in [`skills/`](skills/) encodes a senior security researcher's hypoth
 
 | # | Skill&nbsp;Playbook | Offensive Focus &amp; Methodology |
 | :---: | :--- | :--- |
-| `01` | [`viper&#8209;orchestrator`](skills/viper-orchestrator/SKILL.md) | **5-Phase Orchestrator:** Attack Graph prioritization, hypothesis decomposition &amp; subagent routing. |
-| `02` | [`viper&#8209;js&#8209;harvester`](skills/viper-js-harvester/SKILL.md) | **JS &amp; Lazy-Chunk Harvester:** Unloaded Webpack/Vite/Next.js chunks, hidden admin routes &amp; secrets. |
-| `03` | [`viper&#8209;proxy&#8209;fingerprint`](skills/viper-proxy-fingerprint/SKILL.md) | **HTTP &amp; Proxy Fingerprinter:** Sibling API discovery, framework error envelopes &amp; WAF soft-block detection. |
-| `04` | [`viper&#8209;bola&#8209;idor`](skills/viper-bola-idor/SKILL.md) | **Cross-Tenant BOLA / IDOR:** Multi-role auth matrix (`Tenant A` vs. `Tenant B`), ID mutation &amp; JSON diffing. |
-| `05` | [`viper&#8209;injection&#8209;oracle`](skills/viper-injection-oracle/SKILL.md) | **Precision Injection Oracle:** Zero-noise boolean/time differential pairs for SQLi, NoSQLi, SSTI &amp; CMDi. |
-| `06` | [`viper&#8209;ssrf&#8209;cloud`](skills/viper-ssrf-cloud/SKILL.md) | **SSRF &amp; Cloud Metadata:** URL parser differentials, redirect chains, AWS/GCP/Azure IMDS &amp; K8s discovery. |
-| `07` | [`viper&#8209;auth&#8209;oauth&#8209;jwt`](skills/viper-auth-oauth-jwt/SKILL.md) | **Auth, OAuth 2.0 &amp; JWT:** `redirect_uri` bypasses, pre-ATO collisions, JWT `RS256`→`HS256` &amp; `kid` injection. |
-| `08` | [`viper&#8209;graphql&#8209;ws`](skills/viper-graphql-ws/SKILL.md) | **GraphQL &amp; WebSocket:** Introspection bypass, field clairvoyance, nested edge BOLA, batching &amp; CSWSH. |
-| `09` | [`viper&#8209;race&#8209;logic`](skills/viper-race-logic/SKILL.md) | **Race Condition &amp; Logic:** Single-packet HTTP/2 bursts, TOCTOU quota overruns &amp; workflow step skipping. |
-| `10` | [`viper&#8209;taint&#8209;sast`](skills/viper-taint-sast/SKILL.md) | **White-Box Taint SAST:** Multi-hop source-to-sink code auditing across Python, TS/JS, Go &amp; PHP. |
-| `11` | [`viper&#8209;ai&#8209;llm&#8209;redteam`](skills/viper-ai-llm-redteam/SKILL.md) | **Agentic AI, LLM &amp; MCP Red-Team:** Indirect prompt injection, tool-call hijacking &amp; RAG exfiltration. |
-| `12` | [`viper&#8209;proof&#8209;judge`](skills/viper-proof-judge/SKILL.md) | **Adversarial QA Judge:** Enforces *"No Receipt, No Report"*, 7-Question Triage Gate &amp; CVSS 3.1 scoring. |
+| `01` | <a href="skills/viper-orchestrator/SKILL.md"><code>viper&#8209;orchestrator</code></a> | **5-Phase Orchestrator:** Attack Graph prioritization, hypothesis decomposition &amp; subagent routing. |
+| `02` | <a href="skills/viper-js-harvester/SKILL.md"><code>viper&#8209;js&#8209;harvester</code></a> | **JS &amp; Lazy-Chunk Harvester:** Unloaded Webpack/Vite/Next.js chunks, hidden admin routes &amp; secrets. |
+| `03` | <a href="skills/viper-proxy-fingerprint/SKILL.md"><code>viper&#8209;proxy&#8209;fingerprint</code></a> | **HTTP &amp; Proxy Fingerprinter:** Sibling API discovery, framework error envelopes &amp; WAF soft-block detection. |
+| `04` | <a href="skills/viper-bola-idor/SKILL.md"><code>viper&#8209;bola&#8209;idor</code></a> | **Cross-Tenant BOLA / IDOR:** Multi-role auth matrix (`Tenant A` vs. `Tenant B`), ID mutation &amp; JSON diffing. |
+| `05` | <a href="skills/viper-injection-oracle/SKILL.md"><code>viper&#8209;injection&#8209;oracle</code></a> | **Precision Injection Oracle:** Zero-noise boolean/time differential pairs for SQLi, NoSQLi, SSTI &amp; CMDi. |
+| `06` | <a href="skills/viper-ssrf-cloud/SKILL.md"><code>viper&#8209;ssrf&#8209;cloud</code></a> | **SSRF &amp; Cloud Metadata:** URL parser differentials, redirect chains, AWS/GCP/Azure IMDS &amp; K8s discovery. |
+| `07` | <a href="skills/viper-auth-oauth-jwt/SKILL.md"><code>viper&#8209;auth&#8209;oauth&#8209;jwt</code></a> | **Auth, OAuth 2.0 &amp; JWT:** `redirect_uri` bypasses, pre-ATO collisions, JWT `RS256`→`HS256` &amp; `kid` injection. |
+| `08` | <a href="skills/viper-graphql-ws/SKILL.md"><code>viper&#8209;graphql&#8209;ws</code></a> | **GraphQL &amp; WebSocket:** Introspection bypass, field clairvoyance, nested edge BOLA, batching &amp; CSWSH. |
+| `09` | <a href="skills/viper-race-logic/SKILL.md"><code>viper&#8209;race&#8209;logic</code></a> | **Race Condition &amp; Logic:** Single-packet HTTP/2 bursts, TOCTOU quota overruns &amp; workflow step skipping. |
+| `10` | <a href="skills/viper-taint-sast/SKILL.md"><code>viper&#8209;taint&#8209;sast</code></a> | **White-Box Taint SAST:** Multi-hop source-to-sink code auditing across Python, TS/JS, Go &amp; PHP. |
+| `11` | <a href="skills/viper-ai-llm-redteam/SKILL.md"><code>viper&#8209;ai&#8209;llm&#8209;redteam</code></a> | **Agentic AI, LLM &amp; MCP Red-Team:** Indirect prompt injection, tool-call hijacking &amp; RAG exfiltration. |
+| `12` | <a href="skills/viper-proof-judge/SKILL.md"><code>viper&#8209;proof&#8209;judge</code></a> | **Adversarial QA Judge:** Enforces *"No Receipt, No Report"*, 7-Question Triage Gate &amp; CVSS 3.1 scoring. |
 
 </details>
 
