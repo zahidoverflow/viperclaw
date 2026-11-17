@@ -1,0 +1,16 @@
+# Smithery.ai MCP Registry Configuration
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties:
+      workspaceDb:
+        type: string
+        default: ".viperclaw/graph.db"
+        description: "Path to the SQLite Stigmergic Assessment Graph database"
+  commandFunction:
+    |-
+    (config) => ({
+      command: 'viperclaw',
+      args: ['mcp']
+    })

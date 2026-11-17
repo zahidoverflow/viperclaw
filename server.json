@@ -1,0 +1,26 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-07-09/server.schema.json",
+  "name": "io.github.zahidoverflow/viperclaw",
+  "description": "13-tool Phase-Gated Security Audit & AppSec MCP Server + 64 Security Audit Skills (Zero Dependencies).",
+  "repository": {
+    "url": "https://github.com/zahidoverflow/viperclaw",
+    "source": "github"
+  },
+  "version_detail": {
+    "version": "2.0.0"
+  },
+  "packages": [
+    {
+      "registry_name": "pypi",
+      "name": "viperclaw",
+      "version": "2.0.0",
+      "runtime": "python",
+      "runtime_arguments": [
+        {
+          "type": "positional",
+          "value": "mcp"
+        }
+      ]
+    }
+  ]
+}

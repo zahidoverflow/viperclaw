@@ -82,6 +82,31 @@ Add `viperclaw mcp` to your agent's `mcp_config.json` / `.mcp.json` (or run `cla
 
 </details>
 
+<details>
+<summary><b>⚙️ Use in GitHub Actions CI/CD &amp; Pre-Commit Hooks</b></summary>
+<br />
+
+**GitHub Actions (`.github/workflows/security.yml`):**
+```yaml
+- name: Run ViperClaw Security Audit
+  uses: zahidoverflow/viperclaw@main
+  with:
+    path: "."
+    mode: "taint"
+```
+
+**Pre-Commit (`.pre-commit-config.yaml`):**
+```yaml
+repos:
+  - repo: https://github.com/zahidoverflow/viperclaw
+    rev: v2.0.0
+    hooks:
+      - id: viperclaw-taint
+      - id: viperclaw-harvest-js
+```
+
+</details>
+
 ---
 
 ## 🧬 Architecture

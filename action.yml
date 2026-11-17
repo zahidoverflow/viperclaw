@@ -1,0 +1,46 @@
+name: "ViperClaw Security Audit & Taint SAST"
+author: "Zahidul Islam (@zahidoverflow)"
+description: "Zero-dependency multi-language source-to-sink taint SAST, SPA lazy-chunk harvester, and SARIF 2.1.0 security scanner."
+branding:
+  icon: "shield"
+  color: "green"
+
+inputs:
+  path:
+    description: "Target directory or file path to audit"
+    required: false
+    default: "."
+  mode:
+    description: "Scan mode: 'taint' (source-to-sink SAST) or 'harvest-js' (SPA bundle & secret audit)"
+    required: false
+    default: "taint"
+  output:
+    description: "Output JSON path for scan findings"
+    required: false
+    default: "viperclaw-results.json"
+
+outputs:
+  results-file:
+    description: "Path to the generated JSON results file"
+    value: ${{ inputs.output }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+
+    - name: Install ViperClaw (Zero Dependencies)
+      shell: bash
+      run: pip install --no-deps "${{ github.action_path }}"
+
+    - name: Run ViperClaw Security Audit
+      shell: bash
+      run: |
+        if [ "${{ inputs.mode }}" = "harvest-js" ]; then
+          viperclaw harvest-js "${{ inputs.path }}" --output "${{ inputs.output }}"
+        else
+          viperclaw taint "${{ inputs.path }}" --output "${{ inputs.output }}"
+        fi

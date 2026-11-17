@@ -1,0 +1,14 @@
+- id: viperclaw-taint
+  name: ViperClaw Multi-Language Taint SAST
+  description: Run zero-dependency source-to-sink taint analysis across Python, TS/JS, Go, and PHP.
+  entry: viperclaw taint
+  language: python
+  pass_filenames: false
+  always_run: true
+
+- id: viperclaw-harvest-js
+  name: ViperClaw SPA Bundle & Secret Auditor
+  description: Audit JS/TS bundles for exposed routes, DOM sinks, and hardcoded secrets.
+  entry: viperclaw harvest-js
+  language: python
+  pass_filenames: false

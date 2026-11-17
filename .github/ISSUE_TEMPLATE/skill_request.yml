@@ -1,0 +1,19 @@
+name: "🎯 New Security Audit Skill / Analyzer Request"
+description: "Propose a new framework skill (SKILL.md) or static/dynamic analyzer rule"
+title: "[Skill/Rule]: "
+labels: ["enhancement"]
+body:
+  - type: input
+    id: domain
+    attributes:
+      label: "Target Framework, Cloud Service, or Vulnerability Class"
+      placeholder: "e.g., SvelteKit, AWS Step Functions, CWE-xxx"
+    validations:
+      required: true
+  - type: textarea
+    id: checklist
+    attributes:
+      label: "Proposed Audit Checklist & CWE/OWASP Mapping"
+      description: "What patterns or configurations should this skill audit?"
+    validations:
+      required: true
