@@ -8,7 +8,7 @@
     {
       "name": "viperclaw",
       "source": "./",
-      "description": "ViperClaw — AI Pentesting Framework, Bug Bounty MCP Server, SAST/DAST Taint Engine, Stigmergic Attack Graph, Wire-Check Proof Oracle & 34 Security Audit Skills.",
+      "description": "ViperClaw — AI Pentesting Framework, Bug Bounty MCP Server, SAST/DAST Taint Engine, Stigmergic Attack Graph, Wire-Check Proof Oracle & 64 Security Audit Skills.",
       "version": "2.0.0",
       "keywords": ["ai-pentesting", "bug-bounty", "mcp-server", "offensive-security", "sast", "dast", "taint-analysis", "bola", "idor", "red-teaming"]
     }

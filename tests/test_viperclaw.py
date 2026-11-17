@@ -215,9 +215,9 @@ def test_mcp_server_jsonrpc(tmp_path: Path) -> None:
     assert call_resp["result"]["isError"] is False
 
 
-def test_all_34_skills_and_cli(tmp_path: Path) -> None:
+def test_all_64_skills_and_cli(tmp_path: Path) -> None:
     skills = list_available_skills()
-    assert len(skills) == 34
+    assert len(skills) == 64
     for sk in skills:
         text = Path(sk["path"]).read_text(encoding="utf-8")
         assert text.startswith("---\nname: ")
