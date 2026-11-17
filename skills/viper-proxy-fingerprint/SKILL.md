@@ -1,24 +1,14 @@
 ---
 name: viper-proxy-fingerprint
-description: HTTP Stack & Proxy Traffic Fingerprinter. Discovers sibling API hosts, backend frameworks, error envelope shapes, auth mechanisms, and WAF soft-block traps from HAR captures or HTTP headers.
+description: HTTP Stack, Header & Error-Envelope Auditor. Reviews HAR captures and HTTP responses to inventory backend frameworks, cookie security attributes, and verbose error disclosures.
 ---
 
-# ViperClaw HTTP & Proxy Fingerprinter (`viper-proxy-fingerprint`)
+# ViperClaw Skill 03: HTTP Stack & Error-Envelope Auditor (`viper-proxy-fingerprint`)
 
-## Methodology
-Before firing payloads, fingerprint the exact backend parser, framework error envelope, and upstream reverse-proxy / WAF layer.
+## Overview
+Analyzes `.har` captures and HTTP response metadata (`viper_fingerprint_traffic`) to evaluate server header hygiene, framework configuration, and error-handling consistency.
 
-## Heuristic Matrix
-
-| Signal Source | Indicator | Inferred Stack & Next Move |
-| :--- | :--- | :--- |
-| **JSON Error Shape** | `{"detail": "..."}` or `{"detail": [{"loc": ...}]}` | **FastAPI / Starlette / DRF (Python)** — test type-confusion arrays, SSTI, and Pydantic mass assignment. |
-| **JSON Error Shape** | `{"statusCode": 400, "message": "...", "error": "Bad Request"}` | **NestJS (Node.js)** — test prototype pollution, guard bypass, and GraphQL resolver authz gaps. |
-| **JSON Error Shape** | `{"timestamp": ..., "status": 500, "error": "...", "path": "..."}` | **Spring Boot (Java)** — test Actuator exposure, SpEL injection, and path traversal matrix parameters (`;jsessionid=`). |
-| **Cookie Name** | `laravel_session` / `XSRF-TOKEN` | **Laravel (PHP)** — test mass assignment, signed URL tampering, and PHP type juggling. |
-| **Soft-200 Trap** | HTTP `200 OK` with tiny body or Challenge HTML | **WAF Soft-Block** — run `viper_diff_oracle` to avoid false-positive scanner hits. |
-
-## Running the Fingerprinter
-```bash
-viperclaw fingerprint ./traffic.har --domain target.tld
-```
+## Audit Checklist
+1. **Information Disclosure Review:** Identify verbose `Server`, `X-Powered-By`, and stack-trace error responses in production environments.
+2. **Authentication & Cookie Hygiene:** Check that session cookies enforce `HttpOnly`, `Secure`, and `SameSite=Lax`/`Strict`.
+3. **Error Envelope Standardization:** Ensure API errors return uniform, non-sensitive status envelopes without leaking internal database or file paths.

@@ -1,29 +1,14 @@
 ---
 name: viper-bola-idor
-description: Cross-Tenant Authorization (BOLA / IDOR / BFLA) Hunting Playbook. Builds a multi-role authorization matrix, mutates resource identifiers, and validates leaks via the Differential Oracle.
+description: Object & Function-Level Authorization (BOLA / BFLA) Audit Skill. Reviews resource access controls, tenant scoping, and ownership checks across API endpoints and controllers.
 ---
 
-# ViperClaw BOLA / IDOR / BFLA Hunter (`viper-bola-idor`)
+# ViperClaw Skill 04: Authorization & Tenant Isolation Auditor (`viper-bola-idor`)
 
-## Core Rule
-Never report an IDOR without proving a **cross-tenant differential** between at least two distinct security contexts (Tenant A vs. Tenant B) and verifying that the response is not public data or a WAF soft-block.
+## Overview
+Audits API controllers, database queries, and middleware to ensure every resource lookup enforces explicit caller ownership and tenant scoping (OWASP API1:2023 / API5:2023).
 
-## 5-Step Kill Chain
-
-1. **Build the Role Matrix:**
-   Prepare credentials/tokens for:
-   - `Role_A` (Victim Tenant / User A)
-   - `Role_B` (Attacker Tenant / User B)
-   - `Unauth` (No cookies / stripped `Authorization` header)
-2. **Harvest Object Reference Endpoints:**
-   Pull top `idor_candidates` from `viperclaw harvest-js` or `.viperclaw/graph.db`.
-3. **Execute Cross-Tenant Replay (`Role_B` token + `Role_A` object ID):**
-   Test read (`GET`), state mutation (`PUT`/`PATCH`/`POST`), and deletion (`DELETE`) across sub-routes (`/api/v2/orgs/{id}/members`, `/export`, `/invoices`).
-4. **Apply Identifier Evasion & Parameter Pollution:**
-   - Numeric IDs (`1001` -> `1000`)
-   - UUID v1/v4 swaps or wildcard (`*`)
-   - Array wrapping (`{"id": [victim_id]}`)
-   - HTTP Parameter Pollution (`?user_id=attacker&user_id=victim`)
-   - API version downgrade (`/api/v3/orders` -> `/api/v1/orders`)
-5. **Verify via Differential Oracle (`viper_diff_oracle`):**
-   Confirm `baseline_status == 200`, `probe_status == 200`, high structural JSON key overlap, and `unauth_status in (401, 403, 404)`.
+## Audit Checklist
+1. **Controller Ownership Binding:** Verify that object lookups (`SELECT ... WHERE id = ?`) also bind the authenticated `user_id` or `tenant_id` from the session context.
+2. **Function-Level RBAC Review:** Confirm administrative and state-changing routes enforce role-based middleware checks before executing business logic.
+3. **Differential Response Verification:** Use `viper_diff_oracle` to compare authorized vs. unauthorized baseline responses and confirm `403 Forbidden` / `404 Not Found` enforcement.

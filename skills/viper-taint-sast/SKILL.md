@@ -1,23 +1,14 @@
 ---
 name: viper-taint-sast
-description: White-Box Multi-Language Source-to-Sink Taint Analysis & Dynamic Exploit Synthesis Skill. Uses ViperClaw's AST/structural taint tracer to locate reachable RCE, SQLi, SSRF, LFI, and Deserialization paths.
+description: White-Box Multi-Language Source-to-Sink Taint Analysis Skill. Traces untrusted inputs to sensitive sinks across Python, TypeScript/JS, Go, and PHP to verify sanitization.
 ---
 
-# ViperClaw White-Box Taint SAST (`viper-taint-sast`)
+# ViperClaw Skill 10: White-Box Source-to-Sink Taint Analysis (`viper-taint-sast`)
 
-## Methodology: Follow the Data, Then Prove Reachability
-Static pattern scanners drown operators in false positives because they flag every sink regardless of whether user input reaches it. ViperClaw traces **Source → Tainted Variable → Sink** and extracts compact context slices.
+## Overview
+Uses `viper_taint_scan` (`viperclaw taint`) to trace untrusted user inputs (`request.args`, `req.body`, `$_GET`, `r.URL.Query()`) to sensitive sinks and verify context-appropriate sanitization.
 
-## Workflow
-
-### Step 1: Run Multi-Language Taint Scan
-```bash
-viperclaw taint /path/to/repo --graph-db .viperclaw/graph.db
-```
-Or invoke the MCP tool `viper_taint_scan`.
-
-### Step 2: Audit Each Taint Flow Slice
-For every `TaintFlow` returned:
-1. **Verify Route Reachability:** Check the route decorator / router registration (`@app.post`, `router.get`, `http.HandleFunc`) and required authentication middleware.
-2. **Check Intermediate Sanitizers:** Inspect the `context_slice` between `source_line` and `sink_line` for type casting (`int()`), parameterized queries, or strict allowlists.
-3. **Synthesize Minimal PoC:** Construct the exact HTTP request or CLI input that carries a controlled payload from `source_expr` into `sink_expr`, then verify via `viperclaw verify`.
+## Audit Checklist
+1. **Source-to-Sink Call Chain Tracing:** Map every hop from HTTP/CLI entrypoints to SQL, command, file-path, template, and deserialization sinks.
+2. **Sanitizer Verification:** Confirm that type casts (`int()`, `intval()`), prepared statements (`PDO::prepare`), path canonicalization (`realpath` + prefix check), or allowlists (`in_array`) are applied before the sink.
+3. **Remediation Patch Generation:** Produce minimal, idiomatic code patches that close the unvalidated data flow without breaking application functionality.

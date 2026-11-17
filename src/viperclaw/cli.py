@@ -194,7 +194,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_graph.add_argument("--decay", type=float, default=0.0, help="Apply pheromone evaporation factor (e.g. 0.85)")
 
     # 12. skills
-    p_skills = sub.add_parser("skills", help="List or install the 14 ViperClaw methodology skills for Antigravity, Claude Code, Codex, or Cursor")
+    p_skills = sub.add_parser("skills", help="List or install the 34 ViperClaw security audit skills for Antigravity, Claude Code, Codex, or Cursor")
     p_skills.add_argument("action", choices=["list", "install"], help="Action to perform")
     p_skills.add_argument("--target", choices=["antigravity", "claude", "codex", "cursor", "all"], default="antigravity")
     p_skills.add_argument("--dest", "--dest-dir", dest="dest", default=None, help="Custom destination directory override")
