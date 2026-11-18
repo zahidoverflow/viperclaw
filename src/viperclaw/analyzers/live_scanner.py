@@ -129,6 +129,9 @@ class LiveScanner:
         parsed = urllib.parse.urlparse(url)
         req_line = f"{method} {parsed.path or '/'}{'?' + parsed.query if parsed.query else ''} HTTP/1.1"
         req_receipt = f"{req_line}\nHost: {parsed.netloc}"
+        if extra_headers:
+            for hk, hv in extra_headers.items():
+                req_receipt += f"\n{hk}: {hv}"
         if "Cookie" in headers:
             req_receipt += f"\nCookie: {headers['Cookie']}"
         if encoded_data:
