@@ -186,16 +186,31 @@ def test_proxy_fingerprinter() -> None:
 
 
 def test_mcp_server_jsonrpc(tmp_path: Path) -> None:
-    init_resp = handle_jsonrpc_message({"jsonrpc": "2.0", "id": 1, "method": "initialize"})
+    init_resp = handle_jsonrpc_message(
+        {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2025-03-26"}}
+    )
     assert init_resp is not None
     assert init_resp["result"]["serverInfo"]["name"] == "viperclaw-mcp"
+    assert init_resp["result"]["protocolVersion"] == "2025-03-26"
+
+    assert handle_jsonrpc_message({"jsonrpc": "2.0", "id": 10, "method": "ping"})["result"] == {}
+    assert handle_jsonrpc_message({"jsonrpc": "2.0", "id": 11, "method": "resources/list"})["result"] == {"resources": []}
+    assert handle_jsonrpc_message({"jsonrpc": "2.0", "id": 12, "method": "prompts/list"})["result"] == {"prompts": []}
 
     list_resp = handle_jsonrpc_message({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
     assert list_resp is not None
-    assert len(list_resp["result"]["tools"]) == 13
+    tools = list_resp["result"]["tools"]
+    assert len(tools) == 13
+    # Verify every MCP tool schema enforces strict additionalProperties: false and bounded strings
+    for tool_def in tools:
+        schema = tool_def["inputSchema"]
+        assert schema.get("additionalProperties") is False, f"{tool_def['name']} missing additionalProperties: false"
+        for prop_name, prop_def in schema.get("properties", {}).items():
+            if prop_def.get("type") == "string" and "enum" not in prop_def:
+                assert "maxLength" in prop_def, f"{tool_def['name']}.{prop_name} missing maxLength"
 
     db_path = str(tmp_path / "mcp_graph.db")
-    call_resp = handle_jsonrpc_message(
+    call_upsert = handle_jsonrpc_message(
         {
             "jsonrpc": "2.0",
             "id": 3,
@@ -207,12 +222,72 @@ def test_mcp_server_jsonrpc(tmp_path: Path) -> None:
                     "node_type": "endpoint",
                     "label": "/api/internal/export",
                     "pheromone_boost": 9.5,
+                    "metadata": {"source": "unit_test"},
                 },
             },
         }
     )
-    assert call_resp is not None
-    assert call_resp["result"]["isError"] is False
+    assert call_upsert is not None and call_upsert["result"]["isError"] is False
+
+    call_leads = handle_jsonrpc_message(
+        {
+            "jsonrpc": "2.0",
+            "id": 4,
+            "method": "tools/call",
+            "params": {
+                "name": "viper_graph_leads",
+                "arguments": {"workspace_db": db_path, "node_type": "endpoint", "limit": 5},
+            },
+        }
+    )
+    assert call_leads is not None and call_leads["result"]["isError"] is False
+    leads_data = json.loads(call_leads["result"]["content"][0]["text"])
+    assert len(leads_data["top_leads"]) == 1 and "summary" in leads_data
+
+    # Error reporting on non-existent taint/harvest paths
+    missing_taint = handle_jsonrpc_message(
+        {
+            "jsonrpc": "2.0",
+            "id": 5,
+            "method": "tools/call",
+            "params": {"name": "viper_taint_scan", "arguments": {"path": str(tmp_path / "missing_dir")}},
+        }
+    )
+    assert "error" in json.loads(missing_taint["result"]["content"][0]["text"])
+
+    missing_harv = handle_jsonrpc_message(
+        {
+            "jsonrpc": "2.0",
+            "id": 6,
+            "method": "tools/call",
+            "params": {"name": "viper_harvest_js", "arguments": {"path": str(tmp_path / "missing_dist")}},
+        }
+    )
+    assert "error" in json.loads(missing_harv["result"]["content"][0]["text"])
+
+    # Verify SARIF 2.1.0 + Markdown return on viper_verify_and_report
+    call_verify = handle_jsonrpc_message(
+        {
+            "jsonrpc": "2.0",
+            "id": 7,
+            "method": "tools/call",
+            "params": {
+                "name": "viper_verify_and_report",
+                "arguments": {
+                    "title": "Cross-Tenant BOLA on /api/v1/accounts/42",
+                    "vuln_class": "BOLA / IDOR",
+                    "cwe_id": "CWE-639",
+                    "asset": "https://api.example.com/api/v1/accounts/42",
+                    "request_receipt": "GET /api/v1/accounts/42 HTTP/1.1\nAuthorization: Bearer tenant_b",
+                    "response_receipt": 'HTTP/1.1 200 OK\n\n{"account_id": 42, "owner": "tenant_a"}',
+                },
+            },
+        }
+    )
+    verify_data = json.loads(call_verify["result"]["content"][0]["text"])
+    assert verify_data["triage"]["passed"] is True
+    assert verify_data["markdown_report"] is not None
+    assert verify_data["sarif"]["version"] == "2.1.0"
 
 
 def test_all_65_skills_and_cli(tmp_path: Path) -> None:
@@ -232,7 +307,8 @@ def test_all_65_skills_and_cli(tmp_path: Path) -> None:
     assert rc_mcp == 0
     loaded_mcp = json.loads(mcp_cfg.read_text(encoding="utf-8"))
     assert "existing" in loaded_mcp["mcpServers"]
-    assert loaded_mcp["mcpServers"]["viperclaw"] == {"command": "viperclaw", "args": ["mcp"]}
+    assert loaded_mcp["mcpServers"]["viperclaw"]["args"] == ["mcp"]
+    assert loaded_mcp["mcpServers"]["viperclaw"]["command"].endswith("viperclaw")
 
     finding = VerifiedFinding(
         finding_id="VC-100",
@@ -342,6 +418,33 @@ def test_jwt_graphql_race_oob_and_browser_engines(tmp_path: Path) -> None:
     redeemed_flag = {"redeemed": False}
 
     class _LabHandler(http.server.BaseHTTPRequestHandler):
+        def do_GET(self) -> None:  # noqa: N802
+            origin = self.headers.get("Origin")
+            if self.path == "/":
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html")
+                self.send_header("X-Powered-By", "Express")
+                if origin:
+                    self.send_header("Access-Control-Allow-Origin", origin)
+                    self.send_header("Access-Control-Allow-Credentials", "true")
+                self.end_headers()
+                self.wfile.write(b'<html><body><script src="/app.js"></script><a href="/health">Health</a></body></html>')
+                return
+            if self.path == "/app.js":
+                self.send_response(200)
+                self.send_header("Content-Type", "application/javascript")
+                self.end_headers()
+                self.wfile.write(b'fetch("/api/v2/users/" + uid + "/secrets"); import("./chunks/admin-4455.js");')
+                return
+            if self.path == "/openapi.json":
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"openapi": "3.0.0", "paths": {"/api/v2/wallet": {}, "/api/v2/admin": {}}}).encode())
+                return
+            self.send_response(404)
+            self.end_headers()
+
         def do_POST(self) -> None:  # noqa: N802
             length = int(self.headers.get("Content-Length") or 0)
             raw_body = self.rfile.read(length).decode("utf-8", errors="replace") if length > 0 else ""
@@ -424,6 +527,47 @@ def test_jwt_graphql_race_oob_and_browser_engines(tmp_path: Path) -> None:
         )
         assert "secretAdminToken" in suggestions
         assert "internalConfig" in suggestions
+
+        # 5. Live URL JS Harvesting + Live HTTP Fingerprinting + API OpenAPI/CORS LiveScan via MCP
+        base = f"http://127.0.0.1:{port}"
+        js_url_resp = handle_jsonrpc_message(
+            {
+                "jsonrpc": "2.0",
+                "id": 20,
+                "method": "tools/call",
+                "params": {"name": "viper_harvest_js", "arguments": {"path": base}},
+            }
+        )
+        js_url_data = json.loads(js_url_resp["result"]["content"][0]["text"])
+        assert js_url_data["files_scanned"] == 2
+        assert any("/api/v2/users/" in ep for ep in js_url_data["endpoints"])
+
+        fp_url_resp = handle_jsonrpc_message(
+            {
+                "jsonrpc": "2.0",
+                "id": 21,
+                "method": "tools/call",
+                "params": {"name": "viper_fingerprint_traffic", "arguments": {"url": base}},
+            }
+        )
+        fp_url_data = json.loads(fp_url_resp["result"]["content"][0]["text"])
+        assert any("Express" in t for t in fp_url_data["detected_technologies"])
+        assert fp_url_data["security_posture"]["cors_credentialed_reflection"] is True
+
+        scan_resp = handle_jsonrpc_message(
+            {
+                "jsonrpc": "2.0",
+                "id": 22,
+                "method": "tools/call",
+                "params": {
+                    "name": "viper_live_scan",
+                    "arguments": {"url": base, "workspace_db": str(tmp_path / "live_api.db")},
+                },
+            }
+        )
+        scan_data = json.loads(scan_resp["result"]["content"][0]["text"])
+        assert "/api/v2/wallet" in scan_data["discovered_routes"]
+        assert scan_data["verified_findings_count"] >= 2
     finally:
         srv.shutdown()
         srv.server_close()

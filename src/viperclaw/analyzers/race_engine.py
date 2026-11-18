@@ -113,7 +113,12 @@ class RaceEngine:
             "Connection": "keep-alive",
         }
         if body_bytes and "Content-Type" not in (headers or {}) and "content-type" not in (headers or {}):
-            req_headers["Content-Type"] = "application/x-www-form-urlencoded"
+            stripped_body = body.lstrip()
+            req_headers["Content-Type"] = (
+                "application/json"
+                if stripped_body.startswith(("{", "["))
+                else "application/x-www-form-urlencoded"
+            )
         if body_bytes:
             req_headers["Content-Length"] = str(len(body_bytes))
         if headers:

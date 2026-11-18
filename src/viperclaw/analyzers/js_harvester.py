@@ -17,10 +17,13 @@ This module:
 from __future__ import annotations
 
 import re
+import ssl
+import urllib.error
+import urllib.request
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Set
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlsplit
 
 from viperclaw.core.url_utils import normalize_url
 
@@ -173,9 +176,127 @@ class JSHarvester:
             secrets=secrets,
         )
 
+    @staticmethod
+    def _looks_like_url(target: str) -> bool:
+        s = target.strip()
+        lower = s.lower()
+        if lower.startswith(("http://", "https://")):
+            return True
+        if s.startswith(("/", "./", "../", "~")) or Path(s).exists():
+            return False
+        host_part = s.split("/", 1)[0].split(":", 1)[0]
+        return "." in host_part and not any(
+            host_part.lower().endswith(ext)
+            for ext in (".js", ".mjs", ".cjs", ".jsx", ".ts", ".tsx", ".html", ".php", ".yml", ".yaml", ".json")
+        )
+
+    @classmethod
+    def analyze_url(
+        cls,
+        target_url: str,
+        max_scripts: int = 20,
+        timeout: float = 8.0,
+    ) -> Dict[str, Any]:
+        norm_url = normalize_url(target_url)
+        ssl_ctx = ssl.create_default_context()
+        ssl_ctx.check_hostname = False
+        ssl_ctx.verify_mode = ssl.CERT_NONE
+
+        def _fetch(u: str, max_bytes: int = 2_097_152) -> str:
+            req = urllib.request.Request(
+                u,
+                headers={"User-Agent": "ViperClaw-JSHarvester/2.0", "Accept": "text/html,application/javascript,*/*"},
+            )
+            try:
+                with urllib.request.urlopen(req, timeout=timeout, context=ssl_ctx) as resp:
+                    return resp.read(max_bytes).decode("utf-8", errors="ignore")
+            except urllib.error.HTTPError as he:
+                return he.read(min(max_bytes, 65536)).decode("utf-8", errors="ignore") if he.fp else ""
+            except Exception:
+                return ""
+
+        root_html = _fetch(norm_url)
+        if not root_html:
+            return {
+                "target_url": norm_url,
+                "files_scanned": 0,
+                "lazy_chunks": [],
+                "endpoints": [],
+                "idor_candidates": [],
+                "ssrf_candidates": [],
+                "graphql_operations": [],
+                "client_sinks": [],
+                "secrets": [],
+                "error": f"Unable to fetch HTML/JS content from {norm_url}",
+            }
+
+        origin = f"{urlsplit(norm_url).scheme}://{urlsplit(norm_url).netloc}"
+        script_srcs = re.findall(r"""<script[^>]+src=["']([^"']+)["']""", root_html, re.IGNORECASE)
+        script_urls: List[str] = []
+        for s in script_srcs:
+            abs_u = urljoin(norm_url, s)
+            if abs_u not in script_urls:
+                script_urls.append(abs_u)
+        script_urls = script_urls[:max_scripts]
+
+        sources: List[tuple[str, str]] = [(norm_url, root_html)]
+        for su in script_urls:
+            body = _fetch(su)
+            if body:
+                sources.append((su, body))
+
+        all_chunks: Set[str] = set()
+        all_endpoints: Set[str] = set()
+        all_idor: Set[str] = set()
+        all_ssrf: Set[str] = set()
+        all_gql: Set[str] = set()
+        all_sinks: List[Dict[str, Any]] = []
+        all_secrets: List[Dict[str, str]] = []
+
+        for src_name, text in sources:
+            res = cls.analyze_content(text, source_name=src_name, base_url=origin)
+            all_chunks.update(res.lazy_chunks)
+            all_endpoints.update(res.endpoints)
+            all_idor.update(res.idor_candidates)
+            all_ssrf.update(res.ssrf_candidates)
+            all_gql.update(res.graphql_operations)
+            for sk in res.client_sinks:
+                all_sinks.append({"file": src_name, **sk})
+            for sec in res.secrets:
+                all_secrets.append({"file": src_name, **sec})
+
+        return {
+            "target_url": norm_url,
+            "fetched_scripts": [u for u, _ in sources[1:]],
+            "files_scanned": len(sources),
+            "lazy_chunks": sorted(all_chunks),
+            "endpoints": sorted(all_endpoints),
+            "idor_candidates": sorted(all_idor),
+            "ssrf_candidates": sorted(all_ssrf),
+            "graphql_operations": sorted(all_gql),
+            "client_sinks": all_sinks,
+            "secrets": all_secrets,
+        }
+
     @classmethod
     def analyze_path(cls, target_path: str | Path, base_url: str = "") -> Dict[str, Any]:
+        if isinstance(target_path, str) and cls._looks_like_url(target_path):
+            return cls.analyze_url(target_path)
+
         path = Path(target_path)
+        if not path.exists():
+            return {
+                "files_scanned": 0,
+                "lazy_chunks": [],
+                "endpoints": [],
+                "idor_candidates": [],
+                "ssrf_candidates": [],
+                "graphql_operations": [],
+                "client_sinks": [],
+                "secrets": [],
+                "error": f"Path not found: {target_path}. Pass an existing local file/directory or a live URL (e.g., https://app.example.com).",
+            }
+
         files: List[Path] = []
         if path.is_file():
             files = [path]

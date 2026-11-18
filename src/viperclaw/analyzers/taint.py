@@ -466,6 +466,13 @@ class TaintAnalyzer:
     @classmethod
     def scan_path(cls, target_path: str | Path) -> Dict[str, Any]:
         path = Path(target_path)
+        if not path.exists():
+            return {
+                "files_scanned": 0,
+                "total_flows": 0,
+                "flows": [],
+                "error": f"Source path not found: {target_path}",
+            }
         files: List[Path] = []
         if path.is_file():
             files = [path]

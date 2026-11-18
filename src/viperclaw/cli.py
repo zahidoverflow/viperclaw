@@ -116,8 +116,9 @@ def install_mcp(target: str, dest_override: str | None = None, dry_run: bool = F
     else:
         destinations = [target_configs.get(target, home / ".gemini" / "config" / "mcp_config.json")]
 
+    resolved_bin = shutil.which("viperclaw") or "viperclaw"
     stanza = {
-        "command": "viperclaw",
+        "command": resolved_bin,
         "args": ["mcp"],
     }
     updated_files: List[str] = []

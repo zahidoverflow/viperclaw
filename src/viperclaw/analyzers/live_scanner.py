@@ -11,6 +11,7 @@ Every live finding is validated against `ProofOracle.evaluate_7_gates()` before 
 from __future__ import annotations
 
 import http.cookiejar
+import json
 import re
 import time
 import urllib.error
@@ -44,7 +45,9 @@ class LiveScanResult:
     markdown_bundle: str = ""
 
     def to_dict(self) -> Dict[str, Any]:
-        return asdict(self)
+        d = asdict(self)
+        d["verified_findings_count"] = len(self.verified_findings)
+        return d
 
 
 class _NoRedirectHandler(urllib.request.HTTPRedirectHandler):
@@ -81,12 +84,13 @@ class LiveScanner:
         raw_body: Optional[bytes] = None,
         content_type: Optional[str] = None,
         extra_cookies: Optional[Dict[str, str]] = None,
+        extra_headers: Optional[Dict[str, str]] = None,
         follow_redirects: bool = True,
     ) -> Tuple[HttpSample, str]:
         url = urllib.parse.urljoin(self.base_url, path_or_url)
         encoded_data = raw_body
         headers = {
-            "User-Agent": "ViperClaw-LiveOracle/1.1 (+https://github.com/zahidoverflow/viperclaw)",
+            "User-Agent": "ViperClaw-LiveOracle/2.0 (+https://github.com/zahidoverflow/viperclaw)",
             "Accept": "text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8",
         }
         if data is not None and encoded_data is None:
@@ -94,6 +98,9 @@ class LiveScanner:
             headers["Content-Type"] = "application/x-www-form-urlencoded"
         elif content_type:
             headers["Content-Type"] = content_type
+
+        if extra_headers:
+            headers.update(extra_headers)
 
         cookie_str = self._build_cookie_header(extra_cookies)
         if cookie_str:
@@ -214,17 +221,76 @@ class LiveScanner:
         )
 
         authed = self.authenticate_dvwa_if_present(username=username, password=password)
-        index_sample, _ = self.request("index.php", extra_cookies={"security": "low"})
+        routes_set = set()
+        for m in HREF_REGEX.finditer(root_sample.body):
+            href = m.group(1)
+            if not href.startswith(("http://", "https://", "javascript:", "mailto:")):
+                routes_set.add(href)
 
-        routes = sorted(
-            {
-                m.group(1)
-                for m in HREF_REGEX.finditer(index_sample.body)
-                if not m.group(1).startswith(("http://", "https://", "javascript:", "mailto:"))
-            }
-        )
+        if authed:
+            index_sample, _ = self.request("index.php", extra_cookies={"security": "low"})
+            for m in HREF_REGEX.finditer(index_sample.body):
+                href = m.group(1)
+                if not href.startswith(("http://", "https://", "javascript:", "mailto:")):
+                    routes_set.add(href)
 
         findings: List[VerifiedFinding] = []
+
+        # Non-destructive API & Web Surface Discovery when reachable (non-DVWA & DVWA)
+        if root_sample.status_code > 0 and not authed:
+            for meta_path in ("robots.txt", ".well-known/security.txt", "openapi.json", "swagger.json", "v3/api-docs", "health"):
+                m_sample, m_req = self.request(meta_path, follow_redirects=False)
+                if m_sample.status_code == 200 and not ProofOracle.detect_waf_soft_block(m_sample):
+                    if meta_path in ("openapi.json", "swagger.json", "v3/api-docs"):
+                        try:
+                            spec = json.loads(m_sample.body)
+                            if isinstance(spec, dict) and isinstance(spec.get("paths"), dict):
+                                routes_set.update(spec["paths"].keys())
+                                self._add_verified_finding(
+                                    findings,
+                                    "VC-API-OPENAPI-001",
+                                    f"Unauthenticated OpenAPI / Swagger Specification Exposed (`/{meta_path}`)",
+                                    "Excessive API Schema Exposure",
+                                    "CWE-200",
+                                    meta_path,
+                                    f"The API schema endpoint `/{meta_path}` is publicly readable without authentication and exposes {len(spec['paths'])} API path definitions.",
+                                    m_req,
+                                    f"HTTP/1.1 200 OK\nContent-Type: application/json\n\n{m_sample.body[:400]}",
+                                    {"av": "N", "ac": "L", "pr": "N", "ui": "N", "scope": "U", "c": "L", "i": "N", "a": "N"},
+                                )
+                        except Exception:
+                            pass
+                    elif meta_path == "robots.txt":
+                        for line in m_sample.body.splitlines():
+                            low = line.strip().lower()
+                            if low.startswith(("disallow:", "allow:")) and ":" in line:
+                                p_val = line.split(":", 1)[1].strip()
+                                if p_val.startswith("/"):
+                                    routes_set.add(p_val)
+                    elif meta_path in (".well-known/security.txt", "health"):
+                        routes_set.add(f"/{meta_path}")
+
+            # Non-destructive CORS Origin reflection audit
+            test_origin = "https://untrusted-audit.example"
+            cors_sample, cors_req = self.request("/", extra_headers={"Origin": test_origin}, follow_redirects=False)
+            cors_hdrs = {k.lower(): v for k, v in cors_sample.headers.items()}
+            acao = cors_hdrs.get("access-control-allow-origin", "")
+            acac = cors_hdrs.get("access-control-allow-credentials", "").lower() == "true"
+            if acao == test_origin and acac:
+                self._add_verified_finding(
+                    findings,
+                    "VC-CORS-001",
+                    "Credentialed Arbitrary CORS Origin Reflection on Root Endpoint",
+                    "Cross-Origin Resource Sharing (CORS) Misconfiguration",
+                    "CWE-942",
+                    "/",
+                    "The server reflects an arbitrary `Origin` header directly in `Access-Control-Allow-Origin` alongside `Access-Control-Allow-Credentials: true`.",
+                    cors_req,
+                    f"HTTP/1.1 {cors_sample.status_code}\nAccess-Control-Allow-Origin: {acao}\nAccess-Control-Allow-Credentials: true",
+                    {"av": "N", "ac": "L", "pr": "N", "ui": "R", "scope": "U", "c": "H", "i": "L", "a": "N"},
+                )
+
+        routes = sorted(routes_set)
 
         # Probe 1: Command Injection (/vulnerabilities/exec/)
         if any("vulnerabilities/exec" in r for r in routes):

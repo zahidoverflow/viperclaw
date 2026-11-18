@@ -13,6 +13,9 @@ from __future__ import annotations
 
 import json
 import re
+import ssl
+import urllib.error
+import urllib.request
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Set
@@ -58,6 +61,7 @@ class FingerprintReport:
     auth_mechanisms: List[str] = field(default_factory=list)
     error_shape_hints: List[str] = field(default_factory=list)
     high_value_endpoints: List[str] = field(default_factory=list)
+    security_posture: Dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -119,6 +123,39 @@ class ProxyFingerprinter:
 
         api_hosts = [host] if any(k in host.lower() for k in ("api", "gql", "graphql", "gateway", "auth")) else []
 
+        security_headers_present = {
+            h: lower_headers[h]
+            for h in (
+                "strict-transport-security",
+                "content-security-policy",
+                "x-content-type-options",
+                "x-frame-options",
+                "referrer-policy",
+                "permissions-policy",
+                "cache-control",
+                "access-control-allow-origin",
+                "access-control-allow-credentials",
+            )
+            if h in lower_headers
+        }
+        missing_recommended = [
+            h
+            for h in (
+                "strict-transport-security",
+                "x-content-type-options",
+                "content-security-policy",
+            )
+            if h not in lower_headers
+        ]
+        posture: Dict[str, Any] = {
+            "status_code": status_code,
+            "present_security_headers": security_headers_present,
+            "missing_recommended_headers": missing_recommended,
+        }
+        if lower_headers.get("access-control-allow-origin"):
+            posture["cors_origin_header"] = lower_headers["access-control-allow-origin"]
+            posture["cors_credentials"] = lower_headers.get("access-control-allow-credentials", "")
+
         return FingerprintReport(
             target=url,
             discovered_hosts=[host] if host else [],
@@ -127,7 +164,52 @@ class ProxyFingerprinter:
             auth_mechanisms=sorted(auths),
             error_shape_hints=sorted(error_hints),
             high_value_endpoints=[parsed.path] if parsed.path and parsed.path != "/" else [],
+            security_posture=posture,
         )
+
+    @classmethod
+    def fetch_and_fingerprint(cls, url: str, timeout: float = 8.0) -> FingerprintReport:
+        """Safely fetch live HTTP response headers & body (with Origin check) and fingerprint stack + posture."""
+        norm_url = normalize_url(url)
+        ssl_ctx = ssl.create_default_context()
+        ssl_ctx.check_hostname = False
+        ssl_ctx.verify_mode = ssl.CERT_NONE
+        test_origin = "https://untrusted-audit.example"
+        req = urllib.request.Request(
+            norm_url,
+            headers={
+                "User-Agent": "ViperClaw-Fingerprinter/2.0",
+                "Accept": "application/json, text/html, */*",
+                "Origin": test_origin,
+            },
+            method="GET",
+        )
+        status = 0
+        resp_headers: Dict[str, str] = {}
+        body = ""
+        err_msg = ""
+        try:
+            with urllib.request.urlopen(req, timeout=timeout, context=ssl_ctx) as resp:
+                status = resp.status
+                resp_headers = {k: v for k, v in resp.headers.items()}
+                body = resp.read(65536).decode("utf-8", errors="replace")
+        except urllib.error.HTTPError as he:
+            status = he.code
+            resp_headers = {k: v for k, v in he.headers.items()} if he.headers else {}
+            body = he.read(32768).decode("utf-8", errors="replace") if he.fp else ""
+        except Exception as exc:
+            err_msg = str(exc)
+
+        rep = cls.fingerprint_response(norm_url, resp_headers, body, status_code=status)
+        if err_msg:
+            rep.security_posture["connection_error"] = err_msg
+        else:
+            acao = rep.security_posture.get("cors_origin_header", "")
+            acac = rep.security_posture.get("cors_credentials", "").lower() == "true"
+            rep.security_posture["cors_origin_reflected"] = (acao == test_origin)
+            rep.security_posture["cors_credentialed_reflection"] = (acao == test_origin and acac)
+            rep.security_posture["body_preview"] = body[:240]
+        return rep
 
     @classmethod
     def analyze_har(cls, har_path: str | Path, root_domain: str = "") -> FingerprintReport:

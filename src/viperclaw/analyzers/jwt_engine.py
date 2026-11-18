@@ -108,6 +108,8 @@ class JWTEngine:
         if cleaned.lower().startswith("bearer "):
             cleaned = cleaned[7:].strip()
         parts = cleaned.split(".")
+        if len(parts) == 5:
+            raise ValueError("Token is a 5-segment encrypted JWE (header.key.iv.ciphertext.tag); cannot audit JWS signature without decryption key")
         if len(parts) != 3:
             raise ValueError("Invalid JWT format: expected 3 dot-separated segments (header.payload.signature)")
         header = json.loads(_b64url_decode(parts[0]).decode("utf-8", errors="replace"))

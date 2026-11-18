@@ -65,10 +65,13 @@ QUOTED_FIELD_RE = re.compile(r'["\']([A-Za-z_][A-Za-z0-9_]*)["\']')
 @dataclass
 class GraphQLScanReport:
     endpoint_url: str
+    endpoint_reachable: bool
+    http_status: int
     introspection_enabled: bool
     introspection_bypass_used: str
     batching_allowed: bool
     alias_amplification_allowed: bool
+    response_preview: str = ""
     discovered_types: List[str] = field(default_factory=list)
     discovered_queries: List[str] = field(default_factory=list)
     discovered_mutations: List[str] = field(default_factory=list)
@@ -79,6 +82,9 @@ class GraphQLScanReport:
     def to_dict(self) -> Dict[str, Any]:
         return {
             "endpoint_url": self.endpoint_url,
+            "endpoint_reachable": self.endpoint_reachable,
+            "http_status": self.http_status,
+            "response_preview": self.response_preview,
             "introspection_enabled": self.introspection_enabled,
             "introspection_bypass_used": self.introspection_bypass_used,
             "batching_allowed": self.batching_allowed,
@@ -279,10 +285,13 @@ class GraphQLEngine:
 
         return GraphQLScanReport(
             endpoint_url=url,
+            endpoint_reachable=status > 0,
+            http_status=status,
             introspection_enabled=introspection_ok,
             introspection_bypass_used=bypass_used,
             batching_allowed=batching_ok,
             alias_amplification_allowed=alias_ok,
+            response_preview=raw[:300],
             discovered_types=types_found,
             discovered_queries=queries_found,
             discovered_mutations=mutations_found,
