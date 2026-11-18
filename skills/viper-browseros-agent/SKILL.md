@@ -8,7 +8,7 @@ description: BrowserOS Neo Live Application Inspection & DOM Security Audit Skil
 ## 1. Executive Scope, Standards & CWE/OWASP Mapping
 - **Frameworks & Standards:** OWASP WSTG-CLNT (Client-Side Testing), OWASP ASVS V3/V14, W3C CSP Level 3
 - **Primary CWE Mapping:** CWE-922 (Insecure Storage of Sensitive Information in localStorage), CWE-79 (DOM XSS), CWE-614 (Missing Secure Cookie Flag)
-- **ViperClaw MCP Tools:** `viper_browser_ingest`, `viper_harvest_js`, `viper_jwt_attack`, `viper_verify_and_report`
+- **ViperClaw MCP Tools:** `viper_browser_ingest`, `viper_harvest_js`, `viper_jwt_audit`, `viper_verify_and_report`
 - **ViperClaw CLI Command:** `viperclaw browser --scripts && viperclaw browser --ingest snapshot.json --db .viperclaw/graph.db`
 
 ---

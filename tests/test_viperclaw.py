@@ -201,6 +201,9 @@ def test_mcp_server_jsonrpc(tmp_path: Path) -> None:
     assert list_resp is not None
     tools = list_resp["result"]["tools"]
     assert len(tools) == 13
+    tool_names = {t["name"] for t in tools}
+    assert "viper_jwt_audit" in tool_names
+    assert "viper_jwt_attack" not in tool_names
     # Verify every MCP tool schema enforces strict additionalProperties: false and bounded strings
     for tool_def in tools:
         schema = tool_def["inputSchema"]
@@ -208,6 +211,23 @@ def test_mcp_server_jsonrpc(tmp_path: Path) -> None:
         for prop_name, prop_def in schema.get("properties", {}).items():
             if prop_def.get("type") == "string" and "enum" not in prop_def:
                 assert "maxLength" in prop_def, f"{tool_def['name']}.{prop_name} missing maxLength"
+
+    # Backward-compatible dispatch alias check (viper_jwt_audit + legacy viper_jwt_attack)
+    sample_hs_hdr = base64.urlsafe_b64encode(b'{"alg":"HS256","typ":"JWT"}').decode().rstrip("=")
+    sample_hs_pay = base64.urlsafe_b64encode(b'{"sub":"u1"}').decode().rstrip("=")
+    sample_hs_sig = base64.urlsafe_b64encode(hmac.new(b"secret", f"{sample_hs_hdr}.{sample_hs_pay}".encode(), hashlib.sha256).digest()).decode().rstrip("=")
+    sample_jwt_tok = f"{sample_hs_hdr}.{sample_hs_pay}.{sample_hs_sig}"
+    for alias in ("viper_jwt_audit", "viper_jwt_attack"):
+        jwt_call = handle_jsonrpc_message(
+            {
+                "jsonrpc": "2.0",
+                "id": 29,
+                "method": "tools/call",
+                "params": {"name": alias, "arguments": {"token": sample_jwt_tok}},
+            }
+        )
+        assert jwt_call["result"]["isError"] is False
+        assert json.loads(jwt_call["result"]["content"][0]["text"])["cracked_secret"] == "secret"
 
     db_path = str(tmp_path / "mcp_graph.db")
     call_upsert = handle_jsonrpc_message(
@@ -293,13 +313,25 @@ def test_mcp_server_jsonrpc(tmp_path: Path) -> None:
 def test_all_65_skills_and_cli(tmp_path: Path) -> None:
     skills = list_available_skills()
     assert len(skills) == 65
+    skill_names = {sk["name"] for sk in skills}
+    assert "viperclaw" in skill_names
+    assert "viper-ai-llm-guardrails" in skill_names
+    assert "viper-proxy-parser-alignment" in skill_names
+    assert "viper-ai-llm-redteam" not in skill_names
+    assert "viper-waf-evasion-framing" not in skill_names
     for sk in skills:
         text = Path(sk["path"]).read_text(encoding="utf-8")
         assert text.startswith("---\nname: ")
         assert "description:" in text
 
-    rc = main(["skills", "install", "--target", "antigravity", "--dest", str(tmp_path / "skills"), "--dry-run"])
+    stale_dir = tmp_path / "skills" / "viper-ai-llm-redteam"
+    stale_dir.mkdir(parents=True, exist_ok=True)
+    (stale_dir / "SKILL.md").write_text("legacy", encoding="utf-8")
+
+    rc = main(["skills", "install", "--target", "antigravity", "--dest", str(tmp_path / "skills")])
     assert rc == 0
+    assert not stale_dir.exists()
+    assert (tmp_path / "skills" / "viper-ai-llm-guardrails" / "SKILL.md").is_file()
 
     mcp_cfg = tmp_path / "mcp_config.json"
     mcp_cfg.write_text('{"mcpServers": {"existing": {"command": "foo"}}}', encoding="utf-8")

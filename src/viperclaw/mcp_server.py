@@ -110,7 +110,7 @@ MCP_TOOLS: List[Dict[str, Any]] = [
     },
     {
         "name": "viper_race_burst",
-        "description": "Execute a barrier-synchronized concurrent HTTP request burst (pre-connected sockets) to audit TOCTOU concurrency locks and idempotency controls.",
+        "description": "Verify database locking, idempotency keys, and TOCTOU concurrency controls across synchronized HTTP requests on an authorized staging or local endpoint.",
         "inputSchema": {
             "type": "object",
             "additionalProperties": False,
@@ -128,17 +128,17 @@ MCP_TOOLS: List[Dict[str, Any]] = [
         },
     },
     {
-        "name": "viper_jwt_attack",
-        "description": "Audit a JWT header and payload claims, check HMAC secret strength, test signature enforcement edge cases (`alg:none`, `kid`, key confusion), and optionally verify against a target URL.",
+        "name": "viper_jwt_audit",
+        "description": "Audit a JWT header and payload claims against RFC 8725, verify HMAC key entropy, check signature enforcement edge cases (`alg:none`, `kid`, algorithm confusion), and optionally validate enforcement against an authorized endpoint.",
         "inputSchema": {
             "type": "object",
             "additionalProperties": False,
             "properties": {
                 "token": {"type": "string", "minLength": 5, "maxLength": 16384, "description": "Raw JWT string (header.payload.signature)"},
-                "claim_overrides": {"type": "object", "description": "Optional payload claims to test"},
-                "custom_secrets": {"type": "array", "items": {"type": "string", "maxLength": 256}, "maxItems": 200, "description": "Optional candidate secrets to test"},
-                "rsa_public_key_pem": {"type": "string", "maxLength": 8192, "default": "", "description": "Optional RSA public key PEM for RS256/HS256 confusion verification"},
-                "target_url": {"type": "string", "maxLength": 1024, "default": "", "description": "Optional target URL to verify token acceptance"},
+                "claim_overrides": {"type": "object", "description": "Optional payload claims to inspect"},
+                "custom_secrets": {"type": "array", "items": {"type": "string", "maxLength": 256}, "maxItems": 200, "description": "Optional candidate secrets for local entropy verification"},
+                "rsa_public_key_pem": {"type": "string", "maxLength": 8192, "default": "", "description": "Optional RSA public key PEM for RS256/HS256 algorithm confusion verification"},
+                "target_url": {"type": "string", "maxLength": 1024, "default": "", "description": "Optional authorized endpoint URL to verify token rejection"},
             },
             "required": ["token"],
         },
@@ -159,7 +159,7 @@ MCP_TOOLS: List[Dict[str, Any]] = [
     },
     {
         "name": "viper_oob_probe",
-        "description": "Generate HMAC-authenticated Out-of-Band (OOB) callback verification canaries and test matrices, or cryptographically verify a captured canary.",
+        "description": "Generate HMAC-authenticated Out-of-Band (OOB) callback verification canaries to validate egress allowlists, or cryptographically verify a captured callback canary.",
         "inputSchema": {
             "type": "object",
             "additionalProperties": False,
@@ -205,7 +205,7 @@ MCP_TOOLS: List[Dict[str, Any]] = [
     },
     {
         "name": "viper_verify_and_report",
-        "description": "Run the 7-Question Pre-Submission Quality Gate, calculate CVSS 3.1 scores, and generate HackerOne/Bugcrowd Markdown + SARIF 2.1.0 outputs.",
+        "description": "Run the 7-Question Pre-Submission Quality Gate, calculate CVSS 3.1 scores, and generate security compliance Markdown + SARIF 2.1.0 outputs.",
         "inputSchema": {
             "type": "object",
             "additionalProperties": False,
@@ -352,7 +352,7 @@ def handle_tool_call(name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
         )
         return rep.to_dict()
 
-    if name == "viper_jwt_attack":
+    if name in ("viper_jwt_audit", "viper_jwt_attack"):
         rep = JWTEngine.analyze_and_attack(
             token=arguments["token"],
             claim_overrides=arguments.get("claim_overrides"),

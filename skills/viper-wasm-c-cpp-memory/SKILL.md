@@ -36,7 +36,7 @@ viperclaw taint . --db .viperclaw/graph.db
 2. **Allocation Size Integer Overflow (`count * sizeof(T)`):** Computing `malloc(count * sizeof(Item))` when `count` is untrusted can overflow 32/64-bit integers, allocating a tiny buffer followed by a heap buffer overflow! Use `calloc(count, sizeof(Item))` or `__builtin_mul_overflow(count, sizeof(Item), &total)`.
 3. **Format String & Signed/Unsigned Length Confusion:** Never pass a variable as the first format argument (`printf(user_msg)` / `syslog(LOG_INFO, user_msg)` -> use `"%s", user_msg`); never use signed `int` for buffer lengths where a negative value bypasses `if (len < MAX_SIZE)` and wraps to a huge `size_t`.
 4. **Use-After-Free (UAF), Double-Free & `realloc` Pitfalls:** Never write `ptr = realloc(ptr, new_size)` directly (leaks or corrupts `ptr` on failure); use a temporary pointer, null out pointers after `free()`, and prefer C++ smart pointers (`std::unique_ptr`).
-5. **Compiler & Linker Exploit Mitigations (OpenSSF Guide):** Enforce `-O2 -D_FORTIFY_SOURCE=3 -fstack-protector-strong -fstack-clash-protection -fPIE -pie -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack` in production builds and run AddressSanitizer + UndefinedBehaviorSanitizer (`-fsanitize=address,undefined`) in CI.
+5. **Compiler & Linker Hardening Mitigations (OpenSSF Guide):** Enforce `-O2 -D_FORTIFY_SOURCE=3 -fstack-protector-strong -fstack-clash-protection -fPIE -pie -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack` in production builds and run AddressSanitizer + UndefinedBehaviorSanitizer (`-fsanitize=address,undefined`) in CI.
 
 ---
 

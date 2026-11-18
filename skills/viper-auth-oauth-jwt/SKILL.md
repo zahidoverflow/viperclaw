@@ -8,7 +8,7 @@ description: Authentication, OAuth 2.0 / OIDC & JWT Security Auditor. Reviews to
 ## 1. Executive Scope, Standards & CWE/OWASP Mapping
 - **Frameworks & Standards:** RFC 8725 (JWT Best Current Practices), RFC 9700 (OAuth 2.0 Security BCP), OWASP ASVS V2/V3, CWE-347, CWE-287
 - **Primary CWE Mapping:** CWE-347 (Improper Verification of Cryptographic Signature), CWE-287 (Improper Authentication), CWE-327 (Broken or Risky Crypto Algorithm), CWE-601 (Open Redirect in OAuth)
-- **ViperClaw MCP Tools:** `viper_jwt_attack`, `viper_browser_ingest`, `viper_diff_oracle`, `viper_verify_and_report`
+- **ViperClaw MCP Tools:** `viper_jwt_audit`, `viper_browser_ingest`, `viper_diff_oracle`, `viper_verify_and_report`
 - **ViperClaw CLI Command:** `viperclaw jwt "<token>" --output jwt_audit.json`
 
 ---
@@ -46,7 +46,7 @@ rg -n "(redirect_uri|client_secret|response_type|code_verifier)"
 | Control ID | Audit Verification Target | Pass Criteria | Fail / Vulnerability Indicator |
 | :---: | :--- | :--- | :--- |
 | `AUTH-01` | **Explicit JWT Algorithm Pinning** | Verification call hardcodes `algorithms=["RS256"]` (or `ES256`/`EdDSA`); never reads `header.alg` dynamically. | `alg: none` accepted or `RS256` public key usable as `HS256` HMAC secret. |
-| `AUTH-02` | **HMAC Secret Entropy (>= 256 bits)** | Symmetric `HS256` keys generated via CSPRNG (`>= 32` random bytes), never dictionary words. | Weak secret (`secret`, `changeme`, app name) crackable offline via `viperclaw jwt`. |
+| `AUTH-02` | **HMAC Secret Entropy (>= 256 bits)** | Symmetric `HS256` keys generated via CSPRNG (`>= 32` random bytes), never dictionary words. | Weak secret (`secret`, `changeme`, app name) recoverable offline via `viperclaw jwt`. |
 | `AUTH-03` | **Untrusted Header Parameters (`kid`, `jku`, `jwk`)** | `kid` matched against a strict alphanumeric allowlist of server-configured key IDs; `jku`/`x5u`/`jwk` ignored. | `kid` passed into file path (`../../../../dev/null`) or SQL query. |
 | `AUTH-04` | **Mandatory Claim Validation (`exp`, `iss`, `aud`)** | Verifier enforces `require=["exp", "iss", "aud", "sub"]` with bounded clock skew. | Tokens without `exp` never expire, or tokens from a staging/sibling service (`aud` mismatch) are accepted. |
 | `AUTH-05` | **Pre-ATO Email Collision Prevention** | Linking an OAuth provider to an existing password account requires `email_verified === true` AND re-authentication if the email wasn't previously verified. | Attacker registers unverified email before victim signs up with Google OAuth and retains active session. |

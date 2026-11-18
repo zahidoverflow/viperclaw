@@ -42,5 +42,5 @@ ViperClaw solves this with 6 integrated subsystems:
 - [viper-graphql-ws](https://github.com/zahidoverflow/viperclaw/blob/main/skills/viper-graphql-ws/SKILL.md): GraphQL & WebSocket Security Audit Skill.
 - [viper-race-logic](https://github.com/zahidoverflow/viperclaw/blob/main/skills/viper-race-logic/SKILL.md): Race Condition & Business Logic State-Machine Hunter.
 - [viper-taint-sast](https://github.com/zahidoverflow/viperclaw/blob/main/skills/viper-taint-sast/SKILL.md): White-Box Multi-Language Source-to-Sink Taint Analysis Skill.
-- [viper-ai-llm-redteam](https://github.com/zahidoverflow/viperclaw/blob/main/skills/viper-ai-llm-redteam/SKILL.md): Agentic AI, LLM, and MCP Security Red-Team Playbook.
+- [viper-ai-llm-guardrails](https://github.com/zahidoverflow/viperclaw/blob/main/skills/viper-ai-llm-guardrails/SKILL.md): Agentic AI, LLM, and MCP Security & Guardrails Auditor.
 - [viper-proof-judge](https://github.com/zahidoverflow/viperclaw/blob/main/skills/viper-proof-judge/SKILL.md): Zero-Context Adversarial QA Judge, 7-Question Triage Gate & CVSS 3.1 Reporter.

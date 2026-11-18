@@ -8,7 +8,7 @@ description: OAuth 2.1, OIDC & SSO Protocol Compliance Auditor (RFC 9700 / OAuth
 ## 1. Executive Scope, Standards & CWE/OWASP Mapping
 - **Frameworks & Standards:** RFC 9700 (OAuth 2.0 Security Best Current Practice), OAuth 2.1 Draft, OpenID Connect Core 1.0, CWE-346, CWE-601
 - **Primary CWE Mapping:** CWE-601 (URL Redirection to Untrusted Site / redirect_uri Bypass), CWE-352 (Missing OAuth state / CSRF), CWE-345 (Unverified OIDC ID Token Claims)
-- **ViperClaw MCP Tools:** `viper_jwt_attack`, `viper_taint_scan`, `viper_verify_and_report`
+- **ViperClaw MCP Tools:** `viper_jwt_audit`, `viper_taint_scan`, `viper_verify_and_report`
 - **ViperClaw CLI Command:** `viperclaw taint ./src --db .viperclaw/graph.db`
 
 ---

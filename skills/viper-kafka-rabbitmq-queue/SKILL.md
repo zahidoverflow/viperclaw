@@ -1,6 +1,6 @@
 ---
 name: viper-kafka-rabbitmq-queue
-description: Event Streaming & Message Queue Security Auditor (Kafka, RabbitMQ, Celery, BullMQ, SQS). Reviews SASL/mTLS broker auth, topic ACLs, poison messages, and task serialization.
+description: Event Streaming & Message Queue Security Auditor (Kafka, RabbitMQ, Celery, BullMQ, SQS). Reviews SASL/mTLS broker auth, topic ACLs, malformed message dead-lettering, and task serialization.
 ---
 
 # ViperClaw Skill 53: Kafka, RabbitMQ & Background Queue Security Auditor (`viper-kafka-rabbitmq-queue`)
@@ -33,7 +33,7 @@ viperclaw taint . --db .viperclaw/graph.db
 ## 4. Senior Security Engineer Technical Audit Checklist
 1. **Celery / Worker Safe Serialization (`json` Only):** In Celery, verify `task_serializer = "json"`, `result_serializer = "json"`, and `accept_content = ["json"]`—never allow `"pickle"`, `"yaml"`, or `"marshal"` on broker queues.
 2. **Broker Transport Encryption & SASL/mTLS Auth:** Reject `security.protocol=PLAINTEXT` in Kafka and default `guest:guest` credentials in RabbitMQ; enforce `SASL_SSL` / `mTLS` and per-service topic/vhost ACLs (producers can only write to their topic; consumers can only read).
-3. **Poison-Pill Message & Infinite Requeue Loop Defense:** Consumers that call `channel.basic_nack(requeue=True)` on malformed messages without a retry counter cause instant infinite-loop DoS. Enforce schema validation + max retries (e.g., `x-delivery-count <= 3`) routing to a Dead-Letter Queue (DLQ).
+3. **Malformed Message & Infinite Requeue Loop Defense:** Consumers that call `channel.basic_nack(requeue=True)` on malformed messages without a retry counter cause instant infinite-loop DoS. Enforce schema validation + max retries (e.g., `x-delivery-count <= 3`) routing to a Dead-Letter Queue (DLQ).
 4. **Consumer Idempotency & Replay Deduplication:** Because message queues guarantee at-least-once delivery, consumers executing financial/email/state actions must record `event_id` in an atomic idempotency table.
 5. **Event Payload Envelope Signing / Tenant Binding:** Never trust an unverified `tenant_id` or `user_id` field inside a shared queue message without validating its producer identity or HMAC/JWS envelope.
 

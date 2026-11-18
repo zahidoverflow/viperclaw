@@ -1,7 +1,7 @@
 """
 ViperClaw Command-Line Interface (`viperclaw` / `vclaw`).
 
-Provides standalone offensive analysis commands, the stdio MCP server, and
+Provides standalone application security audit commands, the stdio MCP server, and
 a 1-command cross-harness skill installer for Antigravity, Claude Code, Codex, and Cursor.
 """
 
@@ -34,9 +34,12 @@ BANNER = f"""
 ╦  ╦╦╔═╗╔═╗╦═╗╔═╗╦  ╔═╗╦ ╦
 ╚╗╔╝║╠═╝║╣ ╠╦╝║  ║  ╠═╣║║║
  ╚╝ ╩╩  ╚═╝╩╚═╚═╝╩═╝╩ ╩╚╩╝  v{__version__}
-Universal AI Offensive Security Harness, Swarm Graph & Proof Oracle
+Application Security Audit Harness, Surface Graph & Evidence Verifier
 By Zahidul Islam (@zahidoverflow) — MIT License
 """
+
+
+DEPRECATED_SKILL_NAMES = ("viper-ai-llm-redteam", "viper-waf-evasion-framing")
 
 
 def get_skills_dir() -> Path:
@@ -83,6 +86,11 @@ def install_skills(target: str, dest_override: str | None = None, dry_run: bool 
     installed: List[str] = []
 
     for dest_root in destinations:
+        if not dry_run:
+            for legacy_name in DEPRECATED_SKILL_NAMES:
+                legacy_dir = dest_root / legacy_name
+                if legacy_dir.is_dir():
+                    shutil.rmtree(legacy_dir)
         for sk in skills:
             src_dir = Path(sk["path"]).parent
             dst_dir = dest_root / sk["name"]
@@ -153,20 +161,20 @@ def install_mcp(target: str, dest_override: str | None = None, dry_run: bool = F
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="viperclaw",
-        description="ViperClaw — Universal AI Offensive Security Harness, Attack Graph, Taint SAST, JS Harvester & Proof Oracle.",
+        description="ViperClaw — Application Security Audit Harness, Surface Graph, Taint SAST, Bundle Inventory & Evidence Verifier.",
     )
     parser.add_argument("--version", action="version", version=f"viperclaw {__version__}")
     sub = parser.add_subparsers(dest="command")
 
-    # 1. scan (live dynamic HTTP + stateful auth + wire-verified PoCs)
-    p_scan = sub.add_parser("scan", help="Run live stateful HTTP scan & wire-verified exploitation against a target URL")
-    p_scan.add_argument("url", help="Target base URL (e.g., http://127.0.0.1:4280)")
+    # 1. scan (non-destructive HTTP posture + authorized lab verification)
+    p_scan = sub.add_parser("scan", help="Inspect live HTTP security posture, CORS/header hygiene, and public API schemas")
+    p_scan.add_argument("url", help="Target base URL (https:// optional)")
     p_scan.add_argument("--username", default="admin", help="Optional login username")
     p_scan.add_argument("--password", default="password", help="Optional login password")
     p_scan.add_argument("--cookie", default="", help="Optional raw Cookie header (e.g. 'session=abc; security=low')")
-    p_scan.add_argument("--graph-db", "--db", dest="graph_db", default=".viperclaw/graph.db", help="SQLite attack graph path to populate")
+    p_scan.add_argument("--graph-db", "--db", dest="graph_db", default=".viperclaw/graph.db", help="SQLite assessment graph path to populate")
     p_scan.add_argument("--sarif-out", "--report-sarif", dest="sarif_out", default="", help="Optional path to write SARIF 2.1.0 report")
-    p_scan.add_argument("--report-out", "--report-md", dest="report_out", default="", help="Optional path to write Markdown bounty report bundle")
+    p_scan.add_argument("--report-out", "--report-md", dest="report_out", default="", help="Optional path to write Markdown compliance report")
 
     # 2. harvest-js
     p_js = sub.add_parser("harvest-js", help="Extract lazy-loaded chunks, API endpoints, GraphQL ops, sinks & secrets from JS/TS files")
@@ -187,33 +195,33 @@ def build_parser() -> argparse.ArgumentParser:
     p_fp.add_argument("--domain", "--target-domain", dest="domain", default="", help="Optional root domain filter")
     p_fp.add_argument("--output", "-o", default="", help="Optional output file path for JSON results")
 
-    # 5. race (barrier-synchronized concurrency burst)
-    p_race = sub.add_parser("race", help="Run a barrier-synchronized concurrent HTTP race condition burst (TOCTOU)")
-    p_race.add_argument("url", help="Target URL for race burst")
+    # 5. race (barrier-synchronized concurrency verification)
+    p_race = sub.add_parser("race", help="Verify database locking and idempotency under synchronized HTTP requests (TOCTOU)")
+    p_race.add_argument("url", help="Target URL for concurrency verification")
     p_race.add_argument("--method", "-X", default="POST", help="HTTP method (default: POST)")
-    p_race.add_argument("--body", "-d", default="", help="Request body payload")
+    p_race.add_argument("--body", "-d", default="", help="Request body")
     p_race.add_argument("--cookie", default="", help="Optional Cookie header")
     p_race.add_argument("--auth", default="", help="Optional Authorization header (e.g. 'Bearer ...')")
-    p_race.add_argument("--concurrency", "-c", type=int, default=15, help="Number of synchronized socket workers (default: 15)")
+    p_race.add_argument("--concurrency", "-c", type=int, default=15, help="Number of synchronized workers (default: 15)")
     p_race.add_argument("--success-indicator", default="", help="Substring indicating a successful state transition")
     p_race.add_argument("--output", "-o", default="", help="Optional output file path for JSON results")
 
-    # 6. jwt (decode, crack HMAC, forge alg:none / kid / confusion & replay)
-    p_jwt = sub.add_parser("jwt", help="Decode JWT, crack weak HMAC secrets, synthesize forged tokens & optionally replay")
+    # 6. jwt (RFC 8725 claim audit, HMAC entropy check & signature edge-case verification)
+    p_jwt = sub.add_parser("jwt", help="Audit JWT claims (RFC 8725), HMAC key strength, and signature validation edge cases")
     p_jwt.add_argument("token", help="JWT token string")
-    p_jwt.add_argument("--target-url", default="", help="Optional target URL to replay forged tokens against")
-    p_jwt.add_argument("--public-key", default="", help="Optional path to RSA public key PEM for RS256->HS256 confusion")
+    p_jwt.add_argument("--target-url", default="", help="Optional authorized endpoint URL to verify token rejection")
+    p_jwt.add_argument("--public-key", default="", help="Optional path to RSA public key PEM for RS256->HS256 algorithm confusion verification")
     p_jwt.add_argument("--output", "-o", default="", help="Optional output file path for JSON results")
 
-    # 7. graphql (introspection bypass, clairvoyance & batching)
-    p_gql = sub.add_parser("graphql", help="Scan a GraphQL endpoint for introspection bypass, Clairvoyance field leaks & batching")
+    # 7. graphql (introspection, suggestion hints & batching audit)
+    p_gql = sub.add_parser("graphql", help="Audit a GraphQL endpoint for schema introspection exposure, field suggestion hints & query batching limits")
     p_gql.add_argument("url", help="GraphQL endpoint URL")
     p_gql.add_argument("--auth", default="", help="Optional Authorization header")
     p_gql.add_argument("--cookie", default="", help="Optional Cookie header")
     p_gql.add_argument("--output", "-o", default="", help="Optional output file path for JSON results")
 
-    # 8. oob (HMAC canary & blind payload matrix)
-    p_oob = sub.add_parser("oob", help="Generate HMAC-tagged Out-of-Band (OOB) blind exploit payloads or verify a canary")
+    # 8. oob (HMAC canary & egress verification)
+    p_oob = sub.add_parser("oob", help="Generate HMAC-signed Out-of-Band (OOB) egress verification canaries or verify a canary")
     p_oob.add_argument("--callback", default="http://127.0.0.1:9999", help="Callback base URL (default: http://127.0.0.1:9999)")
     p_oob.add_argument("--param", default="url", help="Target parameter name")
     p_oob.add_argument("--verify-canary", default="", help="Verify an incoming canary token string")
@@ -236,10 +244,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_ver.add_argument("--report-out", "--report-md", dest="report_out", default="", help="Optional path to write Markdown report")
 
     # 11. graph
-    p_graph = sub.add_parser("graph", help="Inspect Stigmergic Attack Surface Graph leads or export Mermaid diagram")
+    p_graph = sub.add_parser("graph", help="Inspect Stigmergic Assessment Surface Graph leads or export Mermaid diagram")
     p_graph.add_argument("--db", "--graph-db", dest="db", default=".viperclaw/graph.db", help="Path to SQLite graph DB")
     p_graph.add_argument("--mermaid", action="store_true", help="Output Mermaid flowchart")
-    p_graph.add_argument("--top-leads", type=int, default=0, help="Return top N prioritized unverified attack leads")
+    p_graph.add_argument("--top-leads", type=int, default=0, help="Return top N prioritized unverified assessment leads")
     p_graph.add_argument("--decay", type=float, default=0.0, help="Apply pheromone evaporation factor (e.g. 0.85)")
 
     # 12. skills

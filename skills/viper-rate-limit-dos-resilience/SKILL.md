@@ -1,6 +1,6 @@
 ---
 name: viper-rate-limit-dos-resilience
-description: Application Rate Limiting, ReDoS & Resource Exhaustion Auditor (OWASP API4:2023). Reviews brute-force protections, regular expression complexity, and payload/decompression limits.
+description: Application Rate Limiting, ReDoS & Resource Exhaustion Auditor (OWASP API4:2023). Reviews credential throttling controls, regular expression complexity, and body-size/decompression limits.
 ---
 
 # Rate Limiting, ReDoS & Resource Exhaustion Resilience Auditor (`viper-rate-limit-dos-resilience`)

@@ -7,12 +7,12 @@
   <a href="https://github.com/zahidoverflow/viperclaw/actions"><img src="https://img.shields.io/github/actions/workflow/status/zahidoverflow/viperclaw/ci.yml?branch=main&style=flat-square&logo=githubactions&logoColor=white&label=CI" alt="GitHub Actions CI Status" /></a>
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.10%2B%20%7C%20Zero%20Deps-06b6d4?style=flat-square&logo=python&logoColor=white" alt="Python 3.10+ Zero Dependencies" /></a>
   <a href="#-cli--mcp-reference"><img src="https://img.shields.io/badge/MCP-13%20Tools-a855f7?style=flat-square" alt="Model Context Protocol MCP Server" /></a>
-  <a href="#-offensive-skill-playbooks"><img src="https://img.shields.io/badge/Skills-14%20Playbooks-f43f5e?style=flat-square" alt="14 Bug Bounty & Pentesting Skills" /></a>
+  <a href="#-security-audit-playbooks"><img src="https://img.shields.io/badge/Skills-64%20%2B%201%20Entrypoint-f43f5e?style=flat-square" alt="64 Security Audit Skills + /viperclaw" /></a>
   <a href="https://github.com/zahidoverflow/viperclaw/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-10b981?style=flat-square" alt="MIT License" /></a>
 </p>
 
 <p align="center">
-  <b>ViperClaw</b> (<code>viperclaw</code> / <code>vclaw</code>) upgrades <b>Google Antigravity</b>, <b>Claude Code</b>, <b>OpenAI Codex</b>, and <b>Cursor</b> into a methodology-driven offensive security &amp; bug bounty platform—combining <b>64 security audit skills</b>, a <b>13-tool Phase-Gated MCP server</b>, a <b>BrowserOS Neo session bridge</b>, a <b>Stigmergic SQLite Attack Graph</b>, <b>Race / JWT / GraphQL / OOB / SAST / DAST engines</b>, and a <b>deterministic Proof Oracle</b> with <b>zero third-party runtime dependencies</b>.
+  <b>ViperClaw</b> (<code>viperclaw</code> / <code>vclaw</code>) upgrades <b>Google Antigravity</b>, <b>Claude Code</b>, <b>OpenAI Codex</b>, and <b>Cursor</b> into a standards-driven Application Security &amp; Architecture Audit platform—combining <b>64 specialized security audit skills + <code>/viperclaw</code></b>, a <b>13-tool Phase-Gated MCP server</b>, a <b>BrowserOS Neo session bridge</b>, a <b>Stigmergic SQLite Assessment Graph</b>, <b>Concurrency / JWT / GraphQL / OOB / SAST / HTTP Posture engines</b>, and a <b>deterministic Evidence Verifier</b> with <b>zero third-party runtime dependencies</b>.
 </p>
 
 <p align="center">
@@ -21,7 +21,7 @@
   <a href="#-quickstart"><b>Quickstart</b></a> •
   <a href="#-architecture"><b>Architecture</b></a> •
   <a href="#-cli--mcp-reference"><b>CLI &amp; MCP</b></a> •
-  <a href="#-offensive-skill-playbooks"><b>64 Skills</b></a> •
+  <a href="#-security-audit-playbooks"><b>64 Skills</b></a> •
   <a href="#-benchmarks--comparison"><b>Benchmarks</b></a>
 </p>
 
@@ -31,18 +31,18 @@
 
 ## ⚡ Why ViperClaw?
 
-Most "AI pentesting wrappers" fail in production: dumping **150+ noisy CLI scanners** into an LLM causes context-window rot and instant WAF blocks, while monolithic Docker stacks require **4–6 containers and separate API budgets** when you already run a frontier coding agent locally.
+Most automated AppSec wrappers fail in production: dumping **150+ noisy CLI scanners** into an LLM causes context-window rot and noisy alerts, while monolithic container stacks require **4–6 services and separate API budgets** when you already run a frontier coding agent locally.
 
-ViperClaw pairs **14 methodology-driven playbooks** with **10 zero-dependency Python 3.10+ offensive engines** and a strict **"No Receipt, No Report" Proof Oracle**:
+ViperClaw pairs **64 compliance &amp; code-review playbooks** with **10 zero-dependency Python 3.10+ verification engines** and a strict **"Evidence-First" Quality Gate**:
 
 | Core&nbsp;Subsystem | Capability &amp; Implementation |
 | :--- | :--- |
-| 🕸️&nbsp;[**Stigmergic&nbsp;Graph**](src/viperclaw/core/graph.py) | Zero-setup SQLite knowledge graph with pheromone priority scoring, decay &amp; Mermaid topology export. |
-| 🌐&nbsp;[**BrowserOS&nbsp;&amp;&nbsp;Live&nbsp;DAST**](src/viperclaw/analyzers/browser_bridge.py) | Bridges signed-in **BrowserOS Neo** tabs (`fetch`/`XHR` hooks, JWTs, storage) + **14 wire-verified HTTP exploit probes**. |
-| ⚡&nbsp;[**Barrier&nbsp;Race&nbsp;Engine**](src/viperclaw/analyzers/race_engine.py) | Pre-connected socket pool synchronized via `threading.Barrier` to prove TOCTOU double-spend &amp; coupon overruns. |
-| 🔑&nbsp;[**JWT&nbsp;&amp;&nbsp;GraphQL&nbsp;Engines**](src/viperclaw/analyzers/jwt_engine.py) | HMAC secret cracker, `alg:none` / `kid` / `RS256`→`HS256` token forger, plus GraphQL Clairvoyance &amp; batching probes. |
-| 📡&nbsp;[**OOB&nbsp;&amp;&nbsp;JS&nbsp;Harvester**](src/viperclaw/analyzers/oob_engine.py) | HMAC-tagged blind OOB canary matrix + ephemeral callback listener, plus **Webpack / Vite / Next.js** lazy-chunk reconstruction. |
-| 🔬&nbsp;[**Taint&nbsp;SAST&nbsp;&amp;&nbsp;Oracle**](src/viperclaw/analyzers/taint.py) | Multi-hop taint SAST (**Python, TS/JS, Go, PHP**) + **7-Gate Proof Oracle** (WAF Soft-200 filter, BOLA diff, CVSS 3.1, SARIF 2.1.0). |
+| 🕸️&nbsp;[**Stigmergic&nbsp;Graph**](src/viperclaw/core/graph.py) | Zero-setup SQLite knowledge graph with priority scoring, decay &amp; Mermaid topology export. |
+| 🌐&nbsp;[**BrowserOS&nbsp;&amp;&nbsp;Posture&nbsp;Inspector**](src/viperclaw/analyzers/browser_bridge.py) | Bridges signed-in **BrowserOS Neo** tabs (`fetch`/`XHR` inspection, JWT claims, storage hygiene) + **non-destructive HTTP/CORS/OpenAPI posture checks**. |
+| ⚡&nbsp;[**Barrier&nbsp;Concurrency&nbsp;Engine**](src/viperclaw/analyzers/race_engine.py) | Pre-connected socket pool synchronized via `threading.Barrier` to verify TOCTOU DB locking &amp; idempotency controls. |
+| 🔑&nbsp;[**JWT&nbsp;&amp;&nbsp;GraphQL&nbsp;Auditors**](src/viperclaw/analyzers/jwt_engine.py) | RFC 8725 JWT claim verification, weak HMAC entropy checks (`alg:none` / `kid` / `RS256`→`HS256`), plus GraphQL schema &amp; batching audits. |
+| 📡&nbsp;[**OOB&nbsp;&amp;&nbsp;JS&nbsp;Harvester**](src/viperclaw/analyzers/oob_engine.py) | HMAC-tagged OOB egress verification canaries + ephemeral callback listener, plus **Webpack / Vite / Next.js** lazy-chunk inventory. |
+| 🔬&nbsp;[**Taint&nbsp;SAST&nbsp;&amp;&nbsp;Oracle**](src/viperclaw/analyzers/taint.py) | Multi-hop taint SAST (**Python, TS/JS, Go, PHP**) + **7-Gate Evidence Verifier** (WAF Soft-200 filter, authorization diff, CVSS 3.1, SARIF 2.1.0). |
 
 ---
 
@@ -168,33 +168,33 @@ viperclaw harvest-js ./bundles --base-url https://app.target.tld/ --db .vipercla
 
 | MCP&nbsp;Tool | Phase | Description |
 | :--- | :--- | :--- |
-| `viper_live_scan` | **DAST** | Execute a stateful, authenticated HTTP dynamic scan against a live web target, proving exploits over the wire. |
-| `viper_race_burst` | **Exploit** | Fire a barrier-synchronized concurrent HTTP burst (pre-connected sockets) to prove TOCTOU race conditions. |
-| `viper_jwt_attack` | **Exploit** | Decode JWTs, crack weak HMAC secrets, forge `alg:none` / `kid` / key-confusion tokens, and replay against live URLs. |
-| `viper_graphql_scan` | **Exploit** | Audit GraphQL for introspection bypass, Clairvoyance field leaks (`Did you mean...?`), array batching &amp; BOLA. |
-| `viper_oob_probe` | **Exploit** | Generate HMAC-tagged blind OOB canary payloads (SSRF, XXE, CMDi, SSTI, SQLi, JNDI) and verify callback hits. |
-| `viper_browser_ingest` | **BrowserOS** | Output BrowserOS Neo JS runtime hooks (`fetch`/`XHR`/storage) or ingest live browser snapshots into the Attack Graph. |
+| `viper_live_scan` | **Posture** | Run non-destructive HTTP/CORS/header inspection, public API schema discovery, and authorized lab verification. |
+| `viper_race_burst` | **Verify** | Verify database locking, idempotency keys, and TOCTOU concurrency controls under synchronized HTTP requests. |
+| `viper_jwt_audit` | **Audit** | Audit JWT claims against RFC 8725, verify HMAC secret entropy, and check signature enforcement edge cases. |
+| `viper_graphql_scan` | **Audit** | Audit GraphQL for schema introspection exposure, field suggestion hints, array batching &amp; authorization controls. |
+| `viper_oob_probe` | **Verify** | Generate HMAC-tagged Out-of-Band (OOB) egress verification canaries and verify callback handling. |
+| `viper_browser_ingest` | **BrowserOS** | Output BrowserOS Neo JS runtime telemetry hooks (`fetch`/`XHR`/storage) or ingest browser snapshots into the Graph. |
 | `viper_taint_scan` | **SAST** | Run multi-language source-to-sink taint analysis across Python, TypeScript/JavaScript, Go, and PHP. |
-| `viper_harvest_js` | **Recon** | Reconstruct Webpack/Vite/Next.js lazy chunks and extract endpoints, IDOR/SSRF candidates, GraphQL ops &amp; secrets. |
-| `viper_fingerprint_traffic` | **Recon** | Fingerprint backend frameworks, WAFs, sibling API hosts, and error envelopes from `.har` captures or HTTP headers. |
-| `viper_graph_upsert` | **Graph** | Upsert hosts, endpoints, lazy chunks, taint sinks, or findings into the Stigmergic SQLite Attack Graph. |
-| `viper_graph_leads` | **Graph** | Query top pheromone-ranked attack leads and export a live Mermaid topology diagram. |
-| `viper_diff_oracle` | **Verify** | Compare baseline vs. mutated/cross-tenant HTTP responses to confirm BOLA/IDOR and filter WAF Soft-200 blocks. |
-| `viper_verify_and_report` | **Report** | Run the 7-Question Triage Gate, calculate exact CVSS v3.1 scores, and generate HackerOne/Bugcrowd Markdown. |
+| `viper_harvest_js` | **Inventory** | Reconstruct Webpack/Vite/Next.js lazy chunks and inventory endpoints, authorization candidates, GraphQL ops &amp; secrets. |
+| `viper_fingerprint_traffic` | **Inventory** | Fingerprint backend frameworks, CDN/WAF banners, CORS posture, and error envelopes from `.har` captures or URLs. |
+| `viper_graph_upsert` | **Graph** | Upsert hosts, endpoints, lazy chunks, taint sinks, or findings into the Stigmergic SQLite Assessment Graph. |
+| `viper_graph_leads` | **Graph** | Query top pheromone-ranked review leads and export a live Mermaid topology diagram. |
+| `viper_diff_oracle` | **Verify** | Compare baseline vs. probe HTTP responses to verify authorization boundaries and filter WAF Soft-200 blocks. |
+| `viper_verify_and_report` | **Report** | Run the 7-Question Triage Gate, calculate exact CVSS v3.1 scores, and generate Markdown + SARIF 2.1.0 reports. |
 
 </details>
 
 ---
 
-## 🎯 Offensive Skill Playbooks (64 Skills)
+## 🎯 Security Audit Playbooks (64 Skills + `/viperclaw`)
 
-Each skill in [`skills/`](skills/) encodes a senior security researcher's hypothesis tree, bypass ladder, and stopping conditions across 5 operational domains:
+Each skill in [`skills/`](skills/) encodes a senior security engineer's checklist, architecture diagram, and hardened remediation patterns:
 
-* **🧭 Orchestration & QA (`01`, `12`):** <a href="skills/viper-orchestrator/SKILL.md"><code>viper&#8209;orchestrator</code></a> (5-Phase Swarm Graph router) and <a href="skills/viper-proof-judge/SKILL.md"><code>viper&#8209;proof&#8209;judge</code></a> (7-Gate Proof Oracle &amp; CVSS 3.1 judge).
-* **🌐 BrowserOS Session & WAF Evasion (`13`, `14`):** <a href="skills/viper-browseros-agent/SKILL.md"><code>viper&#8209;browseros&#8209;agent</code></a> (live signed-in BrowserOS Neo session bridge, `fetch`/`XHR` hooks &amp; DOM XSS verification) and <a href="skills/viper-waf-evasion-framing/SKILL.md"><code>viper&#8209;waf&#8209;evasion&#8209;framing</code></a> (authorized context framing &amp; WAF parser-differential ladders).
-* **🔭 Recon & White-Box SAST (`02`, `03`, `10`):** <a href="skills/viper-js-harvester/SKILL.md"><code>viper&#8209;js&#8209;harvester</code></a> (SPA lazy chunks), <a href="skills/viper-proxy-fingerprint/SKILL.md"><code>viper&#8209;proxy&#8209;fingerprint</code></a> (HAR stack profiling), and <a href="skills/viper-taint-sast/SKILL.md"><code>viper&#8209;taint&#8209;sast</code></a> (Polyglot taint auditing).
-* **⚔️ Web, API & Cloud Exploitation (`04`–`09`):** <a href="skills/viper-bola-idor/SKILL.md"><code>viper&#8209;bola&#8209;idor</code></a>, <a href="skills/viper-injection-oracle/SKILL.md"><code>viper&#8209;injection&#8209;oracle</code></a>, <a href="skills/viper-ssrf-cloud/SKILL.md"><code>viper&#8209;ssrf&#8209;cloud</code></a>, <a href="skills/viper-auth-oauth-jwt/SKILL.md"><code>viper&#8209;auth&#8209;oauth&#8209;jwt</code></a>, <a href="skills/viper-graphql-ws/SKILL.md"><code>viper&#8209;graphql&#8209;ws</code></a>, and <a href="skills/viper-race-logic/SKILL.md"><code>viper&#8209;race&#8209;logic</code></a>.
-* **🤖 AI & Agentic Red-Teaming (`11`):** <a href="skills/viper-ai-llm-redteam/SKILL.md"><code>viper&#8209;ai&#8209;llm&#8209;redteam</code></a> (Prompt injection, MCP tool hijacking &amp; RAG exfiltration).
+* **🧭 Orchestration & QA:** <a href="skills/viperclaw/SKILL.md"><code>/viperclaw</code></a> (Master entrypoint), <a href="skills/viper-orchestrator/SKILL.md"><code>viper&#8209;orchestrator</code></a> (5-Phase Architecture Audit router), and <a href="skills/viper-proof-judge/SKILL.md"><code>viper&#8209;proof&#8209;judge</code></a> (7-Gate Evidence Quality &amp; CVSS 3.1 verifier).
+* **🌐 BrowserOS Session & Edge Alignment:** <a href="skills/viper-browseros-agent/SKILL.md"><code>viper&#8209;browseros&#8209;agent</code></a> (BrowserOS Neo DOM &amp; storage audit) and <a href="skills/viper-proxy-parser-alignment/SKILL.md"><code>viper&#8209;proxy&#8209;parser&#8209;alignment</code></a> (reverse-proxy vs. backend parser consistency checks).
+* **🔭 Code Inventory & White-Box SAST:** <a href="skills/viper-js-harvester/SKILL.md"><code>viper&#8209;js&#8209;harvester</code></a> (SPA lazy chunks), <a href="skills/viper-proxy-fingerprint/SKILL.md"><code>viper&#8209;proxy&#8209;fingerprint</code></a> (HAR stack profiling), and <a href="skills/viper-taint-sast/SKILL.md"><code>viper&#8209;taint&#8209;sast</code></a> (Polyglot taint auditing).
+* **🛡️ Web, API & Cloud Auditing:** <a href="skills/viper-bola-idor/SKILL.md"><code>viper&#8209;bola&#8209;idor</code></a>, <a href="skills/viper-injection-oracle/SKILL.md"><code>viper&#8209;injection&#8209;oracle</code></a>, <a href="skills/viper-ssrf-cloud/SKILL.md"><code>viper&#8209;ssrf&#8209;cloud</code></a>, <a href="skills/viper-auth-oauth-jwt/SKILL.md"><code>viper&#8209;auth&#8209;oauth&#8209;jwt</code></a>, <a href="skills/viper-graphql-ws/SKILL.md"><code>viper&#8209;graphql&#8209;ws</code></a>, and <a href="skills/viper-race-logic/SKILL.md"><code>viper&#8209;race&#8209;logic</code></a>.
+* **🤖 AI & MCP Guardrails:** <a href="skills/viper-ai-llm-guardrails/SKILL.md"><code>viper&#8209;ai&#8209;llm&#8209;guardrails</code></a> (Prompt boundaries, MCP authorization &amp; RAG isolation).
 
 <details>
 <summary><b>📚 View Full 64-Skill Directory &amp; Methodology Breakdown</b></summary>
@@ -202,8 +202,8 @@ Each skill in [`skills/`](skills/) encodes a senior security researcher's hypoth
 
 | # | Skill&nbsp;Playbook | Security Audit &amp; Remediation Focus |
 | :---: | :--- | :--- |
-| `01` | <a href="skills/viper-ai-llm-redteam/SKILL.md"><code>viper&#8209;ai&#8209;llm&#8209;redteam</code></a> | AI, LLM & MCP Application Security Auditor (OWASP LLM Top 10). |
-| `02` | <a href="skills/viper-auth-oauth-jwt/SKILL.md"><code>viper&#8209;auth&#8209;oauth&#8209;jwt</code></a> | Authentication, OAuth 2. |
+| `01` | <a href="skills/viper-ai-llm-guardrails/SKILL.md"><code>viper&#8209;ai&#8209;llm&#8209;guardrails</code></a> | AI, LLM & MCP Application Security & Guardrails Auditor (OWASP LLM Top 10). |
+| `02` | <a href="skills/viper-auth-oauth-jwt/SKILL.md"><code>viper&#8209;auth&#8209;oauth&#8209;jwt</code></a> | Authentication, OAuth 2.0 / OIDC & JWT Security Auditor. |
 | `03` | <a href="skills/viper-aws-iam-cloud-audit/SKILL.md"><code>viper&#8209;aws&#8209;iam&#8209;cloud&#8209;audit</code></a> | AWS IAM, STS, S3, KMS & Lambda Security Auditor (modeled on Prowler, Parliament & CloudSplaining). |
 | `04` | <a href="skills/viper-bola-idor/SKILL.md"><code>viper&#8209;bola&#8209;idor</code></a> | Object & Function-Level Authorization (BOLA / BFLA) Audit Skill. |
 | `05` | <a href="skills/viper-browser-extension-mv3/SKILL.md"><code>viper&#8209;browser&#8209;extension&#8209;mv3</code></a> | Chrome/Firefox Browser Extension (Manifest V3) Security Auditor. |
@@ -234,17 +234,17 @@ Each skill in [`skills/`](skills/) encodes a senior security researcher's hypoth
 | `30` | <a href="skills/viper-mcp-server-audit/SKILL.md"><code>viper&#8209;mcp&#8209;server&#8209;audit</code></a> | Model Context Protocol (MCP) Server & Agentic Tool Security Auditor (OWASP MCP Top 10). |
 | `31` | <a href="skills/viper-mobile-api-config/SKILL.md"><code>viper&#8209;mobile&#8209;api&#8209;config</code></a> | Mobile App Static Configuration & API Security Auditor (modeled on OWASP MASVS & MobSF). |
 | `32` | <a href="skills/viper-multitenant-isolation/SKILL.md"><code>viper&#8209;multitenant&#8209;isolation</code></a> | Multi-Tenant SaaS Data Isolation & Row-Level Security (RLS) Auditor. |
-| `33` | <a href="skills/viper-nextjs-react-rsc/SKILL.md"><code>viper&#8209;nextjs&#8209;react&#8209;rsc</code></a> | Next. |
+| `33` | <a href="skills/viper-nextjs-react-rsc/SKILL.md"><code>viper&#8209;nextjs&#8209;react&#8209;rsc</code></a> | Next.js App Router, React Server Components &amp; Server Actions Auditor. |
 | `34` | <a href="skills/viper-nginx-envoy-gateway/SKILL.md"><code>viper&#8209;nginx&#8209;envoy&#8209;gateway</code></a> | Nginx, Envoy, Traefik & API Gateway Security Auditor (modeled on Gixy & OWASP Reverse Proxy). |
-| `35` | <a href="skills/viper-nodejs-express-nestjs/SKILL.md"><code>viper&#8209;nodejs&#8209;express&#8209;nestjs</code></a> | Node. |
-| `36` | <a href="skills/viper-oauth-oidc-compliance/SKILL.md"><code>viper&#8209;oauth&#8209;oidc&#8209;compliance</code></a> | OAuth 2. |
+| `35` | <a href="skills/viper-nodejs-express-nestjs/SKILL.md"><code>viper&#8209;nodejs&#8209;express&#8209;nestjs</code></a> | Node.js, Express, NestJS &amp; Fastify Security Auditor. |
+| `36` | <a href="skills/viper-oauth-oidc-compliance/SKILL.md"><code>viper&#8209;oauth&#8209;oidc&#8209;compliance</code></a> | OAuth 2.1, OIDC &amp; SSO Protocol Compliance Auditor (RFC 9700). |
 | `37` | <a href="skills/viper-openapi-rest-schema/SKILL.md"><code>viper&#8209;openapi&#8209;rest&#8209;schema</code></a> | OpenAPI / Swagger Schema, Mass Assignment & REST API Security Auditor (OWASP API3 & API4). |
 | `38` | <a href="skills/viper-orchestrator/SKILL.md"><code>viper&#8209;orchestrator</code></a> | Master 5-Phase Security Audit & Architecture Review Orchestrator. |
 | `39` | <a href="skills/viper-payment-stripe-pci/SKILL.md"><code>viper&#8209;payment&#8209;stripe&#8209;pci</code></a> | Payment Processing, Stripe/PayPal Ledger & Financial Precision Auditor. |
 | `40` | <a href="skills/viper-php-laravel-wordpress/SKILL.md"><code>viper&#8209;php&#8209;laravel&#8209;wordpress</code></a> | PHP, Laravel & WordPress Security Auditor. |
 | `41` | <a href="skills/viper-postgres-redis-mongo/SKILL.md"><code>viper&#8209;postgres&#8209;redis&#8209;mongo</code></a> | Database & Cache Security Auditor (PostgreSQL, Redis, MongoDB). |
 | `42` | <a href="skills/viper-privacy-gdpr-hipaa/SKILL.md"><code>viper&#8209;privacy&#8209;gdpr&#8209;hipaa</code></a> | Privacy Engineering, GDPR / HIPAA Data Flow & PII Minimization Auditor. |
-| `43` | <a href="skills/viper-proof-judge/SKILL.md"><code>viper&#8209;proof&#8209;judge</code></a> | Evidence Quality Gate, CVSS v3. |
+| `43` | <a href="skills/viper-proof-judge/SKILL.md"><code>viper&#8209;proof&#8209;judge</code></a> | Evidence Quality Gate, CVSS v3.1 Calculator &amp; Security Report Writer. |
 | `44` | <a href="skills/viper-proxy-fingerprint/SKILL.md"><code>viper&#8209;proxy&#8209;fingerprint</code></a> | HTTP Stack, Header & Error-Envelope Auditor. |
 | `45` | <a href="skills/viper-race-logic/SKILL.md"><code>viper&#8209;race&#8209;logic</code></a> | Concurrency, Idempotency & Business Logic Auditor. |
 | `46` | <a href="skills/viper-rag-vector-audit/SKILL.md"><code>viper&#8209;rag&#8209;vector&#8209;audit</code></a> | RAG Pipeline, Embedding & Vector Database Security Auditor. |
@@ -252,7 +252,7 @@ Each skill in [`skills/`](skills/) encodes a senior security researcher's hypoth
 | `48` | <a href="skills/viper-remediation-patch-verifier/SKILL.md"><code>viper&#8209;remediation&#8209;patch&#8209;verifier</code></a> | Security Patch Synthesizer & Regression Test Generator. |
 | `49` | <a href="skills/viper-ruby-rails-audit/SKILL.md"><code>viper&#8209;ruby&#8209;rails&#8209;audit</code></a> | Ruby on Rails & Rack Security Auditor (modeled on Brakeman). |
 | `50` | <a href="skills/viper-rust-memory-unsafe/SKILL.md"><code>viper&#8209;rust&#8209;memory&#8209;unsafe</code></a> | Rust 'unsafe', FFI, Async & Integer Safety Auditor (modeled on RustSec, Rudra & Clippy security lints). |
-| `51` | <a href="skills/viper-saml-sso-enterprise/SKILL.md"><code>viper&#8209;saml&#8209;sso&#8209;enterprise</code></a> | Enterprise SAML 2. |
+| `51` | <a href="skills/viper-saml-sso-enterprise/SKILL.md"><code>viper&#8209;saml&#8209;sso&#8209;enterprise</code></a> | Enterprise SAML 2.0, SCIM &amp; XML Signature Wrapping Auditor. |
 | `52` | <a href="skills/viper-sbom-slsa-provenance/SKILL.md"><code>viper&#8209;sbom&#8209;slsa&#8209;provenance</code></a> | SLSA Build Provenance, Sigstore Cosign & Artifact Integrity Auditor. |
 | `53` | <a href="skills/viper-secrets-audit/SKILL.md"><code>viper&#8209;secrets&#8209;audit</code></a> | Hardcoded Secret, Credential Entropy & Git History Leak Auditor (modeled on Gitleaks & TruffleHog). |
 | `54` | <a href="skills/viper-session-cookie-audit/SKILL.md"><code>viper&#8209;session&#8209;cookie&#8209;audit</code></a> | Session Lifecycle, Cookie Hardening & Token Invalidation Auditor (OWASP ASVS V3). |
@@ -261,7 +261,7 @@ Each skill in [`skills/`](skills/) encodes a senior security researcher's hypoth
 | `57` | <a href="skills/viper-ssrf-cloud/SKILL.md"><code>viper&#8209;ssrf&#8209;cloud</code></a> | Outbound Request (SSRF) & Cloud Egress Auditor. |
 | `58` | <a href="skills/viper-taint-sast/SKILL.md"><code>viper&#8209;taint&#8209;sast</code></a> | White-Box Multi-Language Source-to-Sink Taint Analysis Skill. |
 | `59` | <a href="skills/viper-threat-model-stride/SKILL.md"><code>viper&#8209;threat&#8209;model&#8209;stride</code></a> | STRIDE Threat Modeling, Data Flow Diagram (DFD) & Trust Boundary Architect (modeled on OWASP Threat Modeling & Trail of Bits). |
-| `60` | <a href="skills/viper-waf-evasion-framing/SKILL.md"><code>viper&#8209;waf&#8209;evasion&#8209;framing</code></a> | WAF Configuration, Parser Normalization & Filter Consistency Auditor. |
+| `60` | <a href="skills/viper-proxy-parser-alignment/SKILL.md"><code>viper&#8209;proxy&#8209;parser&#8209;alignment</code></a> | Reverse-Proxy, Edge Filter & Backend Parser Alignment Auditor. |
 | `61` | <a href="skills/viper-wasm-c-cpp-memory/SKILL.md"><code>viper&#8209;wasm&#8209;c&#8209;cpp&#8209;memory</code></a> | C, C++, JNI & WebAssembly Memory Safety Auditor (modeled on Trail of Bits C/C++ & Flawfinder). |
 | `62` | <a href="skills/viper-webauthn-passkey-mfa/SKILL.md"><code>viper&#8209;webauthn&#8209;passkey&#8209;mfa</code></a> | WebAuthn, FIDO2 Passkey & TOTP MFA Security Auditor. |
 | `63` | <a href="skills/viper-webhook-edr-hmac/SKILL.md"><code>viper&#8209;webhook&#8209;edr&#8209;hmac</code></a> | Inbound & Outbound Webhook Security Auditor. |
@@ -351,8 +351,8 @@ viperclaw/
 <summary><b>❓ Frequently Asked Questions (FAQ)</b></summary>
 <br />
 
-* **Why use ViperClaw instead of a standalone Docker pentest agent?**  
-  If you already use **Google Antigravity**, **Claude Code**, **OpenAI Codex**, or **Cursor**, spinning up a separate 5-container Docker stack with its own LLM API billing is redundant. ViperClaw installs in 2 seconds with zero dependencies and turns your existing coding agent into an evidence-gated offensive security platform.
+* **Why use ViperClaw instead of a standalone Docker security stack?**  
+  If you already use **Google Antigravity**, **Claude Code**, **OpenAI Codex**, or **Cursor**, spinning up a separate 5-container Docker stack with its own LLM API billing is redundant. ViperClaw installs in 2 seconds with zero dependencies and turns your existing coding agent into an evidence-gated AppSec &amp; architecture audit platform.
 * **How does ViperClaw prevent AI hallucinations and WAF "Soft-200" false positives?**  
   Generic AI wrappers often report `200 OK` HTML challenge pages from **Cloudflare, Akamai, Imperva, or CloudFront** as vulnerabilities. ViperClaw's [`ProofOracle`](src/viperclaw/core/oracle.py) filters WAF soft-blocks, diffs structural JSON keys for BOLA/IDOR, and enforces a strict **7-Question Pre-Submission Gate** (*"No Receipt, No Report"*).
 * **How do I run the regression test suite?**  
