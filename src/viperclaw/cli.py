@@ -67,7 +67,7 @@ def list_available_skills() -> List[Dict[str, str]]:
 def install_skills(target: str, dest_override: str | None = None, dry_run: bool = False) -> Dict[str, Any]:
     home = Path.home()
     target_paths: Dict[str, List[Path]] = {
-        "antigravity": [home / ".agents" / "skills"],
+        "antigravity": [home / ".gemini" / "config" / "skills"],
         "claude": [home / ".claude" / "skills"],
         "codex": [home / ".codex" / "skills"],
         "cursor": [home / ".cursor" / "skills"],
@@ -77,7 +77,7 @@ def install_skills(target: str, dest_override: str | None = None, dry_run: bool 
     elif target == "all":
         destinations = [p[0] for p in target_paths.values()]
     else:
-        destinations = target_paths.get(target, [home / ".agents" / "skills"])
+        destinations = target_paths.get(target, [home / ".gemini" / "config" / "skills"])
 
     skills = list_available_skills()
     installed: List[str] = []
@@ -98,6 +98,54 @@ def install_skills(target: str, dest_override: str | None = None, dry_run: bool 
         "dry_run": dry_run,
         "skills_count": len(skills),
         "installed_paths": installed,
+    }
+
+
+def install_mcp(target: str, dest_override: str | None = None, dry_run: bool = False) -> Dict[str, Any]:
+    home = Path.home()
+    target_configs: Dict[str, Path] = {
+        "antigravity": home / ".gemini" / "config" / "mcp_config.json",
+        "claude": home / ".claude.json",
+        "codex": home / ".codex" / "mcp_config.json",
+        "cursor": home / ".cursor" / "mcp.json",
+    }
+    if dest_override:
+        destinations = [Path(dest_override)]
+    elif target == "all":
+        destinations = list(target_configs.values())
+    else:
+        destinations = [target_configs.get(target, home / ".gemini" / "config" / "mcp_config.json")]
+
+    stanza = {
+        "command": "viperclaw",
+        "args": ["mcp"],
+    }
+    updated_files: List[str] = []
+
+    for cfg_path in destinations:
+        data: Dict[str, Any] = {}
+        if cfg_path.is_file():
+            try:
+                loaded = json.loads(cfg_path.read_text(encoding="utf-8"))
+                if isinstance(loaded, dict):
+                    data = loaded
+            except Exception:
+                data = {}
+        servers = data.get("mcpServers")
+        if not isinstance(servers, dict):
+            servers = {}
+        servers["viperclaw"] = stanza
+        data["mcpServers"] = servers
+        updated_files.append(str(cfg_path))
+        if not dry_run:
+            cfg_path.parent.mkdir(parents=True, exist_ok=True)
+            cfg_path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+
+    return {
+        "target": target,
+        "dry_run": dry_run,
+        "server": {"viperclaw": stanza},
+        "config_paths": updated_files,
     }
 
 
@@ -201,7 +249,13 @@ def build_parser() -> argparse.ArgumentParser:
     p_skills.add_argument("--dry-run", action="store_true", help="Preview installation paths without copying files")
 
     # 13. mcp
-    sub.add_parser("mcp", help="Start the Phase-Gated Model Context Protocol (MCP) JSON-RPC server over stdio")
+    p_mcp = sub.add_parser("mcp", help="Start the Phase-Gated MCP JSON-RPC server or install MCP config")
+    sub_mcp = p_mcp.add_subparsers(dest="mcp_action")
+    sub_mcp.add_parser("serve", help="Start the MCP stdio server (default when no subcommand is given)")
+    p_mcp_install = sub_mcp.add_parser("install", help="Register ViperClaw MCP server in Antigravity, Claude Code, Codex, or Cursor config")
+    p_mcp_install.add_argument("--target", choices=["antigravity", "claude", "codex", "cursor", "all"], default="antigravity")
+    p_mcp_install.add_argument("--dest", "--dest-dir", dest="dest", default=None, help="Custom config file path override")
+    p_mcp_install.add_argument("--dry-run", action="store_true", help="Preview MCP config registration without writing")
 
     return parser
 
@@ -268,6 +322,9 @@ def main(argv: List[str] | None = None) -> int:
         return 0
 
     if args.command == "mcp":
+        if getattr(args, "mcp_action", None) == "install":
+            print(json.dumps(install_mcp(args.target, dest_override=args.dest, dry_run=args.dry_run), indent=2))
+            return 0
         run_stdio_server()
         return 0
 

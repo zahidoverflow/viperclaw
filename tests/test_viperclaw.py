@@ -215,9 +215,9 @@ def test_mcp_server_jsonrpc(tmp_path: Path) -> None:
     assert call_resp["result"]["isError"] is False
 
 
-def test_all_64_skills_and_cli(tmp_path: Path) -> None:
+def test_all_65_skills_and_cli(tmp_path: Path) -> None:
     skills = list_available_skills()
-    assert len(skills) == 64
+    assert len(skills) == 65
     for sk in skills:
         text = Path(sk["path"]).read_text(encoding="utf-8")
         assert text.startswith("---\nname: ")
@@ -225,6 +225,14 @@ def test_all_64_skills_and_cli(tmp_path: Path) -> None:
 
     rc = main(["skills", "install", "--target", "antigravity", "--dest", str(tmp_path / "skills"), "--dry-run"])
     assert rc == 0
+
+    mcp_cfg = tmp_path / "mcp_config.json"
+    mcp_cfg.write_text('{"mcpServers": {"existing": {"command": "foo"}}}', encoding="utf-8")
+    rc_mcp = main(["mcp", "install", "--target", "antigravity", "--dest", str(mcp_cfg)])
+    assert rc_mcp == 0
+    loaded_mcp = json.loads(mcp_cfg.read_text(encoding="utf-8"))
+    assert "existing" in loaded_mcp["mcpServers"]
+    assert loaded_mcp["mcpServers"]["viperclaw"] == {"command": "viperclaw", "args": ["mcp"]}
 
     finding = VerifiedFinding(
         finding_id="VC-100",
