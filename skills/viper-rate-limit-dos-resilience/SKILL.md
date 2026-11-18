@@ -21,7 +21,7 @@ flowchart LR
 ```
 
 ### Root-Cause Analysis
-Single-request Denial of Service (DoS) occurs when a route evaluates a catastrophic backtracking regex (`^([a-zA-Z0-9]+)+$`) on a 50-character string (freezing the Python GIL or Node.js event loop for minutes), accepts multi-gigabyte request bodies or JSON/XML payloads without `Content-Length` caps, or allows unlimited brute-force attempts on 6-digit OTPs.
+Single-request Denial of Service (DoS) occurs when a route evaluates a catastrophic backtracking regex (`^([a-zA-Z0-9]+)+$`) on a 50-character string (freezing the Python GIL or Node.js event loop for minutes), accepts multi-gigabyte request bodies or JSON/XML bodies without `Content-Length` caps, or allows unlimited credential-guessing attempts on 6-digit OTPs.
 
 ---
 
@@ -45,12 +45,12 @@ rg -n "(ratelimit|RateLimiter|SlowAPI|throttler)"
 
 | Control ID | Audit Verification Target | Pass Criteria | Fail / Vulnerability Indicator |
 | :---: | :--- | :--- | :--- |
-| `DOS-01` | **Auth & OTP Brute-Force Rate Limiting** | Login, 2FA/OTP verification, and password reset enforce strict per-account AND per-IP rate limits (e.g., max 5 attempts per 15m before invalidating the OTP). | 6-digit OTP endpoint allows 1,000,000 requests without invalidating the code or locking out. |
+| `DOS-01` | **Auth & OTP Credential-Throttling Limits** | Login, 2FA/OTP verification, and password reset enforce strict per-account AND per-IP rate limits (e.g., max 5 attempts per 15m before invalidating the OTP). | 6-digit OTP endpoint allows 1,000,000 requests without invalidating the code or locking out. |
 | `DOS-02` | **Zero Catastrophic Backtracking Regexes (ReDoS)** | All regular expressions evaluated on user input avoid nested quantifiers (`(a+)+`, `(a|aa)+`, `([a-z]+)*`), or use linear-time `google-re2`. | Email/URL validation regex uses `^([a-zA-Z0-9_\.-]+)+@...` (freezes CPU on 32-char non-matching input). |
 | `DOS-03` | **Request Body & Multipart Size Caps** | Web server and framework enforce explicit body size limits (e.g., `1MB` for JSON APIs, `10MB` for uploads). | Missing `MAX_CONTENT_LENGTH` allows a single `POST` of 2GB JSON to OOM-kill the worker pod. |
 | `DOS-04` | **Expensive Operation & AI/Export Quotas** | PDF generation, CSV exports, password hashing, and LLM API routes enforce strict per-user concurrency and daily quota caps. | Unthrottled `/api/export-all` or `/api/chat` route allows exhausting DB CPU or LLM billing. |
 | `DOS-05` | **Password Input Length Cap Before Hashing (`<= 128` bytes)** | Password strings are capped at `<= 128` characters before passing to `bcrypt` / `Argon2` / `PBKDF2`. | Passing a 10MB password string into `PBKDF2` / `Argon2` blocks the worker thread for several seconds per request. |
-| `DOS-06` | **Trusted Proxy IP Resolution for Rate Limiters** | Rate limiters extract client IP from the rightmost trusted proxy hop, never an unvalidated client `X-Forwarded-For` header. | Attacker sends a random `X-Forwarded-For: 1.2.3.4` header on every request to bypass IP rate limiting. |
+| `DOS-06` | **Trusted Proxy IP Resolution for Rate Limiters** | Rate limiters extract client IP from the rightmost trusted proxy hop, never an unvalidated client `X-Forwarded-For` header. | Clients send arbitrary `X-Forwarded-For: 1.2.3.4` headers to circumvent IP rate limiting. |
 | `DOS-07` | **Database & Upstream Outbound Timeouts** | Every DB query (`statement_timeout`) and outbound HTTP/RPC call defines an explicit timeout (e.g., `3s`–`10s`). | requests.get(url) called without `timeout=`, hanging worker threads indefinitely when upstream stalls. |
 | `DOS-08` | **JSON Nesting Depth & Array Length Bounds** | JSON parsers and schema validators cap maximum object nesting depth and array element counts. | 10,000-element array passed to a batch endpoint triggers $O(N^2)$ processing or 10,000 sequential DB queries. |
 
@@ -66,7 +66,7 @@ rg -n "(ratelimit|RateLimiter|SlowAPI|throttler)"
 | :--- | :--- | :--- |
 | **HIGH (8.1)** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N` | Missing rate limit and attempt cap on 4/6-digit OTP/reset code allowing trivial account takeover. |
 | **HIGH (7.5)** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H` | Unauthenticated ReDoS regex or unbounded memory allocation crashing the application server in a single request. |
-| **MEDIUM (5.3)** | `CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:L` | Rate limit bypassable via spoofed `X-Forwarded-For` header or missing password max-length cap. |
+| **MEDIUM (5.3)** | `CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:L` | Rate limit avoidable via untrusted `X-Forwarded-For` header or missing password max-length cap. |
 
 ---
 

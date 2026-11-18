@@ -64,7 +64,7 @@ rg -n "(Route::|path\(|re_path\(|http\.HandleFunc)"
 
 | Severity Tier | Baseline CVSS v3.1 Vector | Qualifying Security Impact |
 | :--- | :--- | :--- |
-| **CRITICAL (9.0–10.0)** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H` | Unauthenticated RCE, authentication bypass, or cross-tenant database compromise. |
+| **CRITICAL (9.0–10.0)** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H` | Unauthenticated RCE, authentication failure, or cross-tenant database compromise. |
 | **HIGH (7.0–8.9)** | `CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N` | Authenticated cross-tenant BOLA/IDOR, SQL injection, or SSRF to internal services. |
 | **MEDIUM (4.0–6.9)** | `CVSS:3.1/AV:N/AC:L/PR:L/UI:R/S:C/C:L/I:L/A:N` | Stored/Reflected XSS, CSRF on non-admin actions, or schema/PII disclosure. |
 | **LOW (0.1–3.9)** | `CVSS:3.1/AV:N/AC:H/PR:H/UI:N/S:U/C:L/I:N/A:N` | Verbose stack traces, minor configuration drift, or defense-in-depth gaps. |

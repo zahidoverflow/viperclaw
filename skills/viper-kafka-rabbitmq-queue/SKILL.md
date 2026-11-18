@@ -15,7 +15,7 @@ description: Event Streaming & Message Queue Security Auditor (Kafka, RabbitMQ, 
 
 ```mermaid
 flowchart LR
-  Prod["Authenticated Producer (SASL_SSL / mTLS)"] --> Broker["Topic/VHost ACL + JSON-Only Payload"] --> DLQ["Bounded Retry Counter -> Dead-Letter Queue"] --> Cons["Idempotent Consumer (event_id Dedup)"]
+  Prod["Authenticated Producer (SASL_SSL / mTLS)"] --> Broker["Topic/VHost ACL + JSON-Only Schema"] --> DLQ["Bounded Retry Counter -> Dead-Letter Queue"] --> Cons["Idempotent Consumer (event_id Dedup)"]
 ```
 
 ### Automated ViperClaw Command
@@ -35,13 +35,13 @@ viperclaw taint . --db .viperclaw/graph.db
 2. **Broker Transport Encryption & SASL/mTLS Auth:** Reject `security.protocol=PLAINTEXT` in Kafka and default `guest:guest` credentials in RabbitMQ; enforce `SASL_SSL` / `mTLS` and per-service topic/vhost ACLs (producers can only write to their topic; consumers can only read).
 3. **Malformed Message & Infinite Requeue Loop Defense:** Consumers that call `channel.basic_nack(requeue=True)` on malformed messages without a retry counter cause instant infinite-loop DoS. Enforce schema validation + max retries (e.g., `x-delivery-count <= 3`) routing to a Dead-Letter Queue (DLQ).
 4. **Consumer Idempotency & Replay Deduplication:** Because message queues guarantee at-least-once delivery, consumers executing financial/email/state actions must record `event_id` in an atomic idempotency table.
-5. **Event Payload Envelope Signing / Tenant Binding:** Never trust an unverified `tenant_id` or `user_id` field inside a shared queue message without validating its producer identity or HMAC/JWS envelope.
+5. **Event Envelope Signing / Tenant Binding:** Never trust an unverified `tenant_id` or `user_id` field inside a shared queue message without validating its producer identity or HMAC/JWS envelope.
 
 ---
 
 ## 5. Production Remediation Patterns (Vulnerable vs. Hardened Code)
 ```python
-# ❌ VULNERABLE: Celery accepts pickle payloads & retries poison messages infinitely
+# ❌ VULNERABLE: Celery accepts pickle serialization & retries malformed messages infinitely
 app.conf.accept_content = ["pickle", "json"]
 
 # ✅ HARDENED: Strict JSON-only serialization & bounded retry with DLQ
@@ -65,10 +65,10 @@ app.conf.update(
 
 | Severity Tier | Baseline CVSS v3.1 Vector | Qualifying Security Impact |
 | :--- | :--- | :--- |
-| **CRITICAL (9.0–10.0)** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H` | Unauthenticated remote code execution, cross-tenant authentication/isolation bypass, or direct theft of funds/keys. |
-| **HIGH (7.0–8.9)** | `CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N` | Authenticated privilege escalation, sensitive data exfiltration, or single-request service outage. |
+| **CRITICAL (9.0–10.0)** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H` | Unauthenticated remote code execution, cross-tenant authentication or isolation gap, or direct theft of funds/keys. |
+| **HIGH (7.0–8.9)** | `CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N` | Authenticated privilege escalation, unauthorized sensitive data exposure, or single-request service outage. |
 | **MEDIUM (4.0–6.9)** | `CVSS:3.1/AV:N/AC:L/PR:L/UI:R/S:C/C:L/I:L/A:N` | Scoped information disclosure, non-admin state mutation, or configuration weakness requiring user interaction. |
-| **LOW (0.1–3.9)** | `CVSS:3.1/AV:N/AC:H/PR:H/UI:N/S:U/C:L/I:N/A:N` | Defense-in-depth hardening gap with high attack complexity and minimal direct impact. |
+| **LOW (0.1–3.9)** | `CVSS:3.1/AV:N/AC:H/PR:H/UI:N/S:U/C:L/I:N/A:N` | Defense-in-depth hardening gap requiring high precondition complexity and minimal direct impact. |
 
 ---
 

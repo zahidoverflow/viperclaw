@@ -21,7 +21,7 @@ flowchart LR
 ```
 
 ### Root-Cause Analysis
-Cryptographic failures occur when developers use fast general-purpose hashes (`SHA-256`, `MD5`) for passwords, unauthenticated encryption modes (`AES-ECB`, `AES-CBC` without HMAC—vulnerable to padding oracle attacks), static or reused IVs/nonces in `AES-GCM`, or non-cryptographic PRNGs (`random`, `Math.random()`) for security tokens.
+Cryptographic failures occur when developers use fast general-purpose hashes (`SHA-256`, `MD5`) for passwords, unauthenticated encryption modes (`AES-ECB`, `AES-CBC` without HMAC—vulnerable to padding oracle decryption), static or reused IVs/nonces in `AES-GCM`, or non-cryptographic PRNGs (`random`, `Math.random()`) for security tokens.
 
 ---
 
@@ -64,7 +64,7 @@ rg -n "(random\.(randint|choice|random)|Math\.random\(|math/rand)"
 
 | Severity Tier | Baseline CVSS v3.1 Vector | Qualifying Security Impact |
 | :--- | :--- | :--- |
-| **CRITICAL (9.1)** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N` | Predictable PRNG reset tokens, static `AES-GCM` nonce reuse, or `AES-CBC` padding oracle allowing auth bypass. |
+| **CRITICAL (9.1)** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N` | Predictable PRNG reset tokens, static `AES-GCM` nonce reuse, or `AES-CBC` padding oracle compromising confidentiality. |
 | **HIGH (7.5)** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N` | Disabled TLS certificate verification (`verify=False`) or fast unsalted password hashes (`MD5`/`SHA1`). |
 | **MEDIUM (5.3)** | `CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:N/A:N` | Non-constant-time HMAC comparison or shared key material across signing and encryption. |
 

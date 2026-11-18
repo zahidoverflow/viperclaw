@@ -17,7 +17,7 @@ description: BrowserOS Neo Live Application Inspection & DOM Security Audit Skil
 
 ```mermaid
 flowchart LR
-  Tab["Live BrowserOS Tab (Signed-In SPA)"] --> Hook["evaluate_in_page (Storage & Fetch Telemetry)"] --> Ingest["viper_browser_ingest (BrowserBridge)"] --> Graph[("SQLite Attack Graph & JWT/JS Audit")]
+  Tab["Live BrowserOS Tab (Signed-In SPA)"] --> Hook["evaluate_in_page (Storage & Fetch Telemetry)"] --> Ingest["viper_browser_ingest (BrowserBridge)"] --> Graph[("SQLite Assessment Graph & JWT/JS Audit")]
 ```
 
 ### Root-Cause Analysis

@@ -36,7 +36,7 @@ viperclaw taint . --db .viperclaw/graph.db
 2. **Laravel Raw SQL & Query Builder Column Names:** Audit `DB::raw()`, `whereRaw()`, `orderByRaw()`, and note that column/sort names in `$query->orderBy($request->input('sort'))` must be validated against `in_array($sort, ['created_at', 'name'], true)`.
 3. **Blade & Twig Output Escaping:** Replace unescaped `{!! $userContent !!}` with escaped `{{ $userContent }}` unless sanitized via `HTMLPurifier`.
 4. **WordPress Capability + Nonce Dual Check:** Every `wp_ajax_*`, REST route, or admin action must check *both* `current_user_can('manage_options')` (authorization) *and* `check_ajax_referer()` / `wp_verify_nonce()` (CSRF), and parameterize SQL via `$wpdb->prepare()`.
-5. **PHP Strict Comparison & File Inclusion:** Use strict equality `===` / `!==` and `in_array(..., true)` to prevent type-juggling bypasses, and disable `allow_url_include = Off` in `php.ini`.
+5. **PHP Strict Comparison & File Inclusion:** Use strict equality `===` / `!==` and `in_array(..., true)` to prevent type-juggling coercion gaps, and disable `allow_url_include = Off` in `php.ini`.
 
 ---
 
@@ -62,10 +62,10 @@ $users = DB::select("SELECT * FROM users WHERE role = ?", [$request->validated('
 
 | Severity Tier | Baseline CVSS v3.1 Vector | Qualifying Security Impact |
 | :--- | :--- | :--- |
-| **CRITICAL (9.0–10.0)** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H` | Unauthenticated remote code execution, cross-tenant authentication/isolation bypass, or direct theft of funds/keys. |
-| **HIGH (7.0–8.9)** | `CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N` | Authenticated privilege escalation, sensitive data exfiltration, or single-request service outage. |
+| **CRITICAL (9.0–10.0)** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H` | Unauthenticated remote code execution, cross-tenant authentication or isolation gap, or direct theft of funds/keys. |
+| **HIGH (7.0–8.9)** | `CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N` | Authenticated privilege escalation, unauthorized sensitive data exposure, or single-request service outage. |
 | **MEDIUM (4.0–6.9)** | `CVSS:3.1/AV:N/AC:L/PR:L/UI:R/S:C/C:L/I:L/A:N` | Scoped information disclosure, non-admin state mutation, or configuration weakness requiring user interaction. |
-| **LOW (0.1–3.9)** | `CVSS:3.1/AV:N/AC:H/PR:H/UI:N/S:U/C:L/I:N/A:N` | Defense-in-depth hardening gap with high attack complexity and minimal direct impact. |
+| **LOW (0.1–3.9)** | `CVSS:3.1/AV:N/AC:H/PR:H/UI:N/S:U/C:L/I:N/A:N` | Defense-in-depth hardening gap requiring high precondition complexity and minimal direct impact. |
 
 ---
 

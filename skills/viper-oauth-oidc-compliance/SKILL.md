@@ -7,7 +7,7 @@ description: OAuth 2.1, OIDC & SSO Protocol Compliance Auditor (RFC 9700 / OAuth
 
 ## 1. Executive Scope, Standards & CWE/OWASP Mapping
 - **Frameworks & Standards:** RFC 9700 (OAuth 2.0 Security Best Current Practice), OAuth 2.1 Draft, OpenID Connect Core 1.0, CWE-346, CWE-601
-- **Primary CWE Mapping:** CWE-601 (URL Redirection to Untrusted Site / redirect_uri Bypass), CWE-352 (Missing OAuth state / CSRF), CWE-345 (Unverified OIDC ID Token Claims)
+- **Primary CWE Mapping:** CWE-601 (URL Redirection to Untrusted Site / Open Redirect), CWE-352 (Missing OAuth state / CSRF), CWE-345 (Unverified OIDC ID Token Claims)
 - **ViperClaw MCP Tools:** `viper_jwt_audit`, `viper_taint_scan`, `viper_verify_and_report`
 - **ViperClaw CLI Command:** `viperclaw taint ./src --db .viperclaw/graph.db`
 
@@ -50,7 +50,7 @@ rg -n "(response_type=token|verify_id_token|oauth2|oidc)"
 | `OIDC-04` | **Disable Legacy Implicit Flow (`response_type=token`)** | Only Authorization Code + PKCE (`response_type=code`) is permitted; tokens are never returned in URL fragments. | `response_type=token` enabled, leaking access tokens in browser history and referrer contexts. |
 | `OIDC-05` | **Single-Use Short-Lived Authorization Codes** | Authorization codes expire in `<= 60 seconds`, are single-use, and replaying a used code revokes all tokens issued from it. | Authorization code can be exchanged multiple times. |
 | `OIDC-06` | **OIDC ID Token `iss`, `aud` & `email_verified` Checks** | Relying Party verifies JWKS signature, `iss`, `aud == CLIENT_ID`, `exp`, and `email_verified is True` before linking accounts. | Relying Party links account by `email` claim without checking `email_verified` or `aud`. |
-| `OIDC-07` | **Mix-Up Attack Prevention (Multi-IdP Clients)** | Clients supporting multiple OAuth/OIDC IdPs use distinct callback URLs per IdP or verify the `iss` parameter in the authorization response (RFC 9207). | Shared `/oauth/callback` trusts session state to determine which IdP issued the code. |
+| `OIDC-07` | **IdP Mix-Up Prevention (Multi-IdP Clients)** | Clients supporting multiple OAuth/OIDC IdPs use distinct callback URLs per IdP or verify the `iss` parameter in the authorization response (RFC 9207). | Shared `/oauth/callback` trusts session state to determine which IdP issued the code. |
 | `OIDC-08` | **Referrer Suppression on `/callback` Page** | The OAuth callback endpoint sets `Referrer-Policy: no-referrer` so `?code=...` is never leaked via third-party subresources. | Callback page loads external analytics scripts with `unsafe-url` referrer policy. |
 
 ---
@@ -63,8 +63,8 @@ rg -n "(response_type=token|verify_id_token|oauth2|oidc)"
 
 | Severity Tier | Baseline CVSS v3.1 Vector | Qualifying Security Impact |
 | :--- | :--- | :--- |
-| **CRITICAL (9.1)** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:H/I:H/A:N` | Wildcard/prefix `redirect_uri` bypass or unverified `email_verified` claim enabling 1-click Account Takeover. |
-| **HIGH (7.5)** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:N` | Missing `state` parameter on OAuth account-linking flow allowing attacker to link their IdP to victim's account. |
+| **CRITICAL (9.1)** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:H/I:H/A:N` | Wildcard/prefix `redirect_uri` validation gap or unverified `email_verified` claim enabling 1-click Account Takeover. |
+| **HIGH (7.5)** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:N` | Missing `state` parameter on OAuth account-linking flow allowing an external party to link their IdP to another user's account. |
 | **MEDIUM (5.3)** | `CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:U/C:H/I:N/A:N` | Missing PKCE (`S256`) enforcement or reusable authorization codes. |
 
 ---

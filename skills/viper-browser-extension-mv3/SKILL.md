@@ -35,7 +35,7 @@ viperclaw harvest-js . --db .viperclaw/graph.db
 2. **Content Script `window.postMessage` Isolation:** Content scripts share the DOM with the untrusted host webpage. Never trust `window.addEventListener("message", (e) => ...)` without checking `e.source === window` and `e.origin === expectedOrigin`, and never pass message data into `innerHTML` or `chrome.runtime.sendMessage` unchecked.
 3. **`externally_connectable` & `web_accessible_resources` Minimization:** Avoid wildcard match patterns (`*://*.example.com/*` or `<all_urls>`) in `externally_connectable.matches` and `web_accessible_resources`, and enable `use_dynamic_url: true` to prevent extension fingerprinting and CSRF.
 4. **Least-Privilege Permissions (`activeTab` over `<all_urls>`):** Prefer `activeTab` over broad `host_permissions: ["<all_urls>"]`, and never store plaintext user passwords or long-lived tokens in unencrypted `chrome.storage.local` accessible to content scripts (use `chrome.storage.session` with `setAccessLevel({ accessLevel: 'TRUSTED_CONTEXTS' })`).
-5. **Extension Page DOM XSS Prevention:** Even with MV3's `script-src 'self'` CSP, assigning untrusted data to `innerHTML` inside `popup.html` or `options.html` can abuse DOM gadgets or leak `chrome.*` storage APIs; always use `textContent`.
+5. **Extension Page DOM XSS Prevention:** Even with MV3's `script-src 'self'` CSP, assigning untrusted data to `innerHTML` inside `popup.html` or `options.html` can trigger unsafe DOM sinks or leak `chrome.*` storage APIs; always use `textContent`.
 
 ---
 
@@ -71,10 +71,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
 | Severity Tier | Baseline CVSS v3.1 Vector | Qualifying Security Impact |
 | :--- | :--- | :--- |
-| **CRITICAL (9.0–10.0)** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H` | Unauthenticated remote code execution, cross-tenant authentication/isolation bypass, or direct theft of funds/keys. |
-| **HIGH (7.0–8.9)** | `CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N` | Authenticated privilege escalation, sensitive data exfiltration, or single-request service outage. |
+| **CRITICAL (9.0–10.0)** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H` | Unauthenticated remote code execution, cross-tenant authentication or isolation gap, or direct theft of funds/keys. |
+| **HIGH (7.0–8.9)** | `CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N` | Authenticated privilege escalation, unauthorized sensitive data exposure, or single-request service outage. |
 | **MEDIUM (4.0–6.9)** | `CVSS:3.1/AV:N/AC:L/PR:L/UI:R/S:C/C:L/I:L/A:N` | Scoped information disclosure, non-admin state mutation, or configuration weakness requiring user interaction. |
-| **LOW (0.1–3.9)** | `CVSS:3.1/AV:N/AC:H/PR:H/UI:N/S:U/C:L/I:N/A:N` | Defense-in-depth hardening gap with high attack complexity and minimal direct impact. |
+| **LOW (0.1–3.9)** | `CVSS:3.1/AV:N/AC:H/PR:H/UI:N/S:U/C:L/I:N/A:N` | Defense-in-depth hardening gap requiring high precondition complexity and minimal direct impact. |
 
 ---
 

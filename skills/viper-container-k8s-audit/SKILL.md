@@ -47,7 +47,7 @@ rg -n "^(FROM|USER|ARG|ENV)" Dockerfile*
 | :---: | :--- | :--- | :--- |
 | `K8S-01` | **Non-Root Container Execution** | Dockerfile declares non-root `USER 65532:65532` and K8s sets `runAsNonRoot: true`, `runAsUser: 65532`. | Container runs as `root` (`uid=0`) or omits `runAsNonRoot: true`. |
 | `K8S-02` | **Privilege Escalation & Capability Drop** | `allowPrivilegeEscalation: false`, `privileged: false`, and `capabilities: { drop: ["ALL"] }` enforced. | `privileged: true` or default Linux capabilities retained. |
-| `K8S-03` | **Read-Only Root Filesystem** | `readOnlyRootFilesystem: true` set on containers with ephemeral `emptyDir` mounted at `/tmp`. | Writable root filesystem allowing post-exploitation binary drops or source modification. |
+| `K8S-03` | **Read-Only Root Filesystem** | `readOnlyRootFilesystem: true` set on containers with ephemeral `emptyDir` mounted at `/tmp`. | Writable root filesystem allowing unapproved runtime binary writes or source modification. |
 | `K8S-04` | **Host Namespace & `docker.sock` Isolation** | Zero use of `hostNetwork: true`, `hostPID: true`, `hostIPC: true`, or `hostPath` mounts (`/var/run/docker.sock`, `/etc`). | Pod mounts `/var/run/docker.sock` or host `/`, enabling trivial node root escape. |
 | `K8S-05` | **ServiceAccount Token Automount Disabled** | Pods that do not call the K8s API set `automountServiceAccountToken: false`. | Default ServiceAccount token mounted in web application pod (leaked via LFI/SSRF). |
 | `K8S-06` | **RBAC Least Privilege (No Wildcards)** | Zero `ClusterRoleBinding` to `cluster-admin` for workloads; no `verbs: ["*"]` or `resources: ["secrets"]` unless required. | Workload ServiceAccount granted `get`/`list`/`watch` on cluster-wide `secrets` or `pods/exec`. |

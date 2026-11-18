@@ -47,7 +47,7 @@ rg -n "(render_template_string|jinja2\.Template\(|new Function\(|eval\()"
 | :---: | :--- | :--- | :--- |
 | `INJ-01` | **SQL Value Parameterization** | 100% of SQL data values bound via prepared statements (`?`, `$1`, `%s`, `:name`). | String interpolation (`f"..."`, `fmt.Sprintf`, `+`, `.format()`) inside SQL strings. |
 | `INJ-02` | **Dynamic SQL Identifier Allowlisting** | Dynamic column/table/sort names (`ORDER BY`, `GROUP BY`) mapped through a hardcoded allowlist dictionary. | User input concatenated into `ORDER BY ${req.query.sort}` (cannot be parameterized by `?`). |
-| `INJ-03` | **Second-Order SQL Taint Tracking** | Database-stored values (usernames, webhook payloads) are also parameterized when reused in later queries. | Stored user metadata concatenated into reporting or batch-job SQL queries. |
+| `INJ-03` | **Second-Order SQL Taint Tracking** | Database-stored values (usernames, webhook event bodies) are also parameterized when reused in later queries. | Stored user metadata concatenated into reporting or batch-job SQL queries. |
 | `INJ-04` | **Zero-Shell Subprocess Execution** | OS commands executed via `subprocess.run([bin, arg1], shell=False)` or `execFile` with `--` option terminator. | Use of `os.system`, `popen`, `shell=True`, or passing unvalidated `-option` flags to CLI binaries (Argument Injection, CWE-88). |
 | `INJ-05` | **NoSQL Scalar Type Enforcement** | MongoDB/CouchDB query inputs validated as primitive strings/numbers; `$where` disabled. | Raw JSON objects (`{"$ne": null}`, `{"$gt": ""}`) passed from `req.body` into `.findOne()`. |
 | `INJ-06` | **Static Template Compilation (SSTI Defense)** | Templates loaded exclusively from static files; user data passed only in the context dictionary. | User strings passed into `Template(user_str).render()` or `render_template_string()`. |
@@ -65,7 +65,7 @@ rg -n "(render_template_string|jinja2\.Template\(|new Function\(|eval\()"
 | Severity Tier | Baseline CVSS v3.1 Vector | Qualifying Security Impact |
 | :--- | :--- | :--- |
 | **CRITICAL (9.8)** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H` | Unauthenticated OS Command Injection, SSTI RCE, or SQLi with database read/write. |
-| **HIGH (8.8)** | `CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H` | Authenticated SQLi, NoSQLi auth bypass, or argument injection leading to code execution. |
+| **HIGH (8.8)** | `CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H` | Authenticated SQLi, NoSQL operator auth gap, or argument injection leading to code execution. |
 | **MEDIUM (6.5)** | `CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N` | Read-only boolean/time-based blind SQLi in a restricted reporting query. |
 
 ---

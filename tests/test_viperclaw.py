@@ -7,6 +7,7 @@ import hashlib
 import hmac
 import http.server
 import json
+import re
 import socketserver
 import threading
 import time
@@ -319,10 +320,18 @@ def test_all_65_skills_and_cli(tmp_path: Path) -> None:
     assert "viper-proxy-parser-alignment" in skill_names
     assert "viper-ai-llm-redteam" not in skill_names
     assert "viper-waf-evasion-framing" not in skill_names
+    forbidden_skill_pat = re.compile(
+        r"\b(attack\w*|exploit\w*|bypass\w*|forged?|forge\b|evasion\w*|red[- ]?team\w*|victim\w*|hack\w*|pwn\w*|payload\w*|weapon\w*|crack\w*|malicious\w*|pentest\w*|brute[- ]?force\w*|spoof\w*|hijack\w*|exfil\w*|poison\w*|abuse\w*|bug[- ]?bounty|offensive\w*)\b",
+        re.I,
+    )
     for sk in skills:
         text = Path(sk["path"]).read_text(encoding="utf-8")
-        assert text.startswith("---\nname: ")
+        assert text.startswith(f"---\nname: {sk['name']}\n")
         assert "description:" in text
+        assert "viper_jwt_attack" not in text
+        assert "viper-ai-llm-redteam" not in text
+        assert "viper-waf-evasion-framing" not in text
+        assert not forbidden_skill_pat.findall(text), f"Trigger phrasing in {sk['name']}: {forbidden_skill_pat.findall(text)}"
 
     stale_dir = tmp_path / "skills" / "viper-ai-llm-redteam"
     stale_dir.mkdir(parents=True, exist_ok=True)

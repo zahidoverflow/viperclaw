@@ -21,7 +21,7 @@ flowchart LR
 ```
 
 ### Root-Cause Analysis
-Cookie-authenticated endpoints accept state-changing requests via `GET` (bypassing `SameSite=Lax` on top-level navigations), accept `application/x-www-form-urlencoded` or `text/plain` on `POST` endpoints without verifying an anti-CSRF token or `Origin` header, or use static/unverified CSRF tokens.
+Cookie-authenticated endpoints accept state-changing requests via `GET` (circumventing `SameSite=Lax` on top-level navigations), accept `application/x-www-form-urlencoded` or `text/plain` on `POST` endpoints without verifying an anti-CSRF token or `Origin` header, or use static/unverified CSRF tokens.
 
 ---
 
@@ -49,8 +49,8 @@ rg -n "@(app|router)\.get\(.*(delete|remove|reset|update|approve|upgrade)"
 | `CSRF-02` | **Cryptographic Session-Bound Anti-CSRF Tokens** | Every cookie-authenticated `POST`/`PUT`/`PATCH`/`DELETE` endpoint validates an HMAC-signed or session-stored CSRF token. | CSRF token checked only for presence (`if req.body.csrf`) or accepts any user's valid CSRF token. |
 | `CSRF-03` | **Reject Form-Encoded Content-Types on JSON APIs** | JSON APIs relying on CORS preflight protection explicitly require `Content-Type: application/json` and reject `text/plain`, `multipart/form-data`, and `application/x-www-form-urlencoded`. | Express/FastAPI/Spring controller parses both JSON and URL-encoded form bodies without a CSRF token. |
 | `CSRF-04` | **`Sec-Fetch-Site` & `Origin` Header Verification** | State-changing middleware rejects requests where `Sec-Fetch-Site` is `cross-site` or `Origin` does not match the host. | No `Origin` / `Sec-Fetch-Site` defense-in-depth validation. |
-| `CSRF-05` | **Login & OAuth Connect CSRF Protection** | Login forms and OAuth account-binding callbacks (`/oauth/callback`) enforce `state` / CSRF tokens. | Missing Login CSRF or OAuth `state` check allows attacker to bind their social account to victim's session. |
-| `CSRF-06` | **Double-Submit Cookie Signing (`__Host-` + HMAC)** | If using stateless double-submit CSRF cookies, the cookie uses `__Host-` prefix and contains an HMAC of the user's session ID. | Unsigned double-submit cookie overwritable by a sibling subdomain (Cookie Tossing bypass). |
+| `CSRF-05` | **Login & OAuth Connect CSRF Protection** | Login forms and OAuth account-binding callbacks (`/oauth/callback`) enforce `state` / CSRF tokens. | Missing Login CSRF or OAuth `state` check allows binding an unverified external account to another user's session. |
+| `CSRF-06` | **Double-Submit Cookie Signing (`__Host-` + HMAC)** | If using stateless double-submit CSRF cookies, the cookie uses `__Host-` prefix and contains an HMAC of the user's session ID. | Unsigned double-submit cookie overwritable by a sibling subdomain (sibling-subdomain cookie overwrite). |
 | `CSRF-07` | **Audit `@csrf_exempt` & Exclusion Lists** | Every `@csrf_exempt` or `VerifyCsrfToken::$except` entry is restricted to webhook endpoints that verify HMAC signatures. | `@csrf_exempt` applied to user-facing cookie-authenticated endpoints. |
 | `CSRF-08` | **GraphQL `POST` CSRF Defense** | Cookie-authenticated `/graphql` endpoints require a custom header (`X-Requested-With`, `Apollo-Require-Preflight`) and reject `GET` mutations. | GraphQL accepts mutations via `GET /graphql?query=mutation...` or `POST` with `application/x-www-form-urlencoded`. |
 

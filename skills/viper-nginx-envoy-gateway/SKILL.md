@@ -36,7 +36,7 @@ viperclaw taint . --db .viperclaw/graph.db
 2. **Nginx `add_header` Inheritance Drop:** In Nginx, adding *any* `add_header` inside a nested `location` block silently drops **all** `add_header` directives (like HSTS, CSP, `X-Frame-Options`) defined in the parent `server` or `http` block! Repeat security headers via an `include security_headers.conf;`.
 3. **CRLF Header Injection via Unencoded `$uri` / `$request_uri`:** In Nginx redirects or `proxy_set_header`, `$uri` is URL-decoded and can contain `
 ` (CRLF response splitting). Use `$request_uri` instead of `$uri` in `return 301 https://$host$request_uri;`.
-4. **Envoy / Nginx `X-Forwarded-For` Spoofing Defense:** Never set `set_real_ip_from 0.0.0.0/0` in Nginx or `use_remote_address: false` on edge Envoy listeners; configure exact trusted proxy CIDRs and `xff_num_trusted_hops`.
+4. **Envoy / Nginx `X-Forwarded-For` Trust Boundary Defense:** Never set `set_real_ip_from 0.0.0.0/0` in Nginx or `use_remote_address: false` on edge Envoy listeners; configure exact trusted proxy CIDRs and `xff_num_trusted_hops`.
 5. **External Auth (`ext_authz`) Fail-Closed Enforcement:** In Envoy `envoy.filters.http.ext_authz`, ensure `failure_mode_allow: false` so an auth-service timeout never fails open.
 
 ---
@@ -71,10 +71,10 @@ location /old {
 
 | Severity Tier | Baseline CVSS v3.1 Vector | Qualifying Security Impact |
 | :--- | :--- | :--- |
-| **CRITICAL (9.0–10.0)** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H` | Unauthenticated remote code execution, cross-tenant authentication/isolation bypass, or direct theft of funds/keys. |
-| **HIGH (7.0–8.9)** | `CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N` | Authenticated privilege escalation, sensitive data exfiltration, or single-request service outage. |
+| **CRITICAL (9.0–10.0)** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H` | Unauthenticated remote code execution, cross-tenant authentication or isolation gap, or direct theft of funds/keys. |
+| **HIGH (7.0–8.9)** | `CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N` | Authenticated privilege escalation, unauthorized sensitive data exposure, or single-request service outage. |
 | **MEDIUM (4.0–6.9)** | `CVSS:3.1/AV:N/AC:L/PR:L/UI:R/S:C/C:L/I:L/A:N` | Scoped information disclosure, non-admin state mutation, or configuration weakness requiring user interaction. |
-| **LOW (0.1–3.9)** | `CVSS:3.1/AV:N/AC:H/PR:H/UI:N/S:U/C:L/I:N/A:N` | Defense-in-depth hardening gap with high attack complexity and minimal direct impact. |
+| **LOW (0.1–3.9)** | `CVSS:3.1/AV:N/AC:H/PR:H/UI:N/S:U/C:L/I:N/A:N` | Defense-in-depth hardening gap requiring high precondition complexity and minimal direct impact. |
 
 ---
 

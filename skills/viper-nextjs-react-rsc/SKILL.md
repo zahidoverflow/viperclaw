@@ -15,7 +15,7 @@ description: Next.js App Router, React Server Components (RSC) & Server Actions 
 
 ```mermaid
 flowchart LR
-  Browser["Client Component"] --> Action["Server Action (Auth + Zod)"] --> DAL["Data Access Layer (Tenant Scoped)"] --> RSC["DTO-Filtered RSC Flight Payload"]
+  Browser["Client Component"] --> Action["Server Action (Auth + Zod)"] --> DAL["Data Access Layer (Tenant Scoped)"] --> RSC["DTO-Filtered RSC Flight Stream"]
 ```
 
 ### Automated ViperClaw Command
@@ -32,7 +32,7 @@ viperclaw harvest-js ./.next --db .viperclaw/graph.db
 
 ## 4. Senior Security Engineer Technical Audit Checklist
 1. **Server Action Authentication & Authorization:** Every exported `"use server"` function is a public HTTP `POST` endpoint; verify that *each* Server Action independently authenticates the session and validates input with `zod` before mutating data.
-2. **RSC Prop Serialization Tainting (`experimental_taintObjectReference`):** Never pass full ORM database objects (`user`) directly from a Server Component into a `"use client"` component, as all serialized props are sent in the RSC flight payload to the browser. Use DTO mappers or `server-only` modules.
+2. **RSC Prop Serialization Tainting (`experimental_taintObjectReference`):** Never pass full ORM database objects (`user`) directly from a Server Component into a `"use client"` component, as all serialized props are sent in the RSC serialized stream to the browser. Use DTO mappers or `server-only` modules.
 3. **`NEXT_PUBLIC_` Environment Variable Hygiene:** Audit `.env*` and `next.config.js` to confirm no private API keys, database URLs, or signing secrets use the `NEXT_PUBLIC_` prefix.
 4. **Middleware Route Coverage (`matcher`):** Do not rely solely on `middleware.ts` path matchers for authentication; enforce authorization inside the Data Access Layer (DAL) on every query and mutation.
 5. **Open Redirect & `next/image` SSRF Prevention:** Restrict `images.remotePatterns` in `next.config.js` to specific trusted hostnames/paths and validate `redirect()` targets against a relative-path check.
@@ -69,10 +69,10 @@ export async function updateEmail(formData: unknown) {
 
 | Severity Tier | Baseline CVSS v3.1 Vector | Qualifying Security Impact |
 | :--- | :--- | :--- |
-| **CRITICAL (9.0–10.0)** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H` | Unauthenticated remote code execution, cross-tenant authentication/isolation bypass, or direct theft of funds/keys. |
-| **HIGH (7.0–8.9)** | `CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N` | Authenticated privilege escalation, sensitive data exfiltration, or single-request service outage. |
+| **CRITICAL (9.0–10.0)** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H` | Unauthenticated remote code execution, cross-tenant authentication or isolation gap, or direct theft of funds/keys. |
+| **HIGH (7.0–8.9)** | `CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N` | Authenticated privilege escalation, unauthorized sensitive data exposure, or single-request service outage. |
 | **MEDIUM (4.0–6.9)** | `CVSS:3.1/AV:N/AC:L/PR:L/UI:R/S:C/C:L/I:L/A:N` | Scoped information disclosure, non-admin state mutation, or configuration weakness requiring user interaction. |
-| **LOW (0.1–3.9)** | `CVSS:3.1/AV:N/AC:H/PR:H/UI:N/S:U/C:L/I:N/A:N` | Defense-in-depth hardening gap with high attack complexity and minimal direct impact. |
+| **LOW (0.1–3.9)** | `CVSS:3.1/AV:N/AC:H/PR:H/UI:N/S:U/C:L/I:N/A:N` | Defense-in-depth hardening gap requiring high precondition complexity and minimal direct impact. |
 
 ---
 

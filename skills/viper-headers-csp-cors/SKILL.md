@@ -21,7 +21,7 @@ flowchart LR
 ```
 
 ### Root-Cause Analysis
-Developers bypass browser Same-Origin Policy protections by reflecting the incoming `Origin` header into `Access-Control-Allow-Origin` alongside `Access-Control-Allow-Credentials: true`, or weaken CSP with `'unsafe-inline'`, `'unsafe-eval'`, and broad CDN wildcards.
+Permissive configurations weaken browser Same-Origin Policy protections by reflecting the incoming `Origin` header into `Access-Control-Allow-Origin` alongside `Access-Control-Allow-Credentials: true`, or weaken CSP with `'unsafe-inline'`, `'unsafe-eval'`, and broad CDN wildcards.
 
 ---
 
@@ -45,9 +45,9 @@ rg -n "(Strict-Transport-Security|X-Frame-Options|X-Content-Type-Options|Referre
 
 | Control ID | Audit Verification Target | Pass Criteria | Fail / Vulnerability Indicator |
 | :---: | :--- | :--- | :--- |
-| `HDR-01` | **Zero Arbitrary CORS Origin Reflection** | When `Access-Control-Allow-Credentials: true` is present, `Access-Control-Allow-Origin` is validated against an exact-match set of trusted origins. | Server reflects `req.headers.origin` or uses regex `.endswith('example.com')` (bypassed by `evilexample.com`). |
-| `HDR-02` | **Block `Origin: null` in Credentialed CORS** | `Origin: null` is never allowed on credentialed endpoints. | `Access-Control-Allow-Origin: null` + `Allow-Credentials: true` (exploitable via sandboxed `<iframe sandbox>`). |
-| `HDR-03` | **Vary: Origin Cache Poisoning Defense** | Dynamic `Access-Control-Allow-Origin` responses always include `Vary: Origin`. | Missing `Vary: Origin` causes CDN to cache Origin A's CORS header and serve it to Origin B. |
+| `HDR-01` | **Zero Arbitrary CORS Origin Reflection** | When `Access-Control-Allow-Credentials: true` is present, `Access-Control-Allow-Origin` is validated against an exact-match set of trusted origins. | Server reflects `req.headers.origin` or uses regex `.endswith('example.com')` (matched improperly by `evilexample.com`). |
+| `HDR-02` | **Block `Origin: null` in Credentialed CORS** | `Origin: null` is never allowed on credentialed endpoints. | `Access-Control-Allow-Origin: null` + `Allow-Credentials: true` (reachable via sandboxed `<iframe sandbox>`). |
+| `HDR-03` | **Vary: Origin Shared-Cache Isolation** | Dynamic `Access-Control-Allow-Origin` responses always include `Vary: Origin`. | Missing `Vary: Origin` causes CDN to cache Origin A's CORS header and serve it to Origin B. |
 | `HDR-04` | **CSP `script-src` Hardening (No `unsafe-inline`/`eval`)** | CSP uses cryptographic nonces (`'nonce-...'`) + `'strict-dynamic'` or hashes, with `object-src 'none'` and `base-uri 'self'`. | `script-src * 'unsafe-inline' 'unsafe-eval' data:` rendering CSP ineffective against XSS. |
 | `HDR-05` | **Clickjacking Defense (`frame-ancestors` & `X-Frame-Options`)** | CSP includes `frame-ancestors 'none'` (or `'self'`) paired with `X-Frame-Options: DENY` on HTML routes. | Authenticated state-changing UI pages frameable by external origins. |
 | `HDR-06` | **HSTS Preload Readiness** | `Strict-Transport-Security: max-age=63072000; includeSubDomains; preload` served over HTTPS. | `max-age` < 1 year (`31536000`) or missing `includeSubDomains`. |

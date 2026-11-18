@@ -21,7 +21,7 @@ flowchart LR
 ```
 
 ### Root-Cause Analysis
-Applications trust `file.filename` (`../../var/www/html/shell.php`) or `file.content_type` (`image/png` header on a `.php`/`.svg`/`.html` payload), store uploads inside the web root where the web server executes scripts or serves active HTML/SVG on the main application origin, or call `zip.extractall()` without checking archive member paths for `../` (Zip Slip).
+Applications trust `file.filename` (`../../var/www/html/shell.php`) or `file.content_type` (`image/png` header on a `.php`/`.svg`/`.html` file), store uploads inside the web root where the web server executes scripts or serves active HTML/SVG on the main application origin, or call `zip.extractall()` without checking archive member paths for `../` (Zip Slip).
 
 ---
 
@@ -45,9 +45,9 @@ rg -n "(get_presigned_url|generate_presigned_post|putObject)"
 
 | Control ID | Audit Verification Target | Pass Criteria | Fail / Vulnerability Indicator |
 | :---: | :--- | :--- | :--- |
-| `UPLD-01` | **CSPRNG UUID Filename Generation** | Server ignores client `filename` and generates a fresh ` f"{uuid.uuid4()}.{safe_ext}"` filename. | `os.path.join(UPLOAD_DIR, file.filename)` used directly (Path Traversal + extension spoofing). |
-| `UPLD-02` | **Strict Extension Allowlist (No Double Extensions)** | Extension matched against a strict lowercase allowlist (`{'.png', '.jpg', '.webp', '.pdf'}`); blocks `.php`, `.phtml`, `.phar`, `.jsp`, `.aspx`, `.svg`, `.html`, `.js`. | Blacklist-only filter (`not filename.endswith('.php')`) bypassed via `.php5`, `.phtml`, `.PhP`, or `shell.php.jpg` on misconfigured Apache. |
-| `UPLD-03` | **Magic-Byte & Image Re-Encoding Verification** | File header bytes verified via `libmagic` / `Pillow` (`Image.open().verify()`) and images re-encoded to strip EXIF/polyglot payloads. | Server only checks the client-supplied `Content-Type: image/jpeg` HTTP header. |
+| `UPLD-01` | **CSPRNG UUID Filename Generation** | Server ignores client `filename` and generates a fresh ` f"{uuid.uuid4()}.{safe_ext}"` filename. | `os.path.join(UPLOAD_DIR, file.filename)` used directly (Path Traversal + extension mismatch). |
+| `UPLD-02` | **Strict Extension Allowlist (No Double Extensions)** | Extension matched against a strict lowercase allowlist (`{'.png', '.jpg', '.webp', '.pdf'}`); blocks `.php`, `.phtml`, `.phar`, `.jsp`, `.aspx`, `.svg`, `.html`, `.js`. | Blacklist-only filter (`not filename.endswith('.php')`) circumvented via `.php5`, `.phtml`, `.PhP`, or `shell.php.jpg` on misconfigured Apache. |
+| `UPLD-03` | **Magic-Byte & Image Re-Encoding Verification** | File header bytes verified via `libmagic` / `Pillow` (`Image.open().verify()`) and images re-encoded to strip EXIF metadata and embedded scripts. | Server only checks the client-supplied `Content-Type: image/jpeg` HTTP header. |
 | `UPLD-04` | **SVG & HTML Stored XSS Prevention** | User-uploaded `.svg`, `.html`, and `.xml` files are rejected for inline rendering or served exclusively from a sandboxed static domain (`usercontent.example-cdn.com`). | Uploaded `.svg` containing `<script>fetch('/api/token')...</script>` served inline on the main app domain. |
 | `UPLD-05` | **Zip Slip & Symlink Archive Extraction Guard** | Before extracting `zipfile` or `tarfile` members, every member path is resolved and verified with `.is_relative_to(dest_dir)` and symlinks/FIFOs are rejected (Python 3.12+ `tar.extractall(filter='data')`). | Unchecked `zip.extractall(dest)` or `tar.extractall(dest)` writes files to `../../../etc/cron.d/`. |
 | `UPLD-06` | **Non-Executable Isolated Object Storage** | Uploads stored in S3/GCS (outside local filesystem) or in a directory with script execution disabled in Nginx/Apache. | Uploads written into `/var/www/html/uploads/` where PHP-FPM executes `.php` files. |

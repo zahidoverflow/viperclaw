@@ -32,9 +32,9 @@ viperclaw taint . --db .viperclaw/graph.db
 
 ## 4. Senior Security Engineer Technical Audit Checklist
 1. **XML Signature Wrapping (XSW) Prevention:** Verify that the SAML library validates the XML Digital Signature against the pinned IdP X.509 certificate *and* extracts the authenticated `NameID` / attributes **exclusively** from the exact DOM node referenced by the verified `<ds:Reference URI="#...">`, rejecting documents with multiple `<Assertion>` elements.
-2. **XML Comments in `NameID` Canonicalization:** Ensure the SAML parser uses Exclusive XML Canonicalization *without comments* (`http://www.w3.org/2001/10/xml-exc-c14n#`) or reads `.textContent` after signature verification so `admin<!--comment-->@corp.com` cannot spoof `admin@corp.com`.
+2. **XML Comments in `NameID` Canonicalization:** Ensure the SAML parser uses Exclusive XML Canonicalization *without comments* (`http://www.w3.org/2001/10/xml-exc-c14n#`) or reads `.textContent` after signature verification so `admin<!--comment-->@corp.com` cannot impersonate `admin@corp.com`.
 3. **Mandatory `Recipient`, `Audience`, `NotOnOrAfter` & `InResponseTo` Validation:** Reject assertions missing `AudienceRestriction` matching your SP EntityID, expired timestamps, or replayed `Assertion` IDs; disable IdP-initiated SSO or bind `InResponseTo` to a server-issued `AuthnRequest` ID.
-4. **Multi-Tenant IdP Mapping Isolation:** In multi-tenant SaaS, verify that an assertion signed by **Tenant A's IdP certificate** can only authenticate users whose email domain belongs to **Tenant A** (preventing a rogue tenant admin from asserting `ceo@victim-tenant.com`).
+4. **Multi-Tenant IdP Mapping Isolation:** In multi-tenant SaaS, verify that an assertion signed by **Tenant A's IdP certificate** can only authenticate users whose email domain belongs to **Tenant A** (preventing a rogue tenant admin from asserting `ceo@other-tenant.com`).
 5. **SCIM v2 Provisioning Endpoint Hardening:** Ensure `/scim/v2/Users` and `/scim/v2/Groups` validate tenant-scoped Bearer tokens, prevent cross-tenant `externalId` collisions, and immediately revoke active sessions when `active: false` is pushed via SCIM PATCH/PUT.
 
 ---
@@ -70,10 +70,10 @@ if email_domain not in tenant.verified_domains:
 
 | Severity Tier | Baseline CVSS v3.1 Vector | Qualifying Security Impact |
 | :--- | :--- | :--- |
-| **CRITICAL (9.0–10.0)** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H` | Unauthenticated remote code execution, cross-tenant authentication/isolation bypass, or direct theft of funds/keys. |
-| **HIGH (7.0–8.9)** | `CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N` | Authenticated privilege escalation, sensitive data exfiltration, or single-request service outage. |
+| **CRITICAL (9.0–10.0)** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H` | Unauthenticated remote code execution, cross-tenant authentication or isolation gap, or direct theft of funds/keys. |
+| **HIGH (7.0–8.9)** | `CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N` | Authenticated privilege escalation, unauthorized sensitive data exposure, or single-request service outage. |
 | **MEDIUM (4.0–6.9)** | `CVSS:3.1/AV:N/AC:L/PR:L/UI:R/S:C/C:L/I:L/A:N` | Scoped information disclosure, non-admin state mutation, or configuration weakness requiring user interaction. |
-| **LOW (0.1–3.9)** | `CVSS:3.1/AV:N/AC:H/PR:H/UI:N/S:U/C:L/I:N/A:N` | Defense-in-depth hardening gap with high attack complexity and minimal direct impact. |
+| **LOW (0.1–3.9)** | `CVSS:3.1/AV:N/AC:H/PR:H/UI:N/S:U/C:L/I:N/A:N` | Defense-in-depth hardening gap requiring high precondition complexity and minimal direct impact. |
 
 ---
 

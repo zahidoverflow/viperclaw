@@ -21,7 +21,7 @@ flowchart LR
 ```
 
 ### Root-Cause Analysis
-Cross-tenant data leaks in SaaS platforms happen when `tenant_id` is read from a request header/body instead of the verified session, when a global/singleton variable stores `current_tenant` across concurrent async requests, when Redis cache keys omit the `tenant_id` prefix, or when PostgreSQL RLS is enabled without `FORCE ROW LEVEL SECURITY` (allowing table owners to bypass RLS).
+Cross-tenant data leaks in SaaS platforms happen when `tenant_id` is read from a request header/body instead of the verified session, when a global/singleton variable stores `current_tenant` across concurrent async requests, when Redis cache keys omit the `tenant_id` prefix, or when PostgreSQL RLS is enabled without `FORCE ROW LEVEL SECURITY` (allowing table owners to skip RLS enforcement).
 
 ---
 
@@ -46,7 +46,7 @@ rg -n "(redis\.(get|set)|cache\.(get|set))" ./src
 | Control ID | Audit Verification Target | Pass Criteria | Fail / Vulnerability Indicator |
 | :---: | :--- | :--- | :--- |
 | `MT-01` | **Cryptographic Tenant Context Binding** | `tenant_id` is derived exclusively from the verified session/JWT or verified membership table—never from an unverified `X-Tenant-ID` header. | Middleware reads `req.headers['x-tenant-id']` without checking if `current_user` belongs to that tenant. |
-| `MT-02` | **PostgreSQL RLS + `FORCE ROW LEVEL SECURITY`** | Every multi-tenant table enables *both* `ENABLE ROW LEVEL SECURITY` and `FORCE ROW LEVEL SECURITY` with `current_setting('app.tenant_id', true)`. | Application connects as the table owner without `FORCE ROW LEVEL SECURITY`, silently bypassing all RLS policies! |
+| `MT-02` | **PostgreSQL RLS + `FORCE ROW LEVEL SECURITY`** | Every multi-tenant table enables *both* `ENABLE ROW LEVEL SECURITY` and `FORCE ROW LEVEL SECURITY` with `current_setting('app.tenant_id', true)`. | Application connects as the table owner without `FORCE ROW LEVEL SECURITY`, silently skipping all RLS policies! |
 | `MT-03` | **Connection-Pool Tenant Context Reset** | Transaction-scoped `SET LOCAL app.tenant_id = ...` is used (or `DISCARD ALL` on pool checkout/checkin) so pooled connections never bleed tenant context. | Session-level `SET app.tenant_id` persists on a PgBouncer/SQLAlchemy pooled connection for the next request. |
 | `MT-04` | **Async Coroutine Context Isolation (`ContextVar`)** | In Python/Node async servers, tenant state is stored in `contextvars.ContextVar` / `AsyncLocalStorage`, never on a module global or class singleton. | Singleton service attribute `self.tenant_id = ...` overwritten by concurrent coroutine from another tenant. |
 | `MT-05` | **Tenant-Namespaced Cache Keys (Redis / Memcached)** | Every cache key includes `tenant:{tenant_id}:...` (`@cache` decorators include `tenant_id` in the key hash). | `@lru_cache` or `redis.get(f'report:{report_id}')` serves Tenant A's cached report to Tenant B. |
@@ -73,7 +73,7 @@ rg -n "(redis\.(get|set)|cache\.(get|set))" ./src
 ## 6. Production Remediation Patterns (Vulnerable vs. Hardened Code)
 
 ```sql
--- ❌ VULNERABLE: Missing FORCE ROW LEVEL SECURITY (table owner bypasses RLS!) & session-wide SET
+-- ❌ VULNERABLE: Missing FORCE ROW LEVEL SECURITY (table owner skips RLS!) & session-wide SET
 ALTER TABLE invoices ENABLE ROW LEVEL SECURITY;
 CREATE POLICY tenant_isolation ON invoices USING (tenant_id = current_setting('app.tenant_id')::uuid);
 

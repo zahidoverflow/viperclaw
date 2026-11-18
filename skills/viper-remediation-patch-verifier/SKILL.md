@@ -21,7 +21,7 @@ flowchart LR
 ```
 
 ### Root-Cause Analysis
-Many security patches fail under bypass testing because developers patch the *symptom* (adding a naive blacklist like `.replace("'", "")` or `.replace("../", "")`) instead of fixing the structural *root cause* (using parameterized SQL statements, canonical path resolution with `.is_relative_to()`, or query-level tenant scoping).
+Many security patches fail verification testing because developers patch the *symptom* (adding a naive blacklist like `.replace("'", "")` or `.replace("../", "")`) instead of fixing the structural *root cause* (using parameterized SQL statements, canonical path resolution with `.is_relative_to()`, or query-level tenant scoping).
 
 ---
 
@@ -44,7 +44,7 @@ pytest -v
 
 | Control ID | Audit Verification Target | Pass Criteria | Fail / Vulnerability Indicator |
 | :---: | :--- | :--- | :--- |
-| `FIX-01` | **Eliminate Blacklists in Favor of Structural Controls** | Fixes use parameterization, strict type/enum allowlists, or canonicalization—never substring blacklists. | Patch adds `input.replace('../', '')` (trivially bypassed by `....//`). |
+| `FIX-01` | **Eliminate Blacklists in Favor of Structural Controls** | Fixes use parameterization, strict type/enum allowlists, or canonicalization—never substring blacklists. | Patch adds `input.replace('../', '')` (trivially circumvented by `....//`). |
 | `FIX-02` | **Minimal Diff & Backward Compatibility** | Patch modifies only the necessary security boundary without breaking existing API contracts or valid inputs. | Overly broad patch breaks legitimate unicode names, special characters in passwords, or API response schemas. |
 | `FIX-03` | **Variant Analysis Across Entire Codebase** | When fixing a bug in one controller, all sibling controllers/services are scanned for the same pattern. | BOLA or SQLi fixed on `GET /invoices/{id}` while `DELETE /invoices/{id}` and `GET /quotes/{id}` remain vulnerable. |
 | `FIX-04` | **Positive Functional Regression Test** | Automated test confirms authorized users with valid inputs still receive the expected `200 OK` result. | Security patch accidentally blocks all users (`403` for everyone) and goes unnoticed without a positive test. |
@@ -64,14 +64,14 @@ pytest -v
 | Severity Tier | Baseline CVSS v3.1 Vector | Qualifying Security Impact |
 | :--- | :--- | :--- |
 | **CRITICAL -> 0.0** | `Remediated (CVSS 0.0)` | Root-cause parameterization / isolation applied + verified by automated negative regression test. |
-| **INCOMPLETE FIX** | `CVSS Unchanged` | Blacklist or client-side-only fix that remains bypassable via encoding or direct API calls. |
+| **INCOMPLETE FIX** | `CVSS Unchanged` | Blacklist or client-side-only fix that remains avoidable via encoding or direct API calls. |
 
 ---
 
 ## 6. Production Remediation Patterns (Vulnerable vs. Hardened Code)
 
 ```python
-# ❌ INCOMPLETE SYMPTOM PATCH: Non-recursive string replace('..', '') is bypassed by '....//'
+# ❌ INCOMPLETE SYMPTOM PATCH: Non-recursive string replace('..', '') is circumvented by '....//'
 def get_template_file(name: str) -> str:
     clean_name = name.replace("../", "")
     return Path(f"/app/templates/{clean_name}").read_text()

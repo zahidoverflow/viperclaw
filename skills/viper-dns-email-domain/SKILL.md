@@ -34,7 +34,7 @@ viperclaw taint . --db .viperclaw/graph.db
 ## 4. Senior Security Engineer Technical Audit Checklist
 1. **Dangling DNS & Subdomain Takeover Prevention:** Audit all `CNAME`, `ALIAS`, and `NS` records pointing to external cloud providers (`*.s3.amazonaws.com`, `*.azurewebsites.net`, `*.github.io`, `*.herokuapp.com`, `*.cloudfront.net`, `*.fastly.net`) to confirm the target resource is actively claimed, and delete DNS records *before* deprovisioning cloud resources.
 2. **SPF, DKIM & DMARC Enforcement:** Verify the root domain and all mail-sending subdomains publish an SPF record ending with hard-fail `-all` (within the 10-DNS-lookup RFC limit), 2048-bit RSA / Ed25519 DKIM keys, and a DMARC record with `v=DMARC1; p=reject; sp=reject; adkim=s; aspf=s;`.
-3. **Password Reset Host-Header Poisoning Prevention:** Never generate password-reset, magic-link, or invitation URLs using `request.headers["Host"]` or `X-Forwarded-Host`; always construct links using a pinned `APP_BASE_URL` configuration constant.
+3. **Password Reset Host-Header Injection Prevention:** Never generate password-reset, magic-link, or invitation URLs using `request.headers["Host"]` or `X-Forwarded-Host`; always construct links using a pinned `APP_BASE_URL` configuration constant.
 4. **SMTP Header & Template Injection:** Strip `
 ` and `
 ` from user-supplied `Subject`, `From`, `Reply-To`, and recipient display names, and never pass user input into email template syntax before rendering.
@@ -44,7 +44,7 @@ viperclaw taint . --db .viperclaw/graph.db
 
 ## 5. Production Remediation Patterns (Vulnerable vs. Hardened Code)
 ```python
-# ❌ VULNERABLE: Password reset link uses untrusted HTTP Host header (Host Header Poisoning)
+# ❌ VULNERABLE: Password reset link uses untrusted HTTP Host header (Untrusted Host Header Injection)
 reset_url = f"https://{request.headers.get('Host')}/reset?token={token}"
 
 # ✅ HARDENED: Uses pinned canonical base URL from immutable server config
@@ -62,10 +62,10 @@ reset_url = f"{settings.CANONICAL_BASE_URL}/reset?token={token}"
 
 | Severity Tier | Baseline CVSS v3.1 Vector | Qualifying Security Impact |
 | :--- | :--- | :--- |
-| **CRITICAL (9.0–10.0)** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H` | Unauthenticated remote code execution, cross-tenant authentication/isolation bypass, or direct theft of funds/keys. |
-| **HIGH (7.0–8.9)** | `CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N` | Authenticated privilege escalation, sensitive data exfiltration, or single-request service outage. |
+| **CRITICAL (9.0–10.0)** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H` | Unauthenticated remote code execution, cross-tenant authentication or isolation gap, or direct theft of funds/keys. |
+| **HIGH (7.0–8.9)** | `CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N` | Authenticated privilege escalation, unauthorized sensitive data exposure, or single-request service outage. |
 | **MEDIUM (4.0–6.9)** | `CVSS:3.1/AV:N/AC:L/PR:L/UI:R/S:C/C:L/I:L/A:N` | Scoped information disclosure, non-admin state mutation, or configuration weakness requiring user interaction. |
-| **LOW (0.1–3.9)** | `CVSS:3.1/AV:N/AC:H/PR:H/UI:N/S:U/C:L/I:N/A:N` | Defense-in-depth hardening gap with high attack complexity and minimal direct impact. |
+| **LOW (0.1–3.9)** | `CVSS:3.1/AV:N/AC:H/PR:H/UI:N/S:U/C:L/I:N/A:N` | Defense-in-depth hardening gap requiring high precondition complexity and minimal direct impact. |
 
 ---
 

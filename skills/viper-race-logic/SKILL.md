@@ -52,7 +52,7 @@ rg -n "(coupon|redeem|withdraw|transfer|vote|credit|quota)"
 | `RACE-05` | **Multi-Step Workflow State Verification** | Step 3 of a checkout/KYC/reset flow verifies in the server session that Steps 1 and 2 were completed for the same transaction. | Client can call `POST /checkout/confirm` directly without completing `POST /checkout/pay`. |
 | `RACE-06` | **Negative & Zero Boundary Validation** | Quantities, transfer amounts, and pagination offsets enforce `val > 0` and upper bounds. | Transferring `-100` credits increases the sender's balance. |
 | `RACE-07` | **Distributed Lock Lease Safety** | Redis/distributed locks use unique lock tokens and Lua compare-and-delete scripts with sufficient TTL. | Worker A's lock expires mid-operation and Worker A deletes Worker B's newly acquired lock. |
-| `RACE-08` | **Rate-Limit Counter Atomicity** | Rate-limit counters increment atomically (`INCR` + `EXPIRE` in Lua) rather than `GET` then `SET`. | Parallel burst requests read the same counter value (`9/10`) and bypass the rate limit. |
+| `RACE-08` | **Rate-Limit Counter Atomicity** | Rate-limit counters increment atomically (`INCR` + `EXPIRE` in Lua) rather than `GET` then `SET`. | Parallel burst requests read the same counter value (`9/10`) and exceed the rate limit. |
 
 ---
 

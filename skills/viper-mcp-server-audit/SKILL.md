@@ -34,7 +34,7 @@ viperclaw taint . --db .viperclaw/graph.db
 ## 4. Senior Security Engineer Technical Audit Checklist
 1. **Strict Input Schema Enforcement:** Every MCP tool must define a strict JSON Schema (`additionalProperties: false`, explicit `enum` or regex patterns, and bounded string lengths) and validate arguments before execution.
 2. **Command & Path Sandboxing (`stdio` Servers):** Never pass tool arguments into `shell=True` or unvalidated filesystem paths; canonicalize paths with `Path.resolve()` and enforce an explicit workspace root prefix check.
-3. **Tool Poisoning & Prompt-In-Description Defense:** Audit tool `description` fields and returned tool output blocks to ensure untrusted external data cannot inject instructions that hijack sibling MCP servers.
+3. **Tool Metadata Integrity & Prompt-Boundary Defense:** Audit tool `description` fields and returned tool output blocks to ensure untrusted external data cannot alter or override sibling MCP tool behavior.
 4. **Remote MCP Transport Authentication:** Remote HTTP/SSE MCP endpoints must validate OAuth 2.1 Bearer tokens with audience (`aud`) binding, mTLS, and strict `Origin` header checks to prevent local DNS-rebinding or CSRF calls.
 5. **Human-in-the-Loop (HITL) Confirmation:** State-changing, network-egress, or destructive tools must declare destructive annotations and require explicit user approval showing exact resolved arguments.
 
@@ -67,10 +67,10 @@ def read_log(filename: str) -> str:
 
 | Severity Tier | Baseline CVSS v3.1 Vector | Qualifying Security Impact |
 | :--- | :--- | :--- |
-| **CRITICAL (9.0–10.0)** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H` | Unauthenticated remote code execution, cross-tenant authentication/isolation bypass, or direct theft of funds/keys. |
-| **HIGH (7.0–8.9)** | `CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N` | Authenticated privilege escalation, sensitive data exfiltration, or single-request service outage. |
+| **CRITICAL (9.0–10.0)** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H` | Unauthenticated remote code execution, cross-tenant authentication or isolation gap, or direct theft of funds/keys. |
+| **HIGH (7.0–8.9)** | `CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N` | Authenticated privilege escalation, unauthorized sensitive data exposure, or single-request service outage. |
 | **MEDIUM (4.0–6.9)** | `CVSS:3.1/AV:N/AC:L/PR:L/UI:R/S:C/C:L/I:L/A:N` | Scoped information disclosure, non-admin state mutation, or configuration weakness requiring user interaction. |
-| **LOW (0.1–3.9)** | `CVSS:3.1/AV:N/AC:H/PR:H/UI:N/S:U/C:L/I:N/A:N` | Defense-in-depth hardening gap with high attack complexity and minimal direct impact. |
+| **LOW (0.1–3.9)** | `CVSS:3.1/AV:N/AC:H/PR:H/UI:N/S:U/C:L/I:N/A:N` | Defense-in-depth hardening gap requiring high precondition complexity and minimal direct impact. |
 
 ---
 

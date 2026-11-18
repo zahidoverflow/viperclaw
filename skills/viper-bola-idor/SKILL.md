@@ -7,7 +7,7 @@ description: Object & Function-Level Authorization (BOLA / BFLA) Audit Skill. Re
 
 ## 1. Executive Scope, Standards & CWE/OWASP Mapping
 - **Frameworks & Standards:** OWASP API1:2023 (BOLA), OWASP API3:2023 (BOPLA), OWASP API5:2023 (BFLA), OWASP ASVS V4, CWE-639, CWE-285
-- **Primary CWE Mapping:** CWE-639 (Authorization Bypass Through User-Controlled Key), CWE-285 (Improper Authorization), CWE-862 (Missing Authorization), CWE-863 (Incorrect Authorization)
+- **Primary CWE Mapping:** CWE-639 (Insecure Direct Object Reference via User-Controlled Key), CWE-285 (Improper Authorization), CWE-862 (Missing Authorization), CWE-863 (Incorrect Authorization)
 - **ViperClaw MCP Tools:** `viper_diff_oracle`, `viper_taint_scan`, `viper_graph_upsert`, `viper_verify_and_report`
 - **ViperClaw CLI Command:** `viperclaw taint ./src --db .viperclaw/graph.db`
 
@@ -49,7 +49,7 @@ rg -n "/api/v[0-9]+/[a-zA-Z0-9_-]+/\{?(id|uuid|user_id|org_id|account_id)\}?"
 | `BOLA-02` | **Nested & Sub-Resource Scoping** | Child resources (`/orgs/{org_id}/projects/{proj_id}/keys/{key_id}`) verify parent-child hierarchy. | Controller checks `org_id` membership but looks up `key_id` globally without verifying `key.org_id == org_id`. |
 | `BOLA-03` | **Bulk & Array Endpoint Authorization** | Batch endpoints (`POST /api/items/bulk-delete` with `ids: [1,2,3]`) verify ownership of *every* ID in the array. | Controller checks ownership of `ids[0]` only and deletes the entire `WHERE id IN (...)` list. |
 | `BOLA-04` | **Function-Level RBAC (BFLA)** | Administrative routes (`/admin/*`, `DELETE`, role-assignment) enforce explicit server-side role guards. | Admin endpoints rely on UI hiding or only check standard user authentication. |
-| `BOLA-05` | **Foreign-Key Reference Validation on Create/Update** | Creating a resource with `project_id` or `folder_id` in the body verifies the caller owns that target container. | Attacker creates a webhook or export bound to another tenant's `project_id`. |
+| `BOLA-05` | **Foreign-Key Reference Validation on Create/Update** | Creating a resource with `project_id` or `folder_id` in the body verifies the caller owns that target container. | A caller creates a webhook or export bound to another tenant's `project_id`. |
 | `BOLA-06` | **UUIDv4 vs. Access Control** | Unpredictable UUIDs are paired with server-side ownership checks (UUIDs alone are not authorization). | Publicly readable/writable objects protected solely by unauthenticated UUIDs leaked in logs/referrers. |
 | `BOLA-07` | **GraphQL & gRPC Resolver AuthZ** | Every nested GraphQL field resolver and gRPC handler enforces context-based policy checks. | Top-level query checks auth, but nested edge `{ organization(id: "other") { billing } }` skips auth. |
 | `BOLA-08` | **Export & Async Job Ownership** | Async report generation (`POST /reports` -> `GET /reports/{job_id}`) binds `job_id` to caller's session. | Sequential `job_id` downloadable by any authenticated user. |

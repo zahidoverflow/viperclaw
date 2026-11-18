@@ -45,7 +45,7 @@ rg -n "(print\(request\.|console\.log\(req\.(headers|body))"
 
 | Control ID | Audit Verification Target | Pass Criteria | Fail / Vulnerability Indicator |
 | :---: | :--- | :--- | :--- |
-| `LOG-01` | **Automatic Credential & Token Redaction** | Structured log processors scrub `password`, `secret`, `token`, `authorization`, `cookie`, `api_key`, `cvv`, and `ssn` keys at the root logger level. | `logger.debug(f"Login payload: {request.json}")` writes plaintext passwords to log storage. |
+| `LOG-01` | **Automatic Credential & Token Redaction** | Structured log processors scrub `password`, `secret`, `token`, `authorization`, `cookie`, `api_key`, `cvv`, and `ssn` keys at the root logger level. | `logger.debug(f"Login body: {request.json}")` writes plaintext passwords to log storage. |
 | `LOG-02` | **Log Injection & CRLF Neutralization (CWE-117)** | Logs are emitted as single-line structured JSON (`structlog` / `pino` / `zap`) or strip `\r`, `\n`, and ANSI escape sequences (`\x1b[`) from user strings. | Plaintext log `logger.info(f"User {username} logged in")` allows forging fake log lines via `username="guest\n2026-11-18 INFO Admin privilege granted"`. |
 | `LOG-03` | **Mandatory Security Event Coverage (CWE-778)** | Auth failures, password/MFA resets, role changes, API key creations, and `403 Forbidden` authorization failures emit structured audit events. | Administrative role elevation or repeated BOLA probes leave zero audit trail. |
 | `LOG-04` | **Correlation / Request ID Propagation** | Every incoming HTTP request generates or validates a UUID `X-Request-ID` propagated across all downstream logs and error responses. | Impossible to trace a security incident across microservices. |

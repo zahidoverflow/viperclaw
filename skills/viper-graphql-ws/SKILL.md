@@ -21,7 +21,7 @@ flowchart LR
 ```
 
 ### Root-Cause Analysis
-GraphQL exposes a single HTTP endpoint where clients dictate the query structure; without per-resolver authorization, query depth/cost caps, and batching limits, attackers traverse circular object edges (`user -> org -> members -> org`) or batch thousands of mutations in one HTTP request.
+GraphQL exposes a single HTTP endpoint where clients dictate the query structure; without per-resolver authorization, query depth/cost caps, and batching limits, untrusted callers traverse deep circular object edges (`user -> org -> members -> org`) or batch thousands of mutations in one HTTP request.
 
 ---
 
@@ -47,11 +47,11 @@ rg -n "(WebSocketServer|ws\.on\(|@WebSocketGateway|accept\(\))"
 | :---: | :--- | :--- | :--- |
 | `GQL-01` | **Production Introspection & Clairvoyance Control** | Introspection (`__schema`, `__type`) and verbose `'Did you mean...?'` field suggestions disabled in production for unprivileged callers. | Full schema or field-suggestion hints exposed on production `/graphql`. |
 | `GQL-02` | **Query Depth & Cyclical Edge Limit** | `graphql-depth-limit` (e.g., `max_depth = 7`) enforced before query execution. | Circular relationships (`User -> Posts -> Author -> Posts`) queryable to depth 50+ causing CPU/DB exhaustion. |
-| `GQL-03` | **Alias & Array Batching Caps** | JSON array batching (`[{query}, ...]`) and field alias count per operation capped (e.g., `<= 10` aliases). | 1,000 `login` or `verifyOtp` mutations batched via aliases in a single HTTP request, bypassing rate limits. |
+| `GQL-03` | **Alias & Array Batching Caps** | JSON array batching (`[{query}, ...]`) and field alias count per operation capped (e.g., `<= 10` aliases). | 1,000 `login` or `verifyOtp` mutations batched via aliases in a single HTTP request, circumventing per-request rate limits. |
 | `GQL-04` | **Field & Edge-Level Authorization** | Every object resolver (`User.email`, `Organization.billing`, nested edges) checks caller permissions. | Auth checked only on top-level `Query` while nested edges leak cross-tenant fields. |
 | `GQL-05` | **Persisted Queries / Operation Allowlisting** | Production first-party apps use Automatic Persisted Queries (APQ) or strict operation allowlists. | Arbitrary ad-hoc GraphQL ASTs accepted from untrusted clients. |
-| `GQL-06` | **WebSocket Handshake `Origin` Validation (CSWSH)** | WebSocket `Upgrade` handler strictly validates the `Origin` header against an exact allowlist. | Cookie-authenticated WebSocket accepts connections from any `Origin` (Cross-Site WebSocket Hijacking). |
-| `GQL-07` | **WebSocket Subscription Tenant Scoping** | `graphql-ws` / Socket.IO subscription channels verify caller authorization for the subscribed topic/tenant ID. | Any connected client can subscribe to `orderUpdated(orgId: "victim_org")`. |
+| `GQL-06` | **WebSocket Handshake `Origin` Validation (CSWSH)** | WebSocket `Upgrade` handler strictly validates the `Origin` header against an exact allowlist. | Cookie-authenticated WebSocket accepts connections from any `Origin` (Cross-Site WebSocket reuse / CSWSH). |
+| `GQL-07` | **WebSocket Subscription Tenant Scoping** | `graphql-ws` / Socket.IO subscription channels verify caller authorization for the subscribed topic/tenant ID. | Any connected client can subscribe to `orderUpdated(orgId: "other_org")`. |
 | `GQL-08` | **Error Masking in Resolvers** | Unhandled resolver exceptions are masked (`formatError`) so SQL errors and internal paths are not returned in `errors[].extensions`. | Raw stack traces and database constraint errors exposed in GraphQL `errors` array. |
 
 ---
@@ -66,7 +66,7 @@ rg -n "(WebSocketServer|ws\.on\(|@WebSocketGateway|accept\(\))"
 | :--- | :--- | :--- |
 | **HIGH (8.1)** | `CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N` | Missing nested resolver authorization allowing cross-tenant data access or mutation. |
 | **HIGH (7.5)** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H` | Uncapped alias amplification or recursive depth bomb causing single-request service outage. |
-| **MEDIUM (6.5)** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:N/A:N` | Cross-Site WebSocket Hijacking (CSWSH) due to missing `Origin` validation on cookie-authenticated WS. |
+| **MEDIUM (6.5)** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:N/A:N` | Cross-Site WebSocket origin validation gap (CSWSH) due to missing `Origin` validation on cookie-authenticated WS. |
 
 ---
 

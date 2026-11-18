@@ -7,7 +7,7 @@ description: Inbound & Outbound Webhook Security Auditor. Reviews HMAC-SHA256 si
 
 ## 1. Executive Scope, Standards & CWE/OWASP Mapping
 - **Frameworks & Standards:** Standard Webhooks Specification, Stripe/GitHub/Slack Webhook Security Guidelines, CWE-345, CWE-294, CWE-918
-- **Primary CWE Mapping:** CWE-345 (Insufficient Verification of Data Authenticity), CWE-294 (Authentication Bypass by Capture-Replay), CWE-208 (Observable Timing Discrepancy)
+- **Primary CWE Mapping:** CWE-345 (Insufficient Verification of Data Authenticity), CWE-294 (Authentication via Capture-Replay), CWE-208 (Observable Timing Discrepancy)
 - **ViperClaw MCP Tools:** `viper_taint_scan`, `viper_oob_probe`, `viper_verify_and_report`
 - **ViperClaw CLI Command:** `viperclaw taint ./src --db .viperclaw/graph.db`
 
@@ -45,7 +45,7 @@ rg -n "(construct_event|compare_digest|timingSafeEqual)"
 | Control ID | Audit Verification Target | Pass Criteria | Fail / Vulnerability Indicator |
 | :---: | :--- | :--- | :--- |
 | `WHK-01` | **Mandatory HMAC Signature Verification over Raw Bytes** | HMAC-SHA256 computed over `f"{timestamp}.{raw_body_bytes.decode()}"` using `request.get_data()` / `await request.body()`. | Webhook handler parses JSON without checking `X-Hub-Signature-256` / `Stripe-Signature`. |
-| `WHK-02` | **Constant-Time Digest Comparison** | Signature comparison uses `hmac.compare_digest(expected, received)` or `crypto.timingSafeEqual()`. | Standard `if sig == expected_sig:` used (vulnerable to byte-by-byte timing attacks). |
+| `WHK-02` | **Constant-Time Digest Comparison** | Signature comparison uses `hmac.compare_digest(expected, received)` or `crypto.timingSafeEqual()`. | Standard `if sig == expected_sig:` used (vulnerable to byte-by-byte timing side-channels). |
 | `WHK-03` | **Timestamp Tolerance Window (<= 300s)** | Signed timestamp header verified to be within `±300 seconds` of current server UTC time. | Timestamp header not included in the HMAC signing string or not checked for expiration. |
 | `WHK-04` | **Atomic Event ID Deduplication (`event_id`)** | Processed webhook `event_id` stored atomically (`INSERT ... ON CONFLICT DO NOTHING` / Redis `SET NX EX 86400`) before fulfilling orders. | Same valid webhook replayed 10 times within the 5-minute window credits the user's account 10 times. |
 | `WHK-05` | **Fail-Closed Secret Configuration** | Webhook verifier raises a startup error if `WEBHOOK_SECRET` is empty or unset. | `os.getenv('WEBHOOK_SECRET', '')` signs with empty key `b''` when unconfigured! |
@@ -63,7 +63,7 @@ rg -n "(construct_event|compare_digest|timingSafeEqual)"
 
 | Severity Tier | Baseline CVSS v3.1 Vector | Qualifying Security Impact |
 | :--- | :--- | :--- |
-| **CRITICAL (9.1)** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:H` | Missing or bypassable payment/provisioning webhook signature check allowing forged `payment_intent.succeeded` events. |
+| **CRITICAL (9.1)** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:H` | Missing or avoidable payment/provisioning webhook signature check allowing unverified `payment_intent.succeeded` events. |
 | **HIGH (7.5)** | `CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:C/C:H/I:N/A:N` | Outbound webhook tester vulnerable to Full-Read SSRF against cloud metadata or internal services. |
 | **MEDIUM (5.9)** | `CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:H/A:N` | Missing `event_id` deduplication or timestamp window allowing webhook replay. |
 

@@ -21,7 +21,7 @@ flowchart LR
 ```
 
 ### Root-Cause Analysis
-REST controllers bind raw request JSON directly into database ORM objects (`User(**req.json)`, `Object.assign(entity, req.body)`), allowing attackers to overwrite internal columns (`role`, `is_admin`, `tenant_id`, `email_verified`, `balance`), or return raw ORM entities that serialize `password_hash`, `mfa_secret`, and PII.
+REST controllers bind raw request JSON directly into database ORM objects (`User(**req.json)`, `Object.assign(entity, req.body)`), allowing callers to overwrite protected columns (`role`, `is_admin`, `tenant_id`, `email_verified`, `balance`), or return raw ORM entities that serialize `password_hash`, `mfa_secret`, and PII.
 
 ---
 
@@ -75,9 +75,9 @@ rg -n "(extra\s*=\s*.allow.|additionalProperties\s*:\s*true)"
 ```python
 # ❌ VULNERABLE: Updates ORM user directly from raw dict & returns full ORM model (with password_hash!)
 @router.patch("/users/me")
-def update_me(payload: dict, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    for k, v in payload.items():
-        setattr(user, k, v)  # Attacker sends {"is_admin": True, "balance": 999999}
+def update_me(req_body: dict, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    for k, v in req_body.items():
+        setattr(user, k, v)  # Untrusted caller sends {"is_admin": True, "balance": 999999}
     db.commit()
     return user
 
@@ -93,9 +93,9 @@ class UserPublicOutput(BaseModel):
     bio: str
 
 @router.patch("/users/me", response_model=UserPublicOutput)
-def update_me(payload: UserUpdateInput, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    user.display_name = payload.display_name
-    user.bio = payload.bio
+def update_me(req_body: UserUpdateInput, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    user.display_name = req_body.display_name
+    user.bio = req_body.bio
     db.commit()
     return user
 ```

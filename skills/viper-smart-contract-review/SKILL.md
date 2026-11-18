@@ -21,7 +21,7 @@ flowchart LR
 ```
 
 ### Root-Cause Analysis
-Smart contract exploits stem from violating the Checks-Effects-Interactions (CEI) pattern (updating user balances *after* an external `.call{value: ...}` or ERC-721/ERC-777 hook), leaving upgradeable proxy `initialize()` functions unprotected, dividing before multiplying in integer math, or skipping signer/owner checks in Solana Anchor accounts.
+Smart contract vulnerabilities stem from violating the Checks-Effects-Interactions (CEI) pattern (updating user balances *after* an external `.call{value: ...}` or ERC-721/ERC-777 hook), leaving upgradeable proxy `initialize()` functions unprotected, dividing before multiplying in integer math, or skipping signer/owner checks in Solana Anchor accounts.
 
 ---
 
@@ -46,11 +46,11 @@ rg -n "(latestRoundData|transferFrom\(|safeTransferFrom)" *.sol
 | Control ID | Audit Verification Target | Pass Criteria | Fail / Vulnerability Indicator |
 | :---: | :--- | :--- | :--- |
 | `SC-01` | **Checks-Effects-Interactions (CEI) & `nonReentrant`** | All state mutations occur *before* external calls, and state-sharing functions enforce OpenZeppelin `ReentrancyGuard` (`nonReentrant`). | `msg.sender.call{value: amt}("")` executed before `balances[msg.sender] -= amt`. |
-| `SC-02` | **Upgradeable Proxy Initializer Lockdown** | Implementation contracts call `_disableInitializers()` in their `constructor`, and `initialize()` has the `initializer` modifier. | Unprotected `initialize()` allows attacker to take ownership of the implementation or proxy contract. |
+| `SC-02` | **Upgradeable Proxy Initializer Lockdown** | Implementation contracts call `_disableInitializers()` in their `constructor`, and `initialize()` has the `initializer` modifier. | Unprotected `initialize()` allows an unauthorized caller to take ownership of the implementation or proxy contract. |
 | `SC-03` | **Zero `tx.origin` Authentication** | Authorization checks use `msg.sender`, never `tx.origin`. | `require(tx.origin == owner)` used (vulnerable to phishing contract relay). |
 | `SC-04` | **Checked Return Values & `SafeERC20`** | All low-level `.call()` return booleans are checked, and ERC-20 transfers use `SafeERC20.safeTransfer` / `safeTransferFrom`. | Unchecked `token.transfer(...)` silently fails on non-reverting tokens or reverts on USDT (missing bool return). |
 | `SC-05` | **Precision Loss & Rounding Direction** | Multiplication always precedes division (`(a * b) / c`), and vault share math rounds in favor of the vault (`Math.Rounding.Floor` on mint/withdraw, `Ceil` on deposit/redeem). | Division before multiplication truncates to `0` or rounds against the protocol. |
-| `SC-06` | **ERC-4626 First-Depositor Inflation Defense** | ERC-4626 vaults use OpenZeppelin v5 virtual shares/assets offset (`_decimalsOffset()`) or dead-share seeding. | Attacker donates tokens to an empty vault to inflate share price and steal the next depositor's funds via rounding. |
+| `SC-06` | **ERC-4626 First-Depositor Inflation Defense** | ERC-4626 vaults use OpenZeppelin v5 virtual shares/assets offset (`_decimalsOffset()`) or dead-share seeding. | An untrusted caller donates tokens to an empty vault to inflate share price and steal the next depositor's funds via rounding. |
 | `SC-07` | **Chainlink Oracle Staleness & Sequencer Checks** | `latestRoundData()` verifies `price > 0`, `updatedAt >= block.timestamp - MAX_DELAY`, and `answeredInRound >= roundId`. | Stale or zero price accepted during market crash or L2 sequencer downtime. |
 | `SC-08` | **Solana / Anchor Signer & Owner Account Checks** | In Rust/Anchor programs, every privileged account uses `Signer<'info>` and `Account<'info, T>` (verifying program ownership + PDA seeds). | Raw `AccountInfo` used without checking `is_signer` or `owner == program_id`. |
 
@@ -65,7 +65,7 @@ rg -n "(latestRoundData|transferFrom\(|safeTransferFrom)" *.sol
 | Severity Tier | Baseline CVSS v3.1 Vector | Qualifying Security Impact |
 | :--- | :--- | :--- |
 | **CRITICAL (9.8)** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H` | Direct theft of user funds or permanent freezing of protocol TVL via reentrancy, unprotected initializer, or access control flaw. |
-| **HIGH (8.1)** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:H` | Theft of unclaimed yield, ERC-4626 inflation attack, or oracle manipulation. |
+| **HIGH (8.1)** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:H` | Theft of unclaimed yield, ERC-4626 share-inflation vector, or oracle manipulation. |
 | **MEDIUM (5.3)** | `CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:L/A:L` | Temporary griefing or non-Standard ERC-20 compatibility bug. |
 
 ---

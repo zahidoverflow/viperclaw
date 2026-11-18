@@ -21,7 +21,7 @@ flowchart LR
 ```
 
 ### Root-Cause Analysis
-Mobile applications expose internal activities/receivers via `android:exported="true"` without permission guards, load unvalidated deep-link URLs (`myapp://webview?url=https://attacker.tld` or `file:///data/data/.../shared_prefs/`) into a JavaScript-enabled WebView that attaches a native bridge (`addJavascriptInterface`) or authentication headers, or store tokens in plaintext `SharedPreferences`.
+Mobile applications expose internal activities/receivers via `android:exported="true"` without permission guards, load unvalidated deep-link URLs (`myapp://webview?url=https://untrusted.example` or `file:///data/data/.../shared_prefs/`) into a JavaScript-enabled WebView that attaches a native bridge (`addJavascriptInterface`) or authentication headers, or store tokens in plaintext `SharedPreferences`.
 
 ---
 
@@ -64,7 +64,7 @@ rg -n "(NSAllowsArbitraryLoads|CFBundleURLSchemes|kSecAttrAccessibleAlways)"
 
 | Severity Tier | Baseline CVSS v3.1 Vector | Qualifying Security Impact |
 | :--- | :--- | :--- |
-| **CRITICAL (9.3)** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:H/I:H/A:N` | One-click deep link loading attacker URL into WebView with `addJavascriptInterface` or leaking Bearer token. |
+| **CRITICAL (9.3)** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:H/I:H/A:N` | One-click deep link loading untrusted external URL into WebView with `addJavascriptInterface` or leaking Bearer token. |
 | **HIGH (7.5)** | `CVSS:3.1/AV:L/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N` | Exported `ContentProvider` or `Activity` allowing any local app to read private files/tokens. |
 | **MEDIUM (5.3)** | `CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:N/A:N` | Cleartext HTTP traffic allowed (`cleartextTrafficPermitted="true"`) or user CA trust in release build. |
 

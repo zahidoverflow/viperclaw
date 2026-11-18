@@ -17,7 +17,7 @@ description: Safe Deserialization & XML/YAML/JSON Parser Auditor (OWASP Deserial
 
 ```mermaid
 flowchart LR
-  Bytes["Untrusted Wire Payload (XML/YAML/Cookie)"] --> Parser["Data-Only Parser (SafeLoader / defusedxml)"] --> Schema["Strict DTO / Prototype Guard"] --> App["Safe Domain Object"]
+  Bytes["Untrusted Serialized Input (XML/YAML/Cookie)"] --> Parser["Data-Only Parser (SafeLoader / defusedxml)"] --> Schema["Strict DTO / Prototype Guard"] --> App["Safe Domain Object"]
 ```
 
 ### Root-Cause Analysis
@@ -45,14 +45,14 @@ rg -n "(lxml\.etree|xml\.etree|DocumentBuilderFactory|SAXParserFactory|DOMDocume
 
 | Control ID | Audit Verification Target | Pass Criteria | Fail / Vulnerability Indicator |
 | :---: | :--- | :--- | :--- |
-| `DESER-01` | **Zero Native Object Deserialization on Untrusted Input** | `pickle.loads`, `dill`, `jsonpickle`, `Marshal.load`, `ObjectInputStream`, and `BinaryFormatter` are never called on network, cookie, or shared-cache inputs. | Session cookie or Redis queue payload parsed via `pickle.loads()` or `unserialize()`. |
+| `DESER-01` | **Zero Native Object Deserialization on Untrusted Input** | `pickle.loads`, `dill`, `jsonpickle`, `Marshal.load`, `ObjectInputStream`, and `BinaryFormatter` are never called on network, cookie, or shared-cache inputs. | Session cookie or Redis queue entry parsed via `pickle.loads()` or `unserialize()`. |
 | `DESER-02` | **YAML SafeLoader Enforcement** | All YAML parsing uses `yaml.safe_load()` / `yaml.CSafeLoader` (Python) or `js-yaml` v4+ safe defaults. | `yaml.load(data)` or `yaml.Loader` used on user/config YAML (`!!python/object/apply:os.system`). |
 | `DESER-03` | **PHP `unserialize` & `phar://` Stream Wrapper Block** | PHP code uses `json_decode()` instead of `unserialize()` (or restricts `allowed_classes => false`), and file functions block `phar://` URIs. | User-supplied path passed to `file_exists('phar://upload.jpg')` triggering POP-chain deserialization. |
 | `DESER-04` | **XML External Entity (XXE) & DTD Disablement** | Python uses `defusedxml`; Java sets `disallow-doctype-decl = true`; PHP avoids `LIBXML_NOENT`; .NET sets `XmlResolver = null`. | `lxml.etree.fromstring(xml, XMLParser(resolve_entities=True))` used on XML/SVG/SOAP/DOCX/XLSX inputs. |
 | `DESER-05` | **JSON Prototype Pollution Guard (JS/TS)** | Recursive object merge/clone helpers strip `__proto__`, `constructor`, and `prototype` keys. | Deep merge of `req.body` pollutes `Object.prototype.isAdmin = true` or template gadget properties. |
 | `DESER-06` | **Java Jackson / Fastjson Polymorphic Type Safety** | `enableDefaultTyping()` and `@JsonTypeInfo(use = Id.CLASS)` disabled; only explicit `@JsonSubTypes` allowlists used. | Arbitrary JDBC/JNDI gadget classes instantiable via `@type` or `@class` JSON properties. |
-| `DESER-07` | **XML Billion Laughs (Entity Expansion Bomb) Cap** | Entity expansion and XML document depth/byte size are strictly bounded. | 1KB XML payload with nested `<!ENTITY lol9 "&lol8;&lol8;...">` expands to 3GB in memory. |
-| `DESER-08` | **Signed Serialization Envelopes Are Not Enough** | Even HMAC-signed cookies avoid `pickle`/`Marshal` so a leaked signing secret does not immediately escalate from auth bypass to RCE. | Framework configured with `PickleSerializer` for signed cookies. |
+| `DESER-07` | **XML Billion Laughs (Entity Expansion Bomb) Cap** | Entity expansion and XML document depth/byte size are strictly bounded. | 1KB XML input with nested `<!ENTITY lol9 "&lol8;&lol8;...">` expands to 3GB in memory. |
+| `DESER-08` | **Signed Serialization Envelopes Are Not Enough** | Even HMAC-signed cookies avoid `pickle`/`Marshal` so a leaked signing secret does not immediately escalate from session tampering to arbitrary code execution. | Framework configured with `PickleSerializer` for signed cookies. |
 
 ---
 

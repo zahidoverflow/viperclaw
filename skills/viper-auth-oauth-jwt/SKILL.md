@@ -21,7 +21,7 @@ flowchart LR
 ```
 
 ### Root-Cause Analysis
-Authentication bypasses arise when JWT libraries trust the token's own header (`alg`, `kid`, `jku`, `jwk`) to select the verification key or algorithm, or when OAuth account-linking flows trust unverified email addresses or loosely matched `redirect_uri` values.
+Authentication gaps arise when JWT libraries trust the token's own header (`alg`, `kid`, `jku`, `jwk`) to select the verification key or algorithm, or when OAuth account-linking flows trust unverified email addresses or loosely matched `redirect_uri` values.
 
 ---
 
@@ -49,7 +49,7 @@ rg -n "(redirect_uri|client_secret|response_type|code_verifier)"
 | `AUTH-02` | **HMAC Secret Entropy (>= 256 bits)** | Symmetric `HS256` keys generated via CSPRNG (`>= 32` random bytes), never dictionary words. | Weak secret (`secret`, `changeme`, app name) recoverable offline via `viperclaw jwt`. |
 | `AUTH-03` | **Untrusted Header Parameters (`kid`, `jku`, `jwk`)** | `kid` matched against a strict alphanumeric allowlist of server-configured key IDs; `jku`/`x5u`/`jwk` ignored. | `kid` passed into file path (`../../../../dev/null`) or SQL query. |
 | `AUTH-04` | **Mandatory Claim Validation (`exp`, `iss`, `aud`)** | Verifier enforces `require=["exp", "iss", "aud", "sub"]` with bounded clock skew. | Tokens without `exp` never expire, or tokens from a staging/sibling service (`aud` mismatch) are accepted. |
-| `AUTH-05` | **Pre-ATO Email Collision Prevention** | Linking an OAuth provider to an existing password account requires `email_verified === true` AND re-authentication if the email wasn't previously verified. | Attacker registers unverified email before victim signs up with Google OAuth and retains active session. |
+| `AUTH-05` | **Pre-ATO Email Collision Prevention** | Linking an OAuth provider to an existing password account requires `email_verified === true` AND re-authentication if the email wasn't previously verified. | An unverified account can be pre-registered before a user signs up with Google OAuth and retains active session. |
 | `AUTH-06` | **Password Reset Token Security** | Reset tokens are `>= 128-bit` CSPRNG, hashed (`SHA-256`) at rest in DB, expire in `<= 15m`, and are single-use. | Predictable UUIDv1/timestamp reset tokens or tokens not invalidated after use. |
 | `AUTH-07` | **Account Enumeration Resistance** | Login, registration, and password-reset endpoints return uniform response messages and status codes (using dummy bcrypt verify on missing users). | Login returns `"User not found"` vs. `"Wrong password"` or 2ms vs. 250ms timing difference. |
 | `AUTH-08` | **Token Type Separation (Access vs. Refresh)** | Refresh tokens cannot be used as Bearer access tokens on API endpoints (`typ` / `token_use` claim checked). | Long-lived refresh token accepted directly by auth middleware as an access token. |
@@ -64,8 +64,8 @@ rg -n "(redirect_uri|client_secret|response_type|code_verifier)"
 
 | Severity Tier | Baseline CVSS v3.1 Vector | Qualifying Security Impact |
 | :--- | :--- | :--- |
-| **CRITICAL (9.8)** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H` | Cracked JWT HMAC secret, `alg:none` acceptance, or `kid` `/dev/null` forgery allowing arbitrary admin impersonation. |
-| **HIGH (8.1)** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:N` | OAuth `redirect_uri` validation bypass or Pre-ATO unverified email collision leading to account takeover. |
+| **CRITICAL (9.8)** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H` | Weak JWT HMAC secret, `alg:none` acceptance, or unvalidated `kid` path resolution allowing admin impersonation. |
+| **HIGH (8.1)** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:N` | OAuth `redirect_uri` validation gap or Pre-ATO unverified email collision leading to account takeover. |
 | **MEDIUM (5.3)** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N` | Missing `exp` / `aud` validation or observable username enumeration on login. |
 
 ---

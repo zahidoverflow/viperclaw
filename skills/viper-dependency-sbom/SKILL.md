@@ -21,7 +21,7 @@ flowchart LR
 ```
 
 ### Root-Cause Analysis
-Supply-chain compromises occur when builds use floating version ranges (`^`, `~`, `>=`), mix public and private package indexes via `pip --extra-index-url` (allowing public PyPI/npm packages with higher version numbers to hijack internal package names), or run untrusted `postinstall` scripts.
+Supply-chain compromises occur when builds use floating version ranges (`^`, `~`, `>=`), mix public and private package indexes via `pip --extra-index-url` (allowing public PyPI/npm packages with higher version numbers to shadow internal package names), or run untrusted `postinstall` scripts.
 
 ---
 
