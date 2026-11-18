@@ -56,15 +56,18 @@ git clone https://github.com/zahidoverflow/viperclaw.git
 cd viperclaw
 pip install -e .
 
-# 2. Install all 64 security audit skills into Antigravity, Claude Code, Codex & Cursor
+# 2. Install all ViperClaw skills into Antigravity, Claude Code, Codex & Cursor
 viperclaw skills install --target all
+
+# 3. Auto-register the Phase-Gated MCP server (e.g. Antigravity ~/.gemini/config/mcp_config.json)
+viperclaw mcp install --target antigravity
 ```
 
 <details>
 <summary><b>🔌 Connect the Phase-Gated MCP Server (<code>mcp_config.json</code> / Claude Code / Cursor)</b></summary>
 <br />
 
-Add `viperclaw mcp` to your agent's `mcp_config.json` / `.mcp.json` (or run `claude mcp add viperclaw -- viperclaw mcp`):
+Run `viperclaw mcp install --target all` (or `claude mcp add viperclaw -- viperclaw mcp`), or add manually to your harness `mcp_config.json` / `.mcp.json`:
 
 ```json
 {
