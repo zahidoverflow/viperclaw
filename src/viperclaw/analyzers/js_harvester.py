@@ -22,6 +22,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Set
 from urllib.parse import urljoin
 
+from viperclaw.core.url_utils import normalize_url
+
 
 ENDPOINT_REGEX = re.compile(
     r"""(?:"|'|`|path:\s*['"]|^\s*)(https?://[^\s"'`<>]+|/(?:api|v[1-9]|vulnerabilities|graphql|gql|internal|admin|auth|oauth|trpc|ws|webhooks?|users?|accounts?|orders?|billing|tenants?|orgs?|files?|upload|export|debug|actuator|swagger|openapi)[^\s"'`<>]*)(?:"|'|`)?""",
@@ -99,7 +101,7 @@ class JSHarvester:
         chunk_prefix: str = "static/js/",
     ) -> JSHarvestResult:
         chunks: Set[str] = set()
-        norm_base = (base_url.rstrip("/") + "/") if base_url else ""
+        norm_base = (normalize_url(base_url).rstrip("/") + "/") if base_url else ""
 
         # 1. Vite / ES dynamic import() chunks
         for m in VITE_DYNAMIC_IMPORT_REGEX.finditer(content):

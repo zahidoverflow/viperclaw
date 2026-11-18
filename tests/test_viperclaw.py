@@ -489,3 +489,14 @@ os.system(top_arg)
 
     js_sub = JSHarvester.analyze_content('import("chunks/adm.js")', base_url="https://cdn.example.com/subpath")
     assert js_sub.lazy_chunks == ["https://cdn.example.com/subpath/chunks/adm.js"]
+
+    # 8. Optional https:// URL normalization across remote, local, and scheme-less targets
+    from viperclaw.core.url_utils import normalize_url
+
+    assert normalize_url("api-wallet.web3auth.io") == "https://api-wallet.web3auth.io"
+    assert normalize_url("api.example.com/graphql") == "https://api.example.com/graphql"
+    assert normalize_url("127.0.0.1:4280") == "http://127.0.0.1:4280"
+    assert normalize_url("localhost:3000/api") == "http://localhost:3000/api"
+    assert normalize_url("http://legacy.internal:8080") == "http://legacy.internal:8080"
+    assert LiveScanner("api.example.com").base_url == "https://api.example.com/"
+    assert LiveScanner("127.0.0.1:4280").base_url == "http://127.0.0.1:4280/"

@@ -18,6 +18,8 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List
 
+from viperclaw.core.url_utils import normalize_url
+
 
 @dataclass
 class OOBHit:
@@ -86,7 +88,7 @@ class OOBEngine:
         parameter: str = "url",
         secret: bytes = DEFAULT_SECRET,
     ) -> Dict[str, Any]:
-        base = callback_base_url.rstrip("/")
+        base = normalize_url(callback_base_url).rstrip("/")
         parsed_host = base.split("://")[-1].split("/")[0]
         canaries: Dict[str, str] = {}
         payloads: Dict[str, List[str]] = {}

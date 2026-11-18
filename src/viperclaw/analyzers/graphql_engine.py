@@ -19,6 +19,8 @@ import urllib.request
 from dataclasses import dataclass, field
 from typing import Any, Dict, List
 
+from viperclaw.core.url_utils import normalize_url
+
 
 INTROSPECTION_QUERY = (
     "query ViperIntrospection { __schema { queryType { name } mutationType { name } "
@@ -162,6 +164,7 @@ class GraphQLEngine:
         headers: Dict[str, str] | None = None,
         probe_clairvoyance: bool = True,
     ) -> GraphQLScanReport:
+        url = normalize_url(url)
         introspection_ok = False
         bypass_used = ""
         types_found: List[str] = []

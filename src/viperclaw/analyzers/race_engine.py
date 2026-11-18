@@ -18,6 +18,8 @@ import urllib.parse
 from dataclasses import dataclass, field
 from typing import Any, Dict, List
 
+from viperclaw.core.url_utils import normalize_url
+
 
 @dataclass
 class RaceWorkerResult:
@@ -91,6 +93,7 @@ class RaceEngine:
         success_indicator: str = "",
         max_expected_successes: int = 1,
     ) -> RaceBurstReport:
+        url = normalize_url(url)
         parsed = urllib.parse.urlsplit(url)
         scheme = (parsed.scheme or "http").lower()
         host = parsed.hostname or "127.0.0.1"

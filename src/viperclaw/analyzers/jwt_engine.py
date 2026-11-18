@@ -24,6 +24,8 @@ import urllib.request
 from dataclasses import dataclass, field
 from typing import Any, Dict, List
 
+from viperclaw.core.url_utils import normalize_url
+
 
 DEFAULT_JWT_SECRETS: List[str] = [
     "secret",
@@ -251,6 +253,7 @@ class JWTEngine:
 
         replay_results: List[Dict[str, Any]] = []
         if target_url:
+            target_url = normalize_url(target_url)
             for attack_name, forged_tok in forged.items():
                 req = urllib.request.Request(
                     target_url,

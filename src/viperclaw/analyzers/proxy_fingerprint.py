@@ -18,6 +18,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Set
 from urllib.parse import urlparse
 
+from viperclaw.core.url_utils import normalize_url
+
 
 COOKIE_TECH_MAP = {
     "phpsessid": "PHP",
@@ -72,7 +74,7 @@ class ProxyFingerprinter:
         body: str = "",
         status_code: int = 200,
     ) -> FingerprintReport:
-        parsed = urlparse(url if "://" in url else f"https://{url}")
+        parsed = urlparse(normalize_url(url))
         host = parsed.netloc or parsed.path
         techs: Set[str] = set()
         auths: Set[str] = set()

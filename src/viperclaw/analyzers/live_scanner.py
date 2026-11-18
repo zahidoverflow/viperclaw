@@ -23,6 +23,7 @@ from viperclaw.analyzers.proxy_fingerprint import FingerprintReport, ProxyFinger
 from viperclaw.core.graph import AttackGraph
 from viperclaw.core.oracle import HttpSample, ProofOracle
 from viperclaw.core.reporter import ReportGenerator, VerifiedFinding
+from viperclaw.core.url_utils import normalize_url
 
 
 CSRF_TOKEN_REGEX = re.compile(
@@ -55,7 +56,7 @@ class LiveScanner:
     """Stateful HTTP session client and wire-verified dynamic vulnerability prober."""
 
     def __init__(self, base_url: str, timeout: float = 8.0) -> None:
-        self.base_url = base_url.rstrip("/") + "/"
+        self.base_url = normalize_url(base_url).rstrip("/") + "/"
         self.timeout = timeout
         self.cookies: Dict[str, str] = {}
         self.cookie_jar = http.cookiejar.CookieJar()
