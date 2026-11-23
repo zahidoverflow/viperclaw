@@ -57,7 +57,7 @@ git clone https://github.com/zahidoverflow/viperclaw.git && cd viperclaw && ./in
 # Or manual editable install + harness setup:
 pip install -e .
 viperclaw setup --target all          # Installs all 72 skills + MCP configs (incl. ~/.config/opencode/opencode.json)
-viperclaw setup --target opencode     # Configure OpenCode only (~/.config/opencode/skills & opencode.json)
+viperclaw setup --target opencode     # Configure OpenCode (~/.config/opencode/{skills,commands,opencode.json})
 ```
 
 <details>

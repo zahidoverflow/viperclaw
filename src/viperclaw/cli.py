@@ -80,6 +80,40 @@ def list_available_skills() -> List[Dict[str, str]]:
 SUPPORTED_HARNESSES = ("antigravity", "claude", "codex", "cursor", "opencode")
 
 
+def _install_opencode_commands(
+    commands_dir: Path,
+    skills: List[Dict[str, str]],
+    dry_run: bool = False,
+) -> List[str]:
+    """Generate conventional OpenCode slash commands (~/.config/opencode/commands/<name>.md)."""
+    created: List[str] = []
+    if not dry_run:
+        commands_dir.mkdir(parents=True, exist_ok=True)
+        for legacy_name in DEPRECATED_SKILL_NAMES:
+            legacy_cmd = commands_dir / f"{legacy_name}.md"
+            if legacy_cmd.is_file():
+                legacy_cmd.unlink()
+
+    for sk in skills:
+        name = sk["name"]
+        desc = sk.get("description") or f"Run ViperClaw {name} security audit workflow"
+        cmd_path = commands_dir / f"{name}.md"
+        created.append(str(cmd_path))
+        if not dry_run:
+            # JSON string quoting is valid YAML and safely escapes colons/quotes (e.g. OWASP API4:2023)
+            quoted_desc = json.dumps(desc)
+            content = (
+                "---\n"
+                f"description: {quoted_desc}\n"
+                "---\n\n"
+                f"Load and follow the `{name}` skill (`~/.config/opencode/skills/{name}/SKILL.md`) "
+                "using ViperClaw MCP tools for the following target or request:\n\n"
+                "$ARGUMENTS\n"
+            )
+            cmd_path.write_text(content, encoding="utf-8")
+    return created
+
+
 def install_skills(target: str, dest_override: str | None = None, dry_run: bool = False) -> Dict[str, Any]:
     home = Path.home()
     target_paths: Dict[str, List[Path]] = {
@@ -98,6 +132,7 @@ def install_skills(target: str, dest_override: str | None = None, dry_run: bool 
 
     skills = list_available_skills()
     installed: List[str] = []
+    opencode_commands: List[str] = []
 
     for dest_root in destinations:
         if not dry_run:
@@ -115,12 +150,21 @@ def install_skills(target: str, dest_override: str | None = None, dry_run: bool 
                     shutil.rmtree(dst_dir)
                 shutil.copytree(src_dir, dst_dir)
 
-    return {
+        # OpenCode slash commands (/viperclaw, /viper-*) live in commands/<name>.md
+        if target in ("opencode", "all") and dest_root.name == "skills" and (
+            dest_override is not None or dest_root.parent.name == "opencode"
+        ):
+            opencode_commands.extend(_install_opencode_commands(dest_root.parent / "commands", skills, dry_run=dry_run))
+
+    result: Dict[str, Any] = {
         "target": target,
         "dry_run": dry_run,
         "skills_count": len(skills),
         "installed_paths": installed,
     }
+    if opencode_commands:
+        result["opencode_commands_count"] = len(opencode_commands)
+    return result
 
 
 def _upsert_codex_toml_mcp(cfg_path: Path, resolved_bin: str, dry_run: bool = False) -> None:

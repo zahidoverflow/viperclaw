@@ -692,8 +692,10 @@ os.system(top_arg)
 
 
 def test_new_analyzers_and_opencode_codex_setup(tmp_path: Path) -> None:
-    # 1. OpenCode MCP config schema (~/.config/opencode/opencode.json)
-    oc_cfg = tmp_path / "opencode.json"
+    # 1. OpenCode MCP config schema (~/.config/opencode/opencode.json) & slash commands (commands/*.md)
+    oc_root = tmp_path / "opencode"
+    oc_cfg = oc_root / "opencode.json"
+    oc_root.mkdir()
     oc_cfg.write_text('{"model": "anthropic/claude-sonnet-4-5"}', encoding="utf-8")
     assert main(["mcp", "install", "--target", "opencode", "--dest", str(oc_cfg)]) == 0
     oc_data = json.loads(oc_cfg.read_text(encoding="utf-8"))
@@ -702,6 +704,13 @@ def test_new_analyzers_and_opencode_codex_setup(tmp_path: Path) -> None:
     assert oc_data["mcp"]["viperclaw"]["type"] == "local"
     assert oc_data["mcp"]["viperclaw"]["enabled"] is True
     assert oc_data["mcp"]["viperclaw"]["command"][-1] == "mcp"
+
+    assert main(["skills", "install", "--target", "opencode", "--dest", str(oc_root / "skills")]) == 0
+    oc_cmd_file = oc_root / "commands" / "viperclaw.md"
+    assert oc_cmd_file.is_file()
+    oc_cmd_txt = oc_cmd_file.read_text(encoding="utf-8")
+    assert "description:" in oc_cmd_txt and "$ARGUMENTS" in oc_cmd_txt
+    assert len(list((oc_root / "commands").glob("viper*.md"))) == 72
 
     # 2. Codex TOML MCP config (~/.codex/config.toml) idempotent upsert
     codex_cfg = tmp_path / "config.toml"

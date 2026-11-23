@@ -29,4 +29,7 @@ export PATH="${USER_BIN}:${PATH}"
 
 echo "[viperclaw] Running auto-setup for target=${TARGET} (includes OpenCode, Antigravity, Claude Code, Codex & Cursor)..."
 viperclaw setup --target "$TARGET"
-echo "[viperclaw] Setup complete! Restart your AI coding harness (OpenCode / Antigravity / Claude Code / Codex / Cursor) to load all 72 skills and 17 MCP tools."
+if command -v opencode >/dev/null 2>&1; then
+  opencode reload >/dev/null 2>&1 || true
+fi
+echo "[viperclaw] Setup complete! Restart your AI coding harness (OpenCode / Antigravity / Claude Code / Codex / Cursor) to load all 72 skills, OpenCode slash commands, and 17 MCP tools."
