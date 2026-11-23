@@ -38,9 +38,19 @@ runs:
 
     - name: Run ViperClaw Security Audit
       shell: bash
+      env:
+        VC_MODE: ${{ inputs.mode }}
+        VC_PATH: ${{ inputs.path }}
+        VC_OUTPUT: ${{ inputs.output }}
       run: |
-        if [ "${{ inputs.mode }}" = "harvest-js" ]; then
-          viperclaw harvest-js "${{ inputs.path }}" --output "${{ inputs.output }}"
+        if [ "$VC_MODE" = "harvest-js" ]; then
+          viperclaw harvest-js "$VC_PATH" --output "$VC_OUTPUT"
+        elif [ "$VC_MODE" = "secrets" ]; then
+          viperclaw secrets "$VC_PATH" --output "$VC_OUTPUT"
+        elif [ "$VC_MODE" = "iac" ]; then
+          viperclaw iac "$VC_PATH" --output "$VC_OUTPUT"
+        elif [ "$VC_MODE" = "sbom" ]; then
+          viperclaw sbom "$VC_PATH" --output "$VC_OUTPUT"
         else
-          viperclaw taint "${{ inputs.path }}" --output "${{ inputs.output }}"
+          viperclaw taint "$VC_PATH" --output "$VC_OUTPUT"
         fi

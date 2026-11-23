@@ -126,6 +126,7 @@ class RaceEngine:
 
         barrier = threading.Barrier(concurrency, timeout=timeout)
         results: List[RaceWorkerResult | None] = [None] * concurrency
+        full_bodies: List[str] = [""] * concurrency
         release_times: List[float] = [0.0] * concurrency
 
         ssl_ctx = ssl.create_default_context()
@@ -170,6 +171,7 @@ class RaceEngine:
                 raw_data = resp.read(32768)
                 t_done = time.perf_counter()
                 text_body = raw_data.decode("utf-8", errors="replace")
+                full_bodies[idx] = text_body
                 resp_hdrs = {k.lower(): v for k, v in resp.getheaders()}
                 results[idx] = RaceWorkerResult(
                     worker_id=idx + 1,
@@ -228,7 +230,7 @@ class RaceEngine:
                     body_hashes.add(w.body_sha256)
                 is_2xx = 200 <= w.status_code < 300
                 if success_indicator:
-                    if success_indicator.lower() in w.body_preview.lower() and is_2xx:
+                    if success_indicator.lower() in full_bodies[i].lower() and is_2xx:
                         success_count += 1
                 elif is_2xx:
                     success_count += 1

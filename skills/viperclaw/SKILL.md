@@ -10,7 +10,7 @@ Use this skill whenever the user invokes `/viperclaw` or requests a comprehensiv
 ## 5-Phase Audit & Remediation Workflow
 
 1. **Phase 1 — Input Mode & Trust-Boundary Inventory (`viper-orchestrator`, `viper-threat-model-stride`):**
-   - **Repository / Source Path (`/viperclaw ./repo`):** Run `viper_taint_scan` (`viperclaw taint . --db .viperclaw/graph.db`) and `viper_harvest_js` (`viperclaw harvest-js . --db .viperclaw/graph.db`) to map data flows, bundle manifests, configuration files, and trust boundaries.
+   - **Repository / Source Path (`/viperclaw ./repo`):** Run `viper_taint_scan` (`viperclaw taint . --db .viperclaw/graph.db`), `viper_harvest_js` (`viperclaw harvest-js . --db .viperclaw/graph.db`), `viper_secrets_scan`, `viper_iac_audit`, `viper_sbom_deps`, and `viper_mcp_audit` to map data flows, secrets, IaC posture, SBOMs, and trust boundaries.
    - **HTTP Endpoint / HAR Capture (`/viperclaw api.example.com` or `./traffic.har`):** Perform strictly non-destructive configuration and contract posture checks:
      - Inspect HTTP headers, TLS/CORS policy, cookie attributes (`HttpOnly`, `Secure`, `SameSite`), and framework signatures with `viper_fingerprint_traffic` (`viperclaw fingerprint`).
      - Inspect public service discovery metadata (`/.well-known/openid-configuration`, `/.well-known/jwks.json`, `/openapi.json`) with `viper_live_scan` and client bundle manifests with `viper_harvest_js`.
@@ -21,7 +21,7 @@ Use this skill whenever the user invokes `/viperclaw` or requests a comprehensiv
      - **Auth, Tokens & Protocol Compliance:** `viper-auth-oauth-jwt`, `viper-oauth-oidc-compliance`, `viper-saml-sso-enterprise`, `viper-session-cookie-audit`, `viper-webauthn-passkey-mfa`.
      - **Access Control, Input Safety & Headers:** `viper-headers-csp-cors`, `viper-openapi-rest-schema`, `viper-multitenant-isolation`, `viper-proxy-parser-alignment`, `viper-taint-sast`.
      - **Application & Language Stacks:** `viper-nextjs-react-rsc`, `viper-fastapi-django-flask`, `viper-nodejs-express-nestjs`, `viper-go-service-audit`, `viper-rust-memory-unsafe`, `viper-java-spring-audit`, `viper-php-laravel-wordpress`, `viper-ruby-rails-audit`.
-     - **Cloud, Containers & AI Guardrails:** `viper-aws-iam-cloud-audit`, `viper-gcp-azure-cloud-audit`, `viper-container-k8s-audit`, `viper-iac-terraform-audit`, `viper-cicd-hardening`, `viper-secrets-audit`, `viper-dependency-sbom`, `viper-ai-llm-guardrails`, `viper-mcp-server-audit`.
+     - **Cloud, Containers & AI Guardrails:** `viper-aws-iam-cloud-audit`, `viper-gcp-azure-cloud-audit`, `viper-container-k8s-audit`, `viper-iac-terraform-audit`, `viper-terraform-drift-policy`, `viper-cicd-hardening`, `viper-secrets-audit`, `viper-dependency-sbom`, `viper-ai-llm-guardrails`, `viper-mcp-server-audit`, `viper-agent-skill-supplychain`, `viper-diff-pr-review`.
 
 3. **Phase 3 — Control Verification (`viper-browseros-agent`, `viper_jwt_audit`, `viper_diff_oracle`):**
    - Audit token headers/claims against RFC 8725 using `viper_jwt_audit`, inspect browser storage/CSP telemetry via `viper_browser_ingest`, and compare control responses using `viper_diff_oracle`.

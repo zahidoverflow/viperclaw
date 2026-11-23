@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import shutil
 import sys
 from pathlib import Path
@@ -17,12 +18,16 @@ from typing import Any, Dict, List
 from viperclaw import __version__
 from viperclaw.analyzers.browser_bridge import BrowserBridge
 from viperclaw.analyzers.graphql_engine import GraphQLEngine
+from viperclaw.analyzers.iac_auditor import IaCAuditor
 from viperclaw.analyzers.js_harvester import JSHarvester
 from viperclaw.analyzers.jwt_engine import JWTEngine
 from viperclaw.analyzers.live_scanner import LiveScanner
+from viperclaw.analyzers.mcp_auditor import MCPAuditor
 from viperclaw.analyzers.oob_engine import OOBEngine
 from viperclaw.analyzers.proxy_fingerprint import ProxyFingerprinter
 from viperclaw.analyzers.race_engine import RaceEngine
+from viperclaw.analyzers.sbom_auditor import SBOMAuditor
+from viperclaw.analyzers.secrets_scanner import SecretsScanner
 from viperclaw.analyzers.taint import TaintAnalyzer
 from viperclaw.core.graph import AttackGraph
 from viperclaw.core.oracle import ProofOracle
@@ -44,10 +49,15 @@ DEPRECATED_SKILL_NAMES = ("viper-ai-llm-redteam", "viper-waf-evasion-framing")
 
 def get_skills_dir() -> Path:
     repo_root = Path(__file__).resolve().parents[2]
-    candidate = repo_root / "skills"
-    if candidate.is_dir():
-        return candidate
-    return Path.cwd() / "skills"
+    for candidate in (
+        repo_root / "skills",
+        Path(sys.prefix) / "share" / "viperclaw" / "skills",
+        Path.home() / ".local" / "share" / "viperclaw" / "skills",
+        Path.cwd() / "skills",
+    ):
+        if candidate.is_dir() and any(candidate.glob("*/SKILL.md")):
+            return candidate
+    return repo_root / "skills"
 
 
 def list_available_skills() -> List[Dict[str, str]]:
@@ -67,6 +77,9 @@ def list_available_skills() -> List[Dict[str, str]]:
     return skills
 
 
+SUPPORTED_HARNESSES = ("antigravity", "claude", "codex", "cursor", "opencode")
+
+
 def install_skills(target: str, dest_override: str | None = None, dry_run: bool = False) -> Dict[str, Any]:
     home = Path.home()
     target_paths: Dict[str, List[Path]] = {
@@ -74,6 +87,7 @@ def install_skills(target: str, dest_override: str | None = None, dry_run: bool 
         "claude": [home / ".claude" / "skills"],
         "codex": [home / ".codex" / "skills"],
         "cursor": [home / ".cursor" / "skills"],
+        "opencode": [home / ".config" / "opencode" / "skills"],
     }
     if dest_override:
         destinations = [Path(dest_override)]
@@ -109,52 +123,151 @@ def install_skills(target: str, dest_override: str | None = None, dry_run: bool 
     }
 
 
+def _upsert_codex_toml_mcp(cfg_path: Path, resolved_bin: str, dry_run: bool = False) -> None:
+    """Idempotently upsert [mcp_servers.viperclaw] in OpenAI Codex ~/.codex/config.toml."""
+    escaped_bin = resolved_bin.replace("\\", "\\\\").replace('"', '\\"')
+    block = (
+        "[mcp_servers.viperclaw]\n"
+        f'command = "{escaped_bin}"\n'
+        'args = ["mcp"]\n'
+        "enabled = true\n"
+    )
+    existing = cfg_path.read_text(encoding="utf-8", errors="ignore") if cfg_path.is_file() else ""
+    section_re = re.compile(r"(?ms)^\[mcp_servers\.viperclaw\]\s*\n.*?(?=^\[|\Z)")
+    if section_re.search(existing):
+        updated = section_re.sub(block + "\n", existing)
+    else:
+        sep = "\n" if existing and not existing.endswith("\n") else ""
+        pad = "\n" if existing.strip() else ""
+        updated = f"{existing}{sep}{pad}{block}"
+    if not dry_run:
+        cfg_path.parent.mkdir(parents=True, exist_ok=True)
+        cfg_path.write_text(updated, encoding="utf-8")
+
+
+def _upsert_opencode_json_mcp(cfg_path: Path, resolved_bin: str, dry_run: bool = False) -> Dict[str, Any]:
+    """Idempotently upsert mcp.viperclaw in OpenCode ~/.config/opencode/opencode.json."""
+    stanza = {
+        "type": "local",
+        "enabled": True,
+        "command": [resolved_bin, "mcp"],
+    }
+    data: Dict[str, Any] = {}
+    if cfg_path.is_file():
+        try:
+            loaded = json.loads(cfg_path.read_text(encoding="utf-8"))
+            if isinstance(loaded, dict):
+                data = loaded
+        except Exception:
+            data = {}
+    if "$schema" not in data:
+        data["$schema"] = "https://opencode.ai/config.json"
+    mcp_map = data.get("mcp")
+    if not isinstance(mcp_map, dict):
+        mcp_map = {}
+    mcp_map["viperclaw"] = stanza
+    data["mcp"] = mcp_map
+    if not dry_run:
+        cfg_path.parent.mkdir(parents=True, exist_ok=True)
+        cfg_path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+    return stanza
+
+
 def install_mcp(target: str, dest_override: str | None = None, dry_run: bool = False) -> Dict[str, Any]:
     home = Path.home()
     target_configs: Dict[str, Path] = {
         "antigravity": home / ".gemini" / "config" / "mcp_config.json",
         "claude": home / ".claude.json",
-        "codex": home / ".codex" / "mcp_config.json",
+        "codex": home / ".codex" / "config.toml",
         "cursor": home / ".cursor" / "mcp.json",
+        "opencode": home / ".config" / "opencode" / "opencode.json",
     }
-    if dest_override:
-        destinations = [Path(dest_override)]
-    elif target == "all":
-        destinations = list(target_configs.values())
-    else:
-        destinations = [target_configs.get(target, home / ".gemini" / "config" / "mcp_config.json")]
 
     resolved_bin = shutil.which("viperclaw") or "viperclaw"
-    stanza = {
+    standard_stanza = {
         "command": resolved_bin,
         "args": ["mcp"],
     }
-    updated_files: List[str] = []
 
-    for cfg_path in destinations:
-        data: Dict[str, Any] = {}
-        if cfg_path.is_file():
-            try:
-                loaded = json.loads(cfg_path.read_text(encoding="utf-8"))
-                if isinstance(loaded, dict):
-                    data = loaded
-            except Exception:
-                data = {}
-        servers = data.get("mcpServers")
-        if not isinstance(servers, dict):
-            servers = {}
-        servers["viperclaw"] = stanza
-        data["mcpServers"] = servers
+    if dest_override:
+        selected = [(target if target in target_configs else "antigravity", Path(dest_override))]
+    elif target == "all":
+        selected = list(target_configs.items())
+    else:
+        key = target if target in target_configs else "antigravity"
+        selected = [(key, target_configs[key])]
+
+    updated_files: List[str] = []
+    server_entries: Dict[str, Any] = {}
+
+    for harness, cfg_path in selected:
         updated_files.append(str(cfg_path))
-        if not dry_run:
-            cfg_path.parent.mkdir(parents=True, exist_ok=True)
-            cfg_path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+        if harness == "opencode":
+            server_entries["opencode"] = _upsert_opencode_json_mcp(cfg_path, resolved_bin, dry_run=dry_run)
+        elif harness == "codex":
+            _upsert_codex_toml_mcp(cfg_path, resolved_bin, dry_run=dry_run)
+            server_entries["codex"] = {"command": resolved_bin, "args": ["mcp"], "enabled": True}
+        else:
+            data: Dict[str, Any] = {}
+            if cfg_path.is_file():
+                try:
+                    loaded = json.loads(cfg_path.read_text(encoding="utf-8"))
+                    if isinstance(loaded, dict):
+                        data = loaded
+                except Exception:
+                    data = {}
+            servers = data.get("mcpServers")
+            if not isinstance(servers, dict):
+                servers = {}
+            servers["viperclaw"] = standard_stanza
+            data["mcpServers"] = servers
+            server_entries[harness] = standard_stanza
+            if not dry_run:
+                cfg_path.parent.mkdir(parents=True, exist_ok=True)
+                cfg_path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
 
     return {
         "target": target,
         "dry_run": dry_run,
-        "server": {"viperclaw": stanza},
+        "server": {"viperclaw": standard_stanza},
+        "harness_configs": server_entries,
         "config_paths": updated_files,
+    }
+
+
+def detect_installed_harnesses(home: Path | None = None) -> List[str]:
+    """Detect AI coding harnesses installed on the current machine (always includes opencode on fresh PCs)."""
+    h = home or Path.home()
+    detected: List[str] = []
+    checks = {
+        "antigravity": (h / ".gemini").exists() or shutil.which("agy") is not None,
+        "claude": (h / ".claude").exists() or (h / ".claude.json").exists() or shutil.which("claude") is not None,
+        "codex": (h / ".codex").exists() or shutil.which("codex") is not None,
+        "cursor": (h / ".cursor").exists() or shutil.which("cursor") is not None,
+        "opencode": (h / ".config" / "opencode").exists() or shutil.which("opencode") is not None,
+    }
+    for name in SUPPORTED_HARNESSES:
+        if checks[name]:
+            detected.append(name)
+    if "opencode" not in detected:
+        detected.append("opencode")
+    return detected
+
+
+def setup_harnesses(target: str = "auto", dry_run: bool = False) -> Dict[str, Any]:
+    """One-command fresh-PC setup: installs all ViperClaw skills and registers MCP servers."""
+    targets = detect_installed_harnesses() if target == "auto" else (list(SUPPORTED_HARNESSES) if target == "all" else [target])
+    skill_results: Dict[str, Any] = {}
+    mcp_results: Dict[str, Any] = {}
+    for t in targets:
+        skill_results[t] = install_skills(t, dry_run=dry_run)
+        mcp_results[t] = install_mcp(t, dry_run=dry_run)
+    return {
+        "mode": target,
+        "dry_run": dry_run,
+        "configured_harnesses": targets,
+        "skills_count": len(list_available_skills()),
+        "mcp_config_paths": [mcp_results[t]["config_paths"][0] for t in targets],
     }
 
 
@@ -251,9 +364,9 @@ def build_parser() -> argparse.ArgumentParser:
     p_graph.add_argument("--decay", type=float, default=0.0, help="Apply pheromone evaporation factor (e.g. 0.85)")
 
     # 12. skills
-    p_skills = sub.add_parser("skills", help="List or install the 64 ViperClaw security audit skills for Antigravity, Claude Code, Codex, or Cursor")
+    p_skills = sub.add_parser("skills", help="List or install all 72 ViperClaw security audit skills for Antigravity, Claude Code, Codex, Cursor, or OpenCode")
     p_skills.add_argument("action", choices=["list", "install"], help="Action to perform")
-    p_skills.add_argument("--target", choices=["antigravity", "claude", "codex", "cursor", "all"], default="antigravity")
+    p_skills.add_argument("--target", choices=["antigravity", "claude", "codex", "cursor", "opencode", "all"], default="antigravity")
     p_skills.add_argument("--dest", "--dest-dir", dest="dest", default=None, help="Custom destination directory override")
     p_skills.add_argument("--dry-run", action="store_true", help="Preview installation paths without copying files")
 
@@ -261,10 +374,35 @@ def build_parser() -> argparse.ArgumentParser:
     p_mcp = sub.add_parser("mcp", help="Start the Phase-Gated MCP JSON-RPC server or install MCP config")
     sub_mcp = p_mcp.add_subparsers(dest="mcp_action")
     sub_mcp.add_parser("serve", help="Start the MCP stdio server (default when no subcommand is given)")
-    p_mcp_install = sub_mcp.add_parser("install", help="Register ViperClaw MCP server in Antigravity, Claude Code, Codex, or Cursor config")
-    p_mcp_install.add_argument("--target", choices=["antigravity", "claude", "codex", "cursor", "all"], default="antigravity")
+    p_mcp_install = sub_mcp.add_parser("install", help="Register ViperClaw MCP server in Antigravity, Claude Code, Codex, Cursor, or OpenCode config")
+    p_mcp_install.add_argument("--target", choices=["antigravity", "claude", "codex", "cursor", "opencode", "all"], default="antigravity")
     p_mcp_install.add_argument("--dest", "--dest-dir", dest="dest", default=None, help="Custom config file path override")
     p_mcp_install.add_argument("--dry-run", action="store_true", help="Preview MCP config registration without writing")
+
+    # 14. setup (fresh-PC auto-setup for OpenCode + all detected harnesses)
+    p_setup = sub.add_parser("setup", help="Auto-configure ViperClaw skills and MCP servers for OpenCode, Antigravity, Claude Code, Codex & Cursor")
+    p_setup.add_argument("--target", choices=["auto", "all", "antigravity", "claude", "codex", "cursor", "opencode"], default="auto")
+    p_setup.add_argument("--dry-run", action="store_true", help="Preview harness setup without writing files")
+
+    # 15. secrets
+    p_sec = sub.add_parser("secrets", help="Scan source files and configs for hardcoded secrets and high-entropy credentials")
+    p_sec.add_argument("path", help="File or repository directory to scan")
+    p_sec.add_argument("--output", "-o", default="", help="Optional output file path for JSON results")
+
+    # 16. iac
+    p_iac = sub.add_parser("iac", help="Audit Dockerfiles, Kubernetes YAML, Terraform (.tf), and GitHub Actions workflows")
+    p_iac.add_argument("path", help="File or repository directory to audit")
+    p_iac.add_argument("--output", "-o", default="", help="Optional output file path for JSON results")
+
+    # 17. sbom
+    p_sbom = sub.add_parser("sbom", help="Generate CycloneDX 1.5 JSON SBOM and audit dependency manifests")
+    p_sbom.add_argument("path", help="Manifest file or repository directory to audit")
+    p_sbom.add_argument("--output", "-o", default="", help="Optional output file path for JSON results")
+
+    # 18. audit-mcp
+    p_amcp = sub.add_parser("audit-mcp", help="Audit MCP JSON configs (opencode.json, mcp_config.json) and SKILL.md bundles")
+    p_amcp.add_argument("path", help="MCP config file, skills directory, or repository path")
+    p_amcp.add_argument("--output", "-o", default="", help="Optional output file path for JSON results")
 
     return parser
 
@@ -374,12 +512,14 @@ def main(argv: List[str] | None = None) -> int:
         res = JSHarvester.analyze_path(args.path, base_url=args.base_url)
         if args.graph_db:
             graph = AttackGraph(args.graph_db)
-            for ch in res["lazy_chunks"]:
-                graph.upsert_node("lazy_chunk", ch, pheromone_boost=2.5)
-            for ep in res["endpoints"]:
-                boost = 5.0 if ep in res["idor_candidates"] or ep in res["ssrf_candidates"] else 1.5
-                graph.upsert_node("endpoint", ep, pheromone_boost=boost)
-            graph.close()
+            try:
+                for ch in res["lazy_chunks"]:
+                    graph.upsert_node("lazy_chunk", ch, pheromone_boost=2.5)
+                for ep in res["endpoints"]:
+                    boost = 5.0 if ep in res["idor_candidates"] or ep in res["ssrf_candidates"] else 1.5
+                    graph.upsert_node("endpoint", ep, pheromone_boost=boost)
+            finally:
+                graph.close()
         out_str = json.dumps(res, indent=2)
         if args.output:
             Path(args.output).parent.mkdir(parents=True, exist_ok=True)
@@ -391,10 +531,12 @@ def main(argv: List[str] | None = None) -> int:
         res = TaintAnalyzer.scan_path(args.path)
         if args.graph_db:
             graph = AttackGraph(args.graph_db)
-            for fl in res["flows"]:
-                label = f"{fl['vuln_class']} @ {fl['file_path']}:{fl['sink_line']}"
-                graph.upsert_node("taint_sink", label, pheromone_boost=8.0, metadata=fl)
-            graph.close()
+            try:
+                for fl in res["flows"]:
+                    label = f"{fl['vuln_class']} @ {fl['file_path']}:{fl['sink_line']}"
+                    graph.upsert_node("taint_sink", label, pheromone_boost=8.0, metadata=fl)
+            finally:
+                graph.close()
         out_str = json.dumps(res, indent=2)
         if args.output:
             Path(args.output).parent.mkdir(parents=True, exist_ok=True)
@@ -404,10 +546,15 @@ def main(argv: List[str] | None = None) -> int:
 
     if args.command == "fingerprint":
         har_file = Path(args.har_path)
-        if not har_file.is_file():
+        if har_file.is_file():
+            report = ProxyFingerprinter.analyze_har(har_file, root_domain=args.domain)
+        elif args.har_path.lower().startswith(("http://", "https://")) or (
+            "." in args.har_path and not args.har_path.lower().endswith(".har")
+        ):
+            report = ProxyFingerprinter.fetch_and_fingerprint(args.har_path)
+        else:
             print(json.dumps({"error": f"HAR file not found: {args.har_path}"}), file=sys.stderr)
             return 2
-        report = ProxyFingerprinter.analyze_har(har_file, root_domain=args.domain)
         out_str = json.dumps(report.to_dict(), indent=2)
         if args.output:
             Path(args.output).parent.mkdir(parents=True, exist_ok=True)
@@ -558,6 +705,25 @@ def main(argv: List[str] | None = None) -> int:
         else:
             print(json.dumps(install_skills(args.target, dest_override=args.dest, dry_run=args.dry_run), indent=2))
         return 0
+
+    if args.command == "setup":
+        print(json.dumps(setup_harnesses(target=args.target, dry_run=args.dry_run), indent=2))
+        return 0
+
+    if args.command in ("secrets", "iac", "sbom", "audit-mcp"):
+        scanner_map = {
+            "secrets": SecretsScanner.scan_path,
+            "iac": IaCAuditor.scan_path,
+            "sbom": SBOMAuditor.scan_path,
+            "audit-mcp": MCPAuditor.scan_path,
+        }
+        res = scanner_map[args.command](args.path)
+        out_str = json.dumps(res, indent=2)
+        if args.output:
+            Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+            Path(args.output).write_text(out_str, encoding="utf-8")
+        print(out_str)
+        return 2 if "error" in res else 0
 
     return 0
 

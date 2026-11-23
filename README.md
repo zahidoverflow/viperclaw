@@ -6,13 +6,13 @@
   <a href="https://github.com/zahidoverflow/viperclaw/releases"><img src="https://img.shields.io/github/v/release/zahidoverflow/viperclaw?style=flat-square&logo=github&color=10b981&label=Release" alt="Latest GitHub Release" /></a>
   <a href="https://github.com/zahidoverflow/viperclaw/actions"><img src="https://img.shields.io/github/actions/workflow/status/zahidoverflow/viperclaw/ci.yml?branch=main&style=flat-square&logo=githubactions&logoColor=white&label=CI" alt="GitHub Actions CI Status" /></a>
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.10%2B%20%7C%20Zero%20Deps-06b6d4?style=flat-square&logo=python&logoColor=white" alt="Python 3.10+ Zero Dependencies" /></a>
-  <a href="#-cli--mcp-reference"><img src="https://img.shields.io/badge/MCP-13%20Tools-a855f7?style=flat-square" alt="Model Context Protocol MCP Server" /></a>
-  <a href="#-security-audit-playbooks"><img src="https://img.shields.io/badge/Skills-64%20%2B%201%20Entrypoint-f43f5e?style=flat-square" alt="64 Security Audit Skills + /viperclaw" /></a>
+  <a href="#-cli--mcp-reference"><img src="https://img.shields.io/badge/MCP-17%20Tools-a855f7?style=flat-square" alt="Model Context Protocol MCP Server" /></a>
+  <a href="#-security-audit-playbooks"><img src="https://img.shields.io/badge/Skills-71%20%2B%201%20Entrypoint-f43f5e?style=flat-square" alt="71 Security Audit Skills + /viperclaw" /></a>
   <a href="https://github.com/zahidoverflow/viperclaw/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-10b981?style=flat-square" alt="MIT License" /></a>
 </p>
 
 <p align="center">
-  <b>ViperClaw</b> (<code>viperclaw</code> / <code>vclaw</code>) upgrades <b>Google Antigravity</b>, <b>Claude Code</b>, <b>OpenAI Codex</b>, and <b>Cursor</b> into a standards-driven Application Security &amp; Architecture Audit platform—combining <b>64 specialized security audit skills + <code>/viperclaw</code></b>, a <b>13-tool Phase-Gated MCP server</b>, a <b>BrowserOS Neo session bridge</b>, a <b>Stigmergic SQLite Assessment Graph</b>, <b>Concurrency / JWT / GraphQL / OOB / SAST / HTTP Posture engines</b>, and a <b>deterministic Evidence Verifier</b> with <b>zero third-party runtime dependencies</b>.
+  <b>ViperClaw</b> (<code>viperclaw</code> / <code>vclaw</code>) upgrades <b>OpenCode</b>, <b>Google Antigravity</b>, <b>Claude Code</b>, <b>OpenAI Codex</b>, and <b>Cursor</b> into a standards-driven Application Security &amp; Architecture Audit platform—combining <b>71 specialized security audit skills + <code>/viperclaw</code></b>, a <b>17-tool Phase-Gated MCP server</b>, a <b>BrowserOS Neo session bridge</b>, a <b>Stigmergic SQLite Assessment Graph</b>, <b>Secrets / IaC / SBOM / MCP Supply-Chain / Concurrency / JWT / GraphQL / OOB / SAST / HTTP Posture engines</b>, and a <b>deterministic Evidence Verifier</b> with <b>zero third-party runtime dependencies</b>.
 </p>
 
 <p align="center">
@@ -51,16 +51,13 @@ ViperClaw pairs **64 compliance &amp; code-review playbooks** with **10 zero-dep
 > 📘 **New to ViperClaw?** Read the complete step-by-step [**Beginner-to-Pro User Guide (`docs/README.md`)**](docs/README.md).
 
 ```bash
-# 1. Clone & install (<2 seconds, zero external dependencies, Python 3.10+)
-git clone https://github.com/zahidoverflow/viperclaw.git
-cd viperclaw
+# 1. Fresh-PC 1-command install & auto-setup (OpenCode, Antigravity, Claude Code, Codex & Cursor)
+git clone https://github.com/zahidoverflow/viperclaw.git && cd viperclaw && ./install.sh
+
+# Or manual editable install + harness setup:
 pip install -e .
-
-# 2. Install all ViperClaw skills into Antigravity, Claude Code, Codex & Cursor
-viperclaw skills install --target all
-
-# 3. Auto-register the Phase-Gated MCP server (e.g. Antigravity ~/.gemini/config/mcp_config.json)
-viperclaw mcp install --target antigravity
+viperclaw setup --target all          # Installs all 72 skills + MCP configs (incl. ~/.config/opencode/opencode.json)
+viperclaw setup --target opencode     # Configure OpenCode only (~/.config/opencode/skills & opencode.json)
 ```
 
 <details>
@@ -181,6 +178,10 @@ viperclaw harvest-js ./bundles --base-url https://app.target.tld/ --db .vipercla
 | `viper_graph_leads` | **Graph** | Query top pheromone-ranked review leads and export a live Mermaid topology diagram. |
 | `viper_diff_oracle` | **Verify** | Compare baseline vs. probe HTTP responses to verify authorization boundaries and filter WAF Soft-200 blocks. |
 | `viper_verify_and_report` | **Report** | Run the 7-Question Triage Gate, calculate exact CVSS v3.1 scores, and generate Markdown + SARIF 2.1.0 reports. |
+| `viper_secrets_scan` | **Secrets** | Scan source, `.env`, and CI files for hardcoded credentials &amp; high-entropy keys (masked output). |
+| `viper_iac_audit` | **IaC** | Audit Dockerfiles, Kubernetes YAML, Terraform (`.tf`), and GitHub Actions workflows for misconfigurations. |
+| `viper_sbom_deps` | **SBOM** | Generate CycloneDX 1.5 JSON SBOMs and audit `package.json`/`requirements.txt`/`go.mod`/`Cargo.toml`. |
+| `viper_mcp_audit` | **Supply-Chain** | Audit MCP JSON configs (`opencode.json`, `mcp_config.json`) &amp; `SKILL.md` bundles for supply-chain risks. |
 
 </details>
 

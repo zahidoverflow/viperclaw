@@ -19,12 +19,16 @@ from typing import Any, Dict, List
 from viperclaw import __version__
 from viperclaw.analyzers.browser_bridge import BrowserBridge
 from viperclaw.analyzers.graphql_engine import GraphQLEngine
+from viperclaw.analyzers.iac_auditor import IaCAuditor
 from viperclaw.analyzers.js_harvester import JSHarvester
 from viperclaw.analyzers.jwt_engine import JWTEngine
 from viperclaw.analyzers.live_scanner import LiveScanner
+from viperclaw.analyzers.mcp_auditor import MCPAuditor
 from viperclaw.analyzers.oob_engine import OOBEngine
 from viperclaw.analyzers.proxy_fingerprint import ProxyFingerprinter
 from viperclaw.analyzers.race_engine import RaceEngine
+from viperclaw.analyzers.sbom_auditor import SBOMAuditor
+from viperclaw.analyzers.secrets_scanner import SecretsScanner
 from viperclaw.analyzers.taint import TaintAnalyzer
 from viperclaw.core.graph import AttackGraph
 from viperclaw.core.oracle import HttpSample, ProofOracle
@@ -239,6 +243,58 @@ MCP_TOOLS: List[Dict[str, Any]] = [
                 "workspace_db": {"type": "string", "maxLength": 512, "default": ".viperclaw/graph.db"},
             },
             "required": ["url"],
+        },
+    },
+    {
+        "name": "viper_secrets_scan",
+        "description": "Scan source files, configs, and CI files for hardcoded credentials, API keys, private keys, and high-entropy secrets (masked output, modeled on Gitleaks & TruffleHog).",
+        "inputSchema": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "path": {"type": "string", "minLength": 1, "maxLength": 1024, "description": "File or repository directory path to scan"},
+                "workspace_db": {"type": "string", "maxLength": 512, "description": "Optional SQLite graph DB path to populate"},
+            },
+            "required": ["path"],
+        },
+    },
+    {
+        "name": "viper_iac_audit",
+        "description": "Audit Dockerfiles, Kubernetes manifests, Terraform (.tf), and GitHub Actions workflows for security misconfigurations (modeled on Checkov, Trivy & Zizmor).",
+        "inputSchema": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "path": {"type": "string", "minLength": 1, "maxLength": 1024, "description": "IaC file or repository directory path to audit"},
+                "workspace_db": {"type": "string", "maxLength": 512, "description": "Optional SQLite graph DB path to populate"},
+            },
+            "required": ["path"],
+        },
+    },
+    {
+        "name": "viper_sbom_deps",
+        "description": "Generate a CycloneDX 1.5 JSON SBOM and audit package.json, requirements.txt, go.mod, and Cargo.toml for unpinned versions, missing lockfiles, and supply-chain risks.",
+        "inputSchema": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "path": {"type": "string", "minLength": 1, "maxLength": 1024, "description": "Manifest file or repository directory path"},
+                "workspace_db": {"type": "string", "maxLength": 512, "description": "Optional SQLite graph DB path to populate"},
+            },
+            "required": ["path"],
+        },
+    },
+    {
+        "name": "viper_mcp_audit",
+        "description": "Audit MCP JSON configs (opencode.json, mcp_config.json, .mcp.json) and AI agent SKILL.md directories for unpinned runners, hardcoded tokens, and prompt-boundary risks.",
+        "inputSchema": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "path": {"type": "string", "minLength": 1, "maxLength": 1024, "description": "MCP config file, skills directory, or repository path"},
+                "workspace_db": {"type": "string", "maxLength": 512, "description": "Optional SQLite graph DB path to populate"},
+            },
+            "required": ["path"],
         },
     },
 ]
@@ -460,6 +516,74 @@ def handle_tool_call(name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
             graph_db=db_path,
         )
         return res.to_dict()
+
+    if name == "viper_secrets_scan":
+        res = SecretsScanner.scan_path(arguments["path"])
+        db_opt = arguments.get("workspace_db") or arguments.get("db_path")
+        if db_opt and res.get("findings"):
+            graph = AttackGraph(str(db_opt))
+            try:
+                for f in res["findings"]:
+                    graph.upsert_node(
+                        "finding",
+                        f"{f['rule_id']}: {f['title']} @ {f['file_path']}:{f['line_number']}",
+                        pheromone_boost=9.0,
+                        metadata=f,
+                    )
+            finally:
+                graph.close()
+        return res
+
+    if name == "viper_iac_audit":
+        res = IaCAuditor.scan_path(arguments["path"])
+        db_opt = arguments.get("workspace_db") or arguments.get("db_path")
+        if db_opt and res.get("findings"):
+            graph = AttackGraph(str(db_opt))
+            try:
+                for f in res["findings"]:
+                    graph.upsert_node(
+                        "finding",
+                        f"{f['rule_id']}: {f['title']} @ {f['file_path']}:{f['line_number']}",
+                        pheromone_boost=6.0,
+                        metadata=f,
+                    )
+            finally:
+                graph.close()
+        return res
+
+    if name == "viper_sbom_deps":
+        res = SBOMAuditor.scan_path(arguments["path"])
+        db_opt = arguments.get("workspace_db") or arguments.get("db_path")
+        if db_opt and res.get("findings"):
+            graph = AttackGraph(str(db_opt))
+            try:
+                for f in res["findings"]:
+                    graph.upsert_node(
+                        "hypothesis",
+                        f"{f['rule_id']}: {f['title']} @ {f['file_path']}",
+                        pheromone_boost=5.0,
+                        metadata=f,
+                    )
+            finally:
+                graph.close()
+        return res
+
+    if name == "viper_mcp_audit":
+        res = MCPAuditor.scan_path(arguments["path"])
+        db_opt = arguments.get("workspace_db") or arguments.get("db_path")
+        if db_opt and res.get("findings"):
+            graph = AttackGraph(str(db_opt))
+            try:
+                for f in res["findings"]:
+                    graph.upsert_node(
+                        "finding",
+                        f"{f['rule_id']}: {f['title']} @ {f['file_path']}",
+                        pheromone_boost=7.5,
+                        metadata=f,
+                    )
+            finally:
+                graph.close()
+        return res
 
     raise ValueError(f"Unknown MCP tool: {name}")
 
