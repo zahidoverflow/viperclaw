@@ -24,6 +24,7 @@ import urllib.request
 from dataclasses import dataclass, field
 from typing import Any, Dict, List
 
+from viperclaw.core.oracle import HttpSample, ProofOracle
 from viperclaw.core.url_utils import normalize_url
 
 
@@ -276,12 +277,14 @@ class JWTEngine:
                     status = 0
                     body_str = str(exc)
 
-                accepted = 200 <= status < 300
+                waf_block = ProofOracle.detect_waf_soft_block(HttpSample(status_code=status, body=body_str))
+                accepted = (200 <= status < 300) and waf_block is None
                 replay_results.append(
                     {
                         "attack_vector": attack_name,
                         "status_code": status,
                         "accepted": accepted,
+                        "waf_soft_block": waf_block,
                         "response_preview": body_str[:200],
                     }
                 )

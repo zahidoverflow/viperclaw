@@ -1,7 +1,7 @@
 {
   "$schema": "https://glama.ai/mcp/schemas/server.json",
   "name": "viperclaw",
-  "description": "Universal AI Security Audit & Bug Bounty Harness — 64 Security Audit Skills, 13-Tool Phase-Gated MCP Server, Multi-Language Taint SAST, SPA Lazy-Chunk Harvester, Race/JWT/GraphQL/OOB Analyzers & Proof Oracle.",
+  "description": "Zero-Dependency Application Security Audit Harness — 72 Security Audit Skills, 17-Tool Phase-Gated MCP Server, Taint SAST, Secrets/IaC/SBOM/MCP Supply-Chain Auditors, SPA Harvester & Evidence Verifier.",
   "homepage": "https://zahidoverflow.github.io/viperclaw/",
   "repository": "https://github.com/zahidoverflow/viperclaw",
   "license": "MIT",

@@ -1,7 +1,7 @@
 {
   "name": "viperclaw",
   "version": "2.0.0",
-  "description": "ViperClaw \u2014 Application Security Audit Harness, Surface Graph, Evidence Verifier, Phase-Gated MCP Server, and 64 Specialized Security Audit Skills.",
+  "description": "ViperClaw \u2014 Application Security Audit Harness, Surface Graph, Evidence Verifier, 17-Tool MCP Server, and 72 Security Audit Skills.",
   "author": {
     "name": "Zahidul Islam (@zahidoverflow)",
     "url": "https://github.com/zahidoverflow"

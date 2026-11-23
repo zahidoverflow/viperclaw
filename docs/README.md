@@ -33,8 +33,8 @@ When people try to use AI for penetration testing or bug bounty hunting, they us
 | Component | What It Is | How You Use It |
 | :--- | :--- | :--- |
 | **1. The CLI (`viperclaw` / `vclaw`)** | A fast command-line tool you can run in any terminal. | Run `viperclaw scan`, `viperclaw taint`, `viperclaw harvest-js`, `viperclaw fingerprint`, `viperclaw graph`, or `viperclaw verify`. |
-| **2. The 14 Offensive Skills (`skills/`)** | 12 step-by-step hunting playbooks (`SKILL.md`) written for AI coding agents. | Installed once with `viperclaw skills install --target all`. Your AI agent automatically reads them when you ask it to hunt bugs. |
-| **3. The MCP Server (`viperclaw mcp`)** | A bridge that lets your AI agent run ViperClaw's analyzers directly as native tools. | Added once to your agent's `mcp_config.json`. Gives your AI 8 deterministic security tools (`viper_live_scan`, `viper_taint_scan`, etc.). |
+| **2. The 72 Security Audit Skills (`skills/`)** | 71 specialized playbooks + `/viperclaw` entrypoint (`SKILL.md`) written for AI coding agents. | Installed once with `viperclaw setup --target all`. Your AI agent loads them dynamically or via `/viperclaw`. |
+| **3. The MCP Server (`viperclaw mcp`)** | A bridge that lets your AI agent run ViperClaw's analyzers directly as native tools. | Auto-registered with `viperclaw setup --target all`. Gives your AI 17 deterministic security tools (`viper_taint_scan`, `viper_secrets_scan`, `viper_iac_audit`, `viper_sbom_deps`, `viper_mcp_audit`, etc.). |
 
 ---
 
@@ -56,19 +56,20 @@ viperclaw --version
 ```
 *(Tip: You can type either `viperclaw` or the shorter alias `vclaw` for any command!)*
 
-### Step 2: Install the 14 Offensive Skills into Your AI Agent
-Tell ViperClaw to copy its 12 hunting playbooks into your AI coding assistant's skill folder:
+### Step 2: Install All 72 Skills & Register MCP Servers
+Run the 1-command auto-setup for **OpenCode**, **Google Antigravity**, **Claude Code**, **OpenAI Codex**, and **Cursor**:
 
 ```bash
-# Install for ALL supported agents at once (Antigravity, Claude Code, Codex, Cursor):
-viperclaw skills install --target all
+# Auto-setup skills, OpenCode slash commands, and MCP configs for ALL supported agents:
+viperclaw setup --target all
 ```
 
 Or install for a specific agent only:
-* **Google Antigravity:** `viperclaw skills install --target antigravity` (installs to `~/.agents/skills/`)
-* **Claude Code:** `viperclaw skills install --target claude` (installs to `~/.claude/skills/`)
-* **OpenAI Codex:** `viperclaw skills install --target codex` (installs to `~/.codex/skills/`)
-* **Cursor:** `viperclaw skills install --target cursor` (installs to `~/.cursor/skills/`)
+* **OpenCode:** `viperclaw setup --target opencode` (installs to `~/.config/opencode/{skills,commands,opencode.json}`)
+* **Google Antigravity:** `viperclaw setup --target antigravity` (installs to `~/.gemini/config/skills/` & `~/.gemini/config/mcp_config.json`)
+* **Claude Code:** `viperclaw setup --target claude` (installs to `~/.claude/skills/` & `~/.claude.json`)
+* **OpenAI Codex:** `viperclaw setup --target codex` (installs to `~/.codex/skills/` & `~/.codex/config.toml`)
+* **Cursor:** `viperclaw setup --target cursor` (installs to `~/.cursor/skills/` & `~/.cursor/mcp.json`)
 
 ### Step 3: Connect the MCP Server to Your AI Agent
 To let your AI agent execute ViperClaw tools automatically, add this block to your agent's MCP configuration file (`mcp_config.json` or `.mcp.json`):
@@ -253,7 +254,7 @@ viperclaw verify \
 
 ## 🤖 4. Mode 2: Using ViperClaw Inside Your AI Coding Agent (Best Prompts)
 
-Once you have installed the 12 Skills (`viperclaw skills install --target all`) and connected the MCP Server (`viperclaw mcp`), you can talk to **Google Antigravity**, **Claude Code**, **Codex**, or **Cursor** in plain English.
+Once you have run `viperclaw setup --target all`, you can talk to **OpenCode**, **Google Antigravity**, **Claude Code**, **Codex**, or **Cursor** in plain English or invoke `/viperclaw`.
 
 Here are the **5 best copy-paste prompts** to get senior-level results:
 

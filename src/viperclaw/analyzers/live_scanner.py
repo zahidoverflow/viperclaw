@@ -111,12 +111,12 @@ class LiveScanner:
         t0 = time.time()
         try:
             with client.open(req, timeout=self.timeout) as resp:
-                body = resp.read().decode("utf-8", errors="ignore")
+                body = resp.read(2_097_152).decode("utf-8", errors="ignore")
                 elapsed = (time.time() - t0) * 1000.0
                 resp_headers = {k: v for k, v in resp.headers.items()}
                 status = resp.status
         except urllib.error.HTTPError as err:
-            body = err.read().decode("utf-8", errors="ignore") if err.fp else ""
+            body = err.read(1_048_576).decode("utf-8", errors="ignore") if err.fp else ""
             elapsed = (time.time() - t0) * 1000.0
             resp_headers = {k: v for k, v in err.headers.items()} if err.headers else {}
             status = err.code

@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "viperclaw"
 version = "2.0.0"
-description = "ViperClaw — Zero-Dependency Application Security Audit Harness, Surface Graph, Evidence Verifier, Phase-Gated MCP Server, and 64 Security Audit Skills for Antigravity, Claude Code, Codex & Cursor."
+description = "ViperClaw — Zero-Dependency Application Security Audit Harness, Surface Graph, Evidence Verifier, 17-Tool MCP Server, and 72 Security Audit Skills for OpenCode, Antigravity, Claude Code, Codex & Cursor."
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.10"

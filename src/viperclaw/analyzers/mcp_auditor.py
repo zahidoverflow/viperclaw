@@ -141,19 +141,23 @@ class MCPAuditor:
                 )
             )
 
-        if re.search(r"curl\s+[^|\n]+\|\s*(?:ba)?sh|wget\s+[^|\n]+\|\s*(?:ba)?sh", text, re.I):
-            findings.append(
-                MCPAuditFinding(
-                    rule_id="MCP-SKILL-02",
-                    target_type="skill_md",
-                    title="Skill instructions contain unverified remote pipe-to-shell command",
-                    cwe_id="CWE-494",
-                    severity="HIGH",
-                    file_path=str(path),
-                    evidence="Matched `curl/wget ... | sh/bash` pattern in SKILL.md",
-                    remediation="Replace pipe-to-shell instructions with pinned package installs and checksum verification.",
+        pipe_shell_re = re.compile(r"curl\s+[^|\n]+\|\s*(?:ba)?sh|wget\s+[^|\n]+\|\s*(?:ba)?sh", re.I)
+        doc_warning_re = re.compile(r"(?i)(never\b|do\s+not|don't|avoid|rg\s+-n|fail\s*/|replace|detect|audit|blocks?\s+)")
+        for ln in text.splitlines():
+            if pipe_shell_re.search(ln) and not doc_warning_re.search(ln):
+                findings.append(
+                    MCPAuditFinding(
+                        rule_id="MCP-SKILL-02",
+                        target_type="skill_md",
+                        title="Skill instructions contain unverified remote pipe-to-shell command",
+                        cwe_id="CWE-494",
+                        severity="HIGH",
+                        file_path=str(path),
+                        evidence=ln.strip()[:160],
+                        remediation="Replace pipe-to-shell instructions with pinned package installs and checksum verification.",
+                    )
                 )
-            )
+                break
 
         if re.search(r"(?i)ignore\s+(?:all\s+)?previous\s+instructions|disregard\s+system\s+prompt", text):
             findings.append(

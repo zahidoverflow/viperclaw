@@ -48,9 +48,13 @@ DEPRECATED_SKILL_NAMES = ("viper-ai-llm-redteam", "viper-waf-evasion-framing")
 
 
 def get_skills_dir() -> Path:
-    repo_root = Path(__file__).resolve().parents[2]
+    pkg_file = Path(__file__).resolve()
+    repo_root = pkg_file.parents[2]
+    site_root = pkg_file.parents[1]
     for candidate in (
         repo_root / "skills",
+        site_root / "share" / "viperclaw" / "skills",
+        repo_root / "share" / "viperclaw" / "skills",
         Path(sys.prefix) / "share" / "viperclaw" / "skills",
         Path.home() / ".local" / "share" / "viperclaw" / "skills",
         Path.cwd() / "skills",

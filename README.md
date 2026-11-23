@@ -21,7 +21,7 @@
   <a href="#-quickstart"><b>Quickstart</b></a> •
   <a href="#-architecture"><b>Architecture</b></a> •
   <a href="#-cli--mcp-reference"><b>CLI &amp; MCP</b></a> •
-  <a href="#-security-audit-playbooks"><b>64 Skills</b></a> •
+  <a href="#-security-audit-playbooks"><b>72 Skills</b></a> •
   <a href="#-benchmarks--comparison"><b>Benchmarks</b></a>
 </p>
 
@@ -160,7 +160,7 @@ viperclaw harvest-js ./bundles --base-url https://app.target.tld/ --db .vipercla
 </details>
 
 <details>
-<summary><b>🔌 View All 13 Phase-Gated MCP Server Tools (<code>viperclaw mcp</code>)</b></summary>
+<summary><b>🔌 View All 17 Phase-Gated MCP Server Tools (<code>viperclaw mcp</code>)</b></summary>
 <br />
 
 | MCP&nbsp;Tool | Phase | Description |
@@ -187,7 +187,7 @@ viperclaw harvest-js ./bundles --base-url https://app.target.tld/ --db .vipercla
 
 ---
 
-## 🎯 Security Audit Playbooks (64 Skills + `/viperclaw`)
+## 🎯 Security Audit Playbooks (71 Skills + `/viperclaw`)
 
 Each skill in [`skills/`](skills/) encodes a senior security engineer's checklist, architecture diagram, and hardened remediation patterns:
 

@@ -1,6 +1,6 @@
 # ViperClaw (`zahidoverflow/viperclaw`)
 
-> ViperClaw is an open-source, zero-dependency Python AI Pentesting Framework, Bug Bounty Automation MCP Server, Multi-Language SAST/DAST Taint Engine, Stigmergic Attack Graph, Wire-Check Proof Oracle, and 12 Methodology-Driven Skill Suite for Google Antigravity, Claude Code, OpenAI Codex, and Cursor.
+> ViperClaw is an open-source, zero-dependency Python Application Security Audit Harness, 17-Tool Phase-Gated MCP Server, Multi-Language Taint SAST, Secrets/IaC/SBOM/MCP Supply-Chain Auditor, Assessment Graph, Evidence Verifier, and 72-Skill Suite for OpenCode, Google Antigravity, Claude Code, OpenAI Codex, and Cursor.
 
 - **Website:** https://zahidoverflow.github.io/viperclaw/
 - **Repository:** https://github.com/zahidoverflow/viperclaw
@@ -15,8 +15,8 @@
 Most AI pentesting agents fail in practice because they wrap 150–200 noisy CLI scanners around an LLM with no target methodology—bloating the context window, triggering Cloudflare/Akamai/Imperva WAF blocks, and hallucinating false positives from Soft-200 challenge pages.
 
 ViperClaw solves this with 6 integrated subsystems:
-1. **12 Narrow & Deep Methodology Skills (`skills/*/SKILL.md`):** Senior bug-bounty & red-team playbooks for Google Antigravity (`~/.agents/skills`), Claude Code (`~/.claude/skills`), OpenAI Codex (`~/.codex/skills`), and Cursor (`~/.cursor/skills`).
-2. **Phase-Gated MCP Server (`viperclaw mcp`):** Exposes 8 deterministic JSON-RPC 2.0 tools over `stdio` (`viper_live_scan`, `viper_graph_upsert`, `viper_graph_leads`, `viper_harvest_js`, `viper_taint_scan`, `viper_fingerprint_traffic`, `viper_diff_oracle`, `viper_verify_and_report`).
+1. **72 Defensive Security Audit Skills (`skills/*/SKILL.md`):** Senior AppSec & compliance playbooks installed via `viperclaw setup --target all` for OpenCode (`~/.config/opencode/{skills,commands}`), Google Antigravity (`~/.gemini/config/skills`), Claude Code (`~/.claude/skills`), OpenAI Codex (`~/.codex/skills`), and Cursor (`~/.cursor/skills`).
+2. **Phase-Gated MCP Server (`viperclaw mcp`):** Exposes 17 deterministic JSON-RPC 2.0 tools over `stdio` (`viper_live_scan`, `viper_graph_upsert`, `viper_graph_leads`, `viper_harvest_js`, `viper_taint_scan`, `viper_fingerprint_traffic`, `viper_race_burst`, `viper_jwt_audit`, `viper_graphql_scan`, `viper_oob_probe`, `viper_browser_ingest`, `viper_diff_oracle`, `viper_verify_and_report`, `viper_secrets_scan`, `viper_iac_audit`, `viper_sbom_deps`, `viper_mcp_audit`).
 3. **Stigmergic Attack Surface Knowledge Graph (`src/viperclaw/core/graph.py`):** Zero-setup SQLite graph with pheromone priority scoring, evaporation decay, and Mermaid flowchart export.
 4. **Multi-Language Source-to-Sink Taint SAST (`src/viperclaw/analyzers/taint.py`):** Forward multi-hop transitive taint analysis across Python, TypeScript/JavaScript, Go, and PHP with context-aware sanitizer/guard de-tainting (`int()`, `intval()`, `PDO::prepare`, `htmlspecialchars`, `in_array`). Achieved **19/19 (100%)** vulnerable module detection and **0 false positives** on DVWA `impossible.php`.
 5. **Stateful Live HTTP Scanner & Wire Exploiter (`src/viperclaw/analyzers/live_scanner.py`):** Automatic cookie & CSRF token handling, route discovery, and wire-verified exploitation (Command Injection, UNION/Blind SQLi, Auth Bypass, LFI, Multipart PHP Upload RCE, Reflected/Stored/DOM XSS, Session Predictability, CSRF, CAPTCHA State-Machine Bypass, CSP Bypass, and JS Token Forgery). Achieved **14/14 (100%)** live verified module exploits on DVWA in under 5 seconds.
